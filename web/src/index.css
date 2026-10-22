@@ -137,6 +137,44 @@
 .kf-drift { animation: kf-drift 14s ease-in-out infinite alternate; }
 .kf-speed { stroke-dasharray: 10 10; animation: kf-speed .5s linear infinite; }
 
+/* سبک «نور شفق»: کشیده‌شدن خطوط، نوری که روی خط حرکت می‌کند، ذرات و حرکت‌های آرام */
+@keyframes kf-draw { from { stroke-dashoffset: 1 } to { stroke-dashoffset: 0 } }
+@keyframes kf-shimmer { from { stroke-dashoffset: 1.1 } to { stroke-dashoffset: -0.1 } }
+@keyframes kf-flow { from { stroke-dashoffset: 0 } to { stroke-dashoffset: -1 } }
+@keyframes kf-glide { 0%, 100% { transform: translate(0, 0) } 50% { transform: translate(3px, -4px) } }
+@keyframes kf-press { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+@keyframes kf-orbit { to { transform: rotate(360deg) } }
+@keyframes kf-pulse { 0% { opacity: .65; transform: scale(.6) } 100% { opacity: 0; transform: scale(1.5) } }
+@keyframes kf-glow { 0%, 100% { opacity: .35 } 50% { opacity: .75 } }
+@keyframes kf-stream { 0% { opacity: 0; transform: translateX(0) } 20% { opacity: 1 } 100% { opacity: 0; transform: translateX(-46px) } }
+@keyframes kf-up { 0% { opacity: 0; transform: translateY(0) scale(.6) } 25% { opacity: 1 } 100% { opacity: 0; transform: translateY(-48px) scale(1) } }
+@keyframes kf-sweep { 0% { transform: translateX(-120%) skewX(-18deg) } 60%, 100% { transform: translateX(220%) skewX(-18deg) } }
+@keyframes kf-gauge { 0%, 100% { stroke-dashoffset: .55 } 50% { stroke-dashoffset: .18 } }
+@keyframes kf-needle2 { 0%, 100% { transform: rotate(-55deg) } 50% { transform: rotate(40deg) } }
+@keyframes kf-heart { 0%, 100% { transform: scale(1) } 12% { transform: scale(1.07) } 24% { transform: scale(.98) } 36% { transform: scale(1.04) } 60% { transform: scale(1) } }
+@keyframes kf-sway { 0%, 100% { transform: rotate(-2.5deg) } 50% { transform: rotate(2.5deg) } }
+@keyframes kf-blob { 0%, 100% { transform: translate(0, 0) scale(1) } 33% { transform: translate(4px, -5px) scale(1.08) } 66% { transform: translate(-4px, 3px) scale(.94) } }
+@keyframes kf-type { 0%, 60%, 100% { opacity: .25; transform: translateY(0) } 30% { opacity: 1; transform: translateY(-3px) } }
+
+.kf-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: kf-draw 1.6s cubic-bezier(.65, 0, .35, 1) forwards; }
+.kf-shimmer { stroke-dasharray: .07 1.1; stroke-dashoffset: 1.1; animation: kf-shimmer 3.2s cubic-bezier(.45, 0, .55, 1) infinite; }
+.kf-flow { stroke-dasharray: .25 .15; animation: kf-flow 2.6s linear infinite; }
+.kf-glide { animation: kf-glide 3.6s ease-in-out infinite; }
+.kf-press { animation: kf-press 3s ease-in-out infinite; }
+.kf-orbit { animation: kf-orbit 9s linear infinite; transform-box: view-box; }
+.kf-orbit-rev { animation: kf-orbit 13s linear infinite reverse; transform-box: view-box; }
+.kf-pulse { animation: kf-pulse 2.8s cubic-bezier(.2, .7, .3, 1) infinite; transform-box: fill-box; transform-origin: center; }
+.kf-glow { animation: kf-glow 3.4s ease-in-out infinite; }
+.kf-stream { animation: kf-stream 2.2s ease-out infinite; }
+.kf-up { animation: kf-up 3.2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-sweep { animation: kf-sweep 4.5s ease-in-out infinite; }
+.kf-gauge { stroke-dasharray: 1; animation: kf-gauge 4.5s ease-in-out infinite; }
+.kf-needle2 { animation: kf-needle2 4.5s ease-in-out infinite; transform-box: view-box; }
+.kf-heart { animation: kf-heart 1.6s ease-in-out infinite; transform-box: view-box; }
+.kf-sway { animation: kf-sway 5s ease-in-out infinite; transform-box: view-box; }
+.kf-blob { animation: kf-blob 7s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-type { animation: kf-type 1.4s ease-in-out infinite; }
+
 /* ورود پله‌ای فرزندان */
 .stagger > * { animation: kf-stagger .55s cubic-bezier(.2, .8, .2, 1) both; }
 .stagger > *:nth-child(1) { animation-delay: .02s }

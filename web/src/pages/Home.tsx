@@ -171,7 +171,7 @@ export default function Home() {
                 <div className="mt-1 font-display text-[2rem] leading-none"><CountUp value={log.steps} /></div>
                 <div className="text-[11px] opacity-70">از {num(6000)} قدم</div>
               </div>
-              <Runner size={104} shirt="#fff" accent="#fcd679" className="absolute -bottom-3 -left-3" />
+              <Runner mono size={112} className="absolute -bottom-3 -left-4" />
               <div className="absolute left-3 top-3">
                 <Ring value={pct(log.steps, 6000)} size={38} stroke={4} color="#ffffff">
                   <span className="text-[9px] tabular-nums">{num(pct(log.steps, 6000) * 100)}٪</span>
@@ -196,7 +196,7 @@ export default function Home() {
                 <div className="mt-1 font-display text-[2rem] leading-none"><CountUp value={log.workoutMinutes} /> <span className="font-sans text-xs">دقیقه</span></div>
                 <div className="text-[11px] opacity-70">هدف {num(20)} دقیقه</div>
               </div>
-              <Lifter size={100} shirt="#fff" className="absolute -bottom-3 -left-3" />
+              <Lifter mono size={108} className="absolute -bottom-3 -left-4" />
               <AddBtn onClick={() => logActivity('workoutMinutes', 10)} label="+۱۰" />
             </div>
             {/* خلاصه */}
@@ -224,9 +224,9 @@ export default function Home() {
       <SectionTitle title="کاوش" />
       <StackSections
         items={[
-          { to: '/fityab', title: 'باشگاه‌های اطراف', subtitle: 'ورود بدون ثبت‌نام با عضویت کی‌فیت', grad: 'grad-lavender', art: <MapPin size={110} /> },
-          { to: '/fityar', title: 'مربی و دستیار هوشمند', subtitle: 'برنامه‌ی تمرین و تغذیه‌ی اختصاصی', grad: 'grad-mint', art: <Coach size={120} shirt="#a78bfa" /> },
-          { to: '/challenges', title: 'چالش‌ها', subtitle: 'رقابت کن، جایزه ببر', grad: 'grad-peach', art: <Trophy size={112} /> },
+          { to: '/fityab', title: 'باشگاه‌های اطراف', subtitle: 'ورود بدون ثبت‌نام با عضویت کی‌فیت', grad: 'grad-lavender', art: <MapPin mono size={116} /> },
+          { to: '/fityar', title: 'مربی و دستیار هوشمند', subtitle: 'برنامه‌ی تمرین و تغذیه‌ی اختصاصی', grad: 'grad-mint', art: <Coach mono size={124} /> },
+          { to: '/challenges', title: 'چالش‌ها', subtitle: 'رقابت کن، جایزه ببر', grad: 'grad-peach', art: <Trophy mono size={116} /> },
           { to: '/fitzone', title: 'فیت‌زون', subtitle: 'جامعه‌ی ورزشکاران', grad: '', dark: true, art: <ChatBubbles size={118} /> },
         ]}
       />
