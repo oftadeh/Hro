@@ -20,7 +20,7 @@ export default function AdminSettings() {
             {(Object.keys(MODULE_LABEL) as RevenueModule[]).map((m) => (
               <div key={m} className="flex items-center gap-3">
                 <span className="flex-1 text-sm">{MODULE_LABEL[m]}</span>
-                <input type="range" min={0} max={50} value={settings.commissions[m]} onChange={(e) => setCommission(m, +e.target.value)} className="w-40 accent-emerald-500" />
+                <input type="range" min={0} max={50} value={settings.commissions[m]} onChange={(e) => setCommission(m, +e.target.value)} className="w-40 accent-brand-500" />
                 <b className="w-12 text-left">٪{settings.commissions[m].toLocaleString('fa-IR')}</b>
               </div>
             ))}

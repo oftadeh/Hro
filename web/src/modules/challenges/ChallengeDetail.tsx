@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Gift, Share2, Trophy, Users } from 'lucide-react'
+import { Gift, Share2, Ticket, Trophy, Zap } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { daysLeft, faDate, num, toman } from '@/core/format'
 import { joinChallenge, logChallengeProgress, rankings, settleChallenge } from '@/core/services/challenges'
 import { ROLE_META } from '@/core/config'
-import { Avatar, Badge, Button, Card, Cover, Empty, Field, Input, NumberInput, PageHeader, Progress, SectionTitle, Sheet, Stat } from '@/ui/kit'
+import { Avatar, Badge, Button, Card, Empty, Field, HeroHeader, Input, NumberInput, PageHeader, Progress, RaisedSheet, SectionTitle, Sheet, Stat } from '@/ui/kit'
 import { useMe, useUserMap, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
@@ -40,18 +40,26 @@ export default function ChallengeDetail() {
   return (
     <div className="animate-fade-up">
       <PageHeader back="/challenges" title={c.title} actions={<Button variant="outline" size="sm" icon={<Share2 size={15} />} onClick={() => setShare(true)}>فیت‌زون</Button>} />
-      <Cover gradient={c.gradient} className="rounded-[2rem]">
-        <div className="relative flex flex-col items-center p-6 text-center text-white">
-          <div className="text-7xl drop-shadow-xl">{c.emoji}</div>
-          <div className="mt-2 text-sm opacity-90">صندوق جایزه</div>
-          <div className="text-4xl font-black">{toman(c.pool)}</div>
-          {c.extraReward && <div className="mt-2 rounded-full bg-white/20 px-3 py-1 text-xs backdrop-blur">🎁 {c.extraReward}</div>}
-          <div className="mt-3 flex gap-2 text-xs">
-            <Badge color="slate" className="!bg-black/30 !text-white">{c.status === 'finished' ? 'پایان‌یافته' : left > 0 ? `${num(left)} روز مانده` : 'در انتظار اعلام نتایج'}</Badge>
-            <Badge color="slate" className="!bg-black/30 !text-white"><Users size={12} /> {num(c.participants.length)} / {num(c.maxParticipants)}</Badge>
-          </div>
+      <HeroHeader gradient={c.gradient} className="px-5 pb-14 pt-6 text-center">
+        <div className="text-6xl drop-shadow-xl">{c.emoji}</div>
+        <div className="mt-2 text-xs font-semibold text-white/80">صندوق جایزه</div>
+        <div className="text-[2.5rem] font-black leading-tight tracking-tight">{toman(c.pool)}</div>
+        {c.extraReward && <div className="mx-auto mt-2 w-fit rounded-full bg-white/20 px-3 py-1 text-xs backdrop-blur">🎁 {c.extraReward}</div>}
+      </HeroHeader>
+      <RaisedSheet className="mx-auto max-w-3xl">
+        <div className="grid grid-cols-3 text-center">
+          {[
+            ['زمان باقی‌مانده', c.status === 'finished' ? 'پایان‌یافته' : left > 0 ? `${num(left)} روز` : 'اعلام نتایج'],
+            ['شرکت‌کننده', `${num(c.participants.length)} / ${num(c.maxParticipants)}`],
+            ['هدف', `${num(c.goal)} ${c.unit}`],
+          ].map(([k, v], i) => (
+            <div key={k} className={i === 1 ? 'border-x border-ink-100 dark:border-white/10' : ''}>
+              <div className="text-[11px] text-ink-400">{k}</div>
+              <div className="mt-0.5 text-sm font-black">{v}</div>
+            </div>
+          ))}
         </div>
-      </Cover>
+      </RaisedSheet>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_360px]">
         <div className="space-y-4">
@@ -66,14 +74,13 @@ export default function ChallengeDetail() {
             </div>
           </Card>
 
-          <div className="grid grid-cols-3 gap-3">
-            <Stat label="هدف" value={`${num(c.goal)}`} hint={c.unit} />
-            <Stat label="ورودی" value={c.entryFee ? num(c.entryFee) : 'رایگان'} hint={c.entryFee ? 'تومان' : ''} />
-            <Stat label="امتیاز تجربه" value={`+${num(c.xpReward)}`} hint="با رسیدن به هدف" />
+          <div className="grid grid-cols-2 gap-3">
+            <Stat label="ورودی" value={c.entryFee ? num(c.entryFee) : 'رایگان'} hint={c.entryFee ? 'تومان' : undefined} icon={<Ticket size={18} />} tone="rose" />
+            <Stat label="امتیاز تجربه" value={`+${num(c.xpReward)} XP`} hint="با رسیدن به هدف" icon={<Zap size={18} />} tone="sky" />
           </div>
 
           {mine ? (
-            <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5">
+            <Card className="bg-gradient-to-br from-white to-brand-50 dark:from-ink-900/70 dark:to-ink-850/70">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs text-ink-500">پیشرفت تو</div>
@@ -83,10 +90,10 @@ export default function ChallengeDetail() {
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-ink-500">رتبه</div>
-                  <div className="text-3xl font-black text-amber-500">{MEDALS[myIdx] ?? num(myIdx + 1)}</div>
+                  <div className="text-3xl font-black text-brand-600 dark:text-gold-300">{MEDALS[myIdx] ?? num(myIdx + 1)}</div>
                 </div>
               </div>
-              <Progress value={mine.score / c.goal} className="mt-3 h-3" />
+              <Progress value={mine.score / c.goal} className="mt-3 h-2.5" tone="from-coral-400 to-fuchsia-600" />
               {c.status === 'active' && left > 0 && (
                 <Button className="mt-4 w-full" onClick={() => setLog(true)}>
                   ثبت پیشرفت امروز
@@ -108,7 +115,7 @@ export default function ChallengeDetail() {
                   <span className="text-2xl">{MEDALS[w.rank - 1] ?? w.rank}</span>
                   <Avatar name={users[w.userId]?.name ?? ''} size={36} />
                   <div className="flex-1 font-bold">{users[w.userId]?.name}</div>
-                  <b className="text-emerald-600">{toman(w.amount)}</b>
+                  <b className="text-brand-600">{toman(w.amount)}</b>
                 </div>
               ))}
             </Card>
@@ -141,7 +148,7 @@ export default function ChallengeDetail() {
               {ranked.slice(0, 20).map((p, i) => {
                 const u = users[p.userId]
                 return (
-                  <Link to={`/u/${p.userId}`} key={p.userId} className={clsx('flex items-center gap-2 rounded-2xl p-2', p.userId === me.id && 'bg-emerald-50 dark:bg-emerald-500/10')}>
+                  <Link to={`/u/${p.userId}`} key={p.userId} className={clsx('flex items-center gap-2 rounded-2xl p-2', p.userId === me.id && 'bg-brand-50 dark:bg-gold-400/10')}>
                     <span className="w-6 text-center font-black text-ink-400">{MEDALS[i] ?? num(i + 1)}</span>
                     <Avatar name={u?.name ?? ''} src={u?.avatar} size={32} />
                     <span className="flex-1 truncate text-sm font-semibold">{u?.name}</span>

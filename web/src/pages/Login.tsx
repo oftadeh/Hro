@@ -52,9 +52,9 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-ink-950 text-white">
-      <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-emerald-500/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 -left-20 h-[28rem] w-[28rem] rounded-full bg-violet-600/30 blur-3xl" />
+    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-ink-850 via-ink-900 to-ink-950 text-white">
+      <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-brand-600/35 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -left-20 h-[28rem] w-[28rem] rounded-full bg-blue-600/25 blur-3xl" />
 
       <div className="relative mx-auto grid min-h-dvh max-w-6xl items-center gap-10 px-5 py-10 lg:grid-cols-2">
         <div className="animate-fade-up">
@@ -62,14 +62,14 @@ export default function Login() {
           <h1 className="mt-8 text-4xl font-black leading-tight lg:text-5xl">
             یک کلید،
             <br />
-            <span className="bg-gradient-to-l from-emerald-300 via-teal-300 to-violet-400 bg-clip-text text-transparent">همه‌ی دنیای سلامتی</span>
+            <span className="bg-gradient-to-l from-gold-300 via-gold-400 to-brand-400 bg-clip-text text-transparent">همه‌ی دنیای سلامتی</span>
           </h1>
           <p className="mt-4 max-w-md text-ink-300">
             با یک اشتراک وارد ده‌ها باشگاه شو، از هوش مصنوعی و مربی برنامه بگیر، در چالش‌ها جایزه ببر و غذای رژیمی سفارش بده.
           </p>
           <div className="mt-8 grid max-w-md grid-cols-2 gap-3">
             {FEATURES.map(([icon, t, d]) => (
-              <div key={t} className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur">
+              <div key={t} className="rounded-[1.4rem] border border-white/10 bg-white/[.06] p-3 backdrop-blur">
                 <div className="text-2xl">{icon}</div>
                 <div className="mt-1 text-sm font-bold">{t}</div>
                 <div className="text-[11px] text-ink-400">{d}</div>
@@ -78,7 +78,8 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="animate-fade-up rounded-[2rem] border border-white/10 bg-white/[.06] p-6 shadow-2xl backdrop-blur-xl lg:p-8">
+        <div className="animate-sheet-up rounded-[2.25rem] border border-white/10 bg-white/[.06] p-6 shadow-2xl backdrop-blur-2xl lg:p-8">
+          <div className="mx-auto -mt-2 mb-4 h-1.5 w-11 rounded-full bg-white/20" />
           <h2 className="text-xl font-extrabold">ورود / ثبت‌نام</h2>
           <p className="mt-1 text-sm text-ink-400">با شماره موبایل وارد شو</p>
           <form
@@ -102,7 +103,7 @@ export default function Login() {
                 <Input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="- - - -" dir="ltr" className="text-center text-xl tracking-[1em]" inputMode="numeric" maxLength={4} autoFocus />
               </Field>
             )}
-            <Button type="submit" size="lg" className="w-full" loading={loading} icon={<ArrowLeft size={18} />}>
+            <Button type="submit" size="lg" className="w-full !from-gold-300 !via-gold-400 !to-gold-600 !text-ink-950 !shadow-gold" loading={loading} icon={<ArrowLeft size={18} />}>
               {step === 'phone' ? 'دریافت کد تایید' : 'ورود به کی‌فیت'}
             </Button>
             {step === 'otp' && (
@@ -125,9 +126,9 @@ export default function Login() {
                   <button
                     key={d.userId}
                     onClick={() => demo(d.userId, d.role)}
-                    className="group rounded-2xl border border-white/10 bg-white/5 p-3 text-right transition hover:-translate-y-0.5 hover:bg-white/10"
+                    className="group rounded-[1.4rem] border border-white/10 bg-white/[.05] p-3 text-right transition hover:-translate-y-0.5 hover:border-gold-400/40 hover:bg-white/10"
                   >
-                    <div className={`mb-2 inline-flex rounded-xl bg-gradient-to-br ${meta.color} p-1.5 text-lg`}>{meta.icon}</div>
+                    <div className={`mb-2 inline-flex rounded-[.8rem] bg-gradient-to-br ${meta.color} p-1.5 text-lg shadow-soft`}>{meta.icon}</div>
                     <div className="text-xs font-bold">{meta.label}</div>
                     <div className="truncate text-[11px] text-ink-400">{u.name}</div>
                   </button>

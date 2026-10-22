@@ -51,7 +51,7 @@ export default function Shop() {
 
 function ProductCard({ p }: { p: Product }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-3xl border border-ink-100 bg-white shadow-soft dark:border-white/5 dark:bg-ink-900">
+    <div className="flex flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
       <Link to={`/shop/${p.id}`} className="relative flex h-36 items-center justify-center bg-gradient-to-br from-ink-50 to-violet-50 text-6xl dark:from-white/5 dark:to-violet-500/10">
         {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : p.emoji}
         {p.discount > 0 && <Badge color="rose" className="absolute right-2 top-2">٪{num(p.discount)}</Badge>}

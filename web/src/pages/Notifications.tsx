@@ -22,14 +22,14 @@ export default function Notifications() {
         <Card className="divide-y divide-ink-100 p-0 dark:divide-white/5">
           {mine.slice(0, 60).map((n) => {
             const body = (
-              <div className={clsx('flex gap-3 p-4', !n.read && 'bg-emerald-50/60 dark:bg-emerald-500/5')}>
+              <div className={clsx('flex gap-3 p-4', !n.read && 'bg-brand-50/60 dark:bg-brand-500/5')}>
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-ink-100 text-lg dark:bg-white/5">{n.icon}</span>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold">{n.title}</div>
                   <div className="text-xs leading-6 text-ink-500">{n.body}</div>
                   <div className="text-[11px] text-ink-400">{timeAgo(n.at)}</div>
                 </div>
-                {!n.read && <span className="mt-2 h-2 w-2 rounded-full bg-emerald-500" />}
+                {!n.read && <span className="mt-2 h-2 w-2 rounded-full bg-brand-500" />}
               </div>
             )
             return n.link ? <Link key={n.id} to={n.link} className="block hover:bg-ink-50 dark:hover:bg-white/5">{body}</Link> : <div key={n.id}>{body}</div>

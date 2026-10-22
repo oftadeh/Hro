@@ -44,7 +44,7 @@ export default function CoachDashboard() {
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div>
-          <SectionTitle title="سفارش‌های در انتظار" action={<Link to="orders" className="text-xs font-bold text-emerald-600">همه</Link>} />
+          <SectionTitle title="سفارش‌های در انتظار" action={<Link to="orders" className="text-xs font-bold text-brand-600">همه</Link>} />
           {pending.length === 0 && <Empty icon="✅" title="همه‌ی برنامه‌ها تحویل شده" />}
           <div className="space-y-2">
             {pending.slice(0, 5).map((o) => (

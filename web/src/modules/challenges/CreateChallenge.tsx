@@ -93,14 +93,14 @@ export default function CreateChallenge() {
           <Field label="رنگ کاور">
             <div className="flex flex-wrap gap-2">
               {GRADIENTS.map((g) => (
-                <button key={g} onClick={() => set('gradient', g)} className={clsx('h-10 w-10 rounded-xl bg-gradient-to-br', g, f.gradient === g && 'ring-4 ring-emerald-400 ring-offset-2 dark:ring-offset-ink-900')} aria-label="رنگ" />
+                <button key={g} onClick={() => set('gradient', g)} className={clsx('h-10 w-10 rounded-xl bg-gradient-to-br', g, f.gradient === g && 'ring-4 ring-brand-400 ring-offset-2 dark:ring-offset-ink-900')} aria-label="رنگ" />
               ))}
             </div>
           </Field>
         </Card>
 
         <div className="space-y-4">
-          <Cover gradient={f.gradient} className="rounded-3xl">
+          <Cover gradient={f.gradient} className="rounded-[1.75rem]">
             <div className="flex flex-col items-center p-6 text-center text-white">
               <div className="text-6xl">{f.emoji}</div>
               <div className="mt-2 font-black">{f.title || 'عنوان چالش'}</div>

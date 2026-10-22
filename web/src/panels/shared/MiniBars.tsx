@@ -1,7 +1,7 @@
 import { num } from '@/core/format'
 
 /** نمودار ستونی سبک بدون وابستگی */
-export function MiniBars({ data, color = 'from-emerald-400 to-teal-500', format = num }: { data: { label: string; value: number }[]; color?: string; format?: (n: number) => string }) {
+export function MiniBars({ data, color = 'from-brand-400 to-violet-500', format = num }: { data: { label: string; value: number }[]; color?: string; format?: (n: number) => string }) {
   const max = Math.max(1, ...data.map((d) => d.value))
   return (
     <div className="flex items-end gap-2">

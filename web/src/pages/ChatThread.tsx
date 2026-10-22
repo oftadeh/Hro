@@ -38,7 +38,7 @@ export default function ChatThread() {
           </div>
         }
       />
-      <div className="flex-1 space-y-2 overflow-y-auto rounded-3xl bg-white p-4 dark:bg-ink-900">
+      <div className="flex-1 space-y-2 overflow-y-auto rounded-[1.75rem] bg-white p-4 dark:bg-ink-900">
         {thread.messages.map((m) =>
           m.kind === 'system' || m.kind === 'call' ? (
             <div key={m.id} className="mx-auto max-w-sm whitespace-pre-line rounded-2xl bg-amber-50 px-4 py-2 text-center text-xs leading-6 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
@@ -46,7 +46,7 @@ export default function ChatThread() {
             </div>
           ) : (
             <div key={m.id} className={clsx('flex', m.from === me.id ? 'justify-start' : 'justify-end')}>
-              <div className={clsx('max-w-[80%] rounded-3xl px-4 py-2.5 text-sm leading-7', m.from === me.id ? 'rounded-tr-md bg-emerald-500 text-white' : 'rounded-tl-md bg-ink-100 dark:bg-white/5')}>
+              <div className={clsx('max-w-[80%] rounded-[1.75rem] px-4 py-2.5 text-sm leading-7', m.from === me.id ? 'rounded-tr-md bg-brand-500 text-white' : 'rounded-tl-md bg-ink-100 dark:bg-white/5')}>
                 <div className="whitespace-pre-line">{m.text}</div>
                 <div className={clsx('mt-0.5 text-[10px]', m.from === me.id ? 'text-white/70' : 'text-ink-400')}>{faTime(m.at)}</div>
               </div>

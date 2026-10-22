@@ -3,7 +3,7 @@ import type { Role, SubscriptionPlan, RevenueModule } from './types'
 export const APP_NAME = 'کی‌فیت'
 
 export const ROLE_META: Record<Role, { label: string; panel: string; icon: string; color: string; desc: string }> = {
-  user: { label: 'ورزشکار', panel: '/', icon: '🏃', color: 'from-emerald-400 to-teal-500', desc: 'استفاده از همه‌ی امکانات کی‌فیت' },
+  user: { label: 'ورزشکار', panel: '/', icon: '🏃', color: 'from-brand-400 to-violet-500', desc: 'استفاده از همه‌ی امکانات کی‌فیت' },
   gym: { label: 'باشگاه‌دار', panel: '/panel/gym', icon: '🏋️', color: 'from-orange-400 to-rose-500', desc: 'معرفی باشگاه در فیت‌یاب و پذیرش ورزشکاران' },
   coach: { label: 'مربی', panel: '/panel/coach', icon: '🧑‍🏫', color: 'from-sky-400 to-indigo-500', desc: 'ارائه‌ی برنامه و مشاوره در فیت‌یار' },
   seller: { label: 'فروشنده', panel: '/panel/seller', icon: '🛍️', color: 'from-fuchsia-400 to-purple-600', desc: 'فروش مکمل و لوازم ورزشی در فروشگاه' },
@@ -82,11 +82,11 @@ export const DAILY_MISSIONS = [
 export const STREAK_BONUS_XP = 25
 
 export const GRADIENTS = [
-  'from-emerald-400 via-teal-500 to-cyan-600',
+  'from-brand-400 via-violet-500 to-cyan-600',
   'from-fuchsia-500 via-purple-600 to-indigo-700',
   'from-orange-400 via-rose-500 to-pink-600',
   'from-sky-400 via-blue-500 to-indigo-600',
-  'from-lime-400 via-green-500 to-emerald-700',
+  'from-lime-400 via-green-500 to-brand-700',
   'from-amber-400 via-orange-500 to-red-600',
   'from-violet-500 via-fuchsia-500 to-rose-500',
   'from-slate-600 via-slate-800 to-black',

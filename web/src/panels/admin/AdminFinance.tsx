@@ -68,7 +68,7 @@ export default function AdminFinance() {
                 <td className="p-3 text-xs">{name(t.payerId ?? t.from)}{t.from === 'subscription' && ' (اشتراک)'}</td>
                 <td className="p-3 text-xs">{name(t.to)}</td>
                 <td className="p-3 font-bold">{toman(t.amount)}</td>
-                <td className="p-3 font-bold text-emerald-600">{t.commission ? toman(t.commission) : '—'}</td>
+                <td className="p-3 font-bold text-brand-600">{t.commission ? toman(t.commission) : '—'}</td>
                 <td className="p-3 text-xs text-ink-400">{faDateTime(t.createdAt)}</td>
               </tr>
             ))}

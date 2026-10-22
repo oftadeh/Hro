@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Crosshair, List, Map as MapIcon, Navigation, Search } from 'lucide-react'
+import { Crosshair, List, Map as MapIcon, Navigation, Search, X } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { DEFAULT_CENTER } from '@/core/config'
-import { dec, distanceKm, toman } from '@/core/format'
-import { Button, Chips, Cover, Input, PageHeader, Stars, Tabs } from '@/ui/kit'
+import { dec, distanceKm, num } from '@/core/format'
+import { Button, Chips, Cover, Input, PageHeader, Tabs } from '@/ui/kit'
 import { toast } from '@/ui/toast'
 import { GymMap } from './GymMap'
 import { GymCard } from './GymCard'
@@ -74,26 +74,41 @@ export default function FitYab() {
 
       {view === 'map' ? (
         <div className="relative mt-3">
-          <GymMap gyms={list.map((x) => x.g)} center={center} user={user} selected={selected} onSelect={(id) => { setSelected(id); const g = gyms.find((x) => x.id === id); if (g) setCenter([g.lat, g.lng]) }} className="h-[62dvh]" />
+          <GymMap gyms={list.map((x) => x.g)} center={center} user={user} selected={selected} onSelect={(id) => { setSelected(id); const g = gyms.find((x) => x.id === id); if (g) setCenter([g.lat, g.lng]) }} className="h-[calc(100dvh-24rem)] min-h-[22rem] shadow-card lg:h-[64dvh]" />
           {sel && (
-            <div className="absolute inset-x-3 bottom-3 z-[500] animate-fade-up overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-ink-900">
-              <div className="flex gap-3 p-3">
-                <Cover gradient={sel.g.cover} image={sel.g.media.find((m) => m.type === 'image')?.url} emoji="🏋️" className="h-24 w-24 shrink-0 rounded-2xl" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="truncate font-bold">{sel.g.name}</div>
-                    <Stars value={sel.g.rating} />
+            <div className="absolute inset-x-3 bottom-3 z-[500] animate-sheet-up">
+              {/* پنل به سبک ناوبری: سه شاخص + دکمه‌ی طلایی */}
+              <div className="rounded-[2rem] border border-white/60 bg-white/90 p-4 pt-2.5 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/85">
+                <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-ink-200 dark:bg-white/25" />
+                <div className="flex items-center gap-3">
+                  <Cover gradient={sel.g.cover} image={sel.g.media.find((m) => m.type === 'image')?.url} emoji="🏋️" className="h-14 w-14 shrink-0 rounded-[1rem] text-sm" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-black">{sel.g.name}</div>
+                    <div className="truncate text-xs text-ink-400">{sel.g.address}</div>
                   </div>
-                  <div className="truncate text-xs text-ink-500">{sel.g.tagline}</div>
-                  <div className="mt-1 text-xs text-ink-400">{dec(sel.d)} کیلومتر · {toman(sel.g.sessionPrice)}</div>
-                  <div className="mt-2 flex gap-2">
-                    <Link to={`/fityab/${sel.g.id}`} className="flex-1">
-                      <Button size="sm" className="w-full">مشاهده و ورود</Button>
-                    </Link>
-                    <a href={directionsUrl(sel.g.lat, sel.g.lng)} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="secondary" icon={<Navigation size={14} />}>مسیر</Button>
-                    </a>
-                  </div>
+                  <button onClick={() => setSelected(undefined)} className="rounded-full bg-ink-100 p-2 text-ink-500 dark:bg-white/10 dark:text-ink-300" aria-label="بستن">
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="mt-4 grid grid-cols-3 text-center">
+                  {[
+                    ['فاصله', `${dec(sel.d)} کیلومتر`],
+                    ['زمان رسیدن', `${num(Math.max(3, (sel.d / 22) * 60))} دقیقه`],
+                    ['هر سانس', `${num(sel.g.sessionPrice / 1000)} هزار`],
+                  ].map(([k, v], i) => (
+                    <div key={k} className={i === 1 ? 'border-x border-ink-100 dark:border-white/10' : ''}>
+                      <div className="text-[11px] text-ink-400">{k}</div>
+                      <div className="mt-0.5 text-sm font-black">{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <a href={directionsUrl(sel.g.lat, sel.g.lng)} target="_blank" rel="noreferrer" className="flex-1">
+                    <Button className="w-full" icon={<Navigation size={16} />}>مسیریابی</Button>
+                  </a>
+                  <Link to={`/fityab/${sel.g.id}`} className="flex-1">
+                    <Button variant="outline" className="w-full">ورود به باشگاه</Button>
+                  </Link>
                 </div>
               </div>
             </div>

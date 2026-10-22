@@ -50,7 +50,7 @@ export function PostCard({ post }: { post: Post }) {
           {post.text && <p className="whitespace-pre-line px-4 pt-3 text-sm leading-7">{post.text}</p>}
         </div>
       ) : (
-        <div onDoubleClick={() => !liked && toggleLike(post.id)} className={`mx-4 flex min-h-40 items-center justify-center rounded-3xl bg-gradient-to-br p-6 ${post.gradient}`}>
+        <div onDoubleClick={() => !liked && toggleLike(post.id)} className={`mx-4 flex min-h-40 items-center justify-center rounded-[1.75rem] bg-gradient-to-br p-6 ${post.gradient}`}>
           <p className="whitespace-pre-line text-center text-[15px] font-bold leading-8 text-white drop-shadow">{post.text}</p>
         </div>
       )}
@@ -119,7 +119,7 @@ export function PostCard({ post }: { post: Post }) {
               }}
             >
               <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="نظرت رو بنویس…" className="!py-2" />
-              <button className="rounded-2xl bg-emerald-500 px-4 text-sm font-bold text-white">ارسال</button>
+              <button className="rounded-2xl bg-brand-500 px-4 text-sm font-bold text-white">ارسال</button>
             </form>
           )}
         </div>

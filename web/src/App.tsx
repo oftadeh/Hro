@@ -113,7 +113,7 @@ export default function App() {
     if (me) touchDaily(me.id)
   }, [me?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => window.scrollTo(0, 0), [pathname])
+  useEffect(() => window.scrollTo(0, 0), [pathname, me?.id])
 
   if (!me) {
     return (
@@ -135,7 +135,7 @@ export default function App() {
   return (
     <>
       <Toaster />
-      <Suspense fallback={<div className="flex h-dvh items-center justify-center"><span className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" /></div>}>
+      <Suspense fallback={<div className="flex h-dvh items-center justify-center"><span className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>}>
       <Routes>
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route element={<AppShell />}>

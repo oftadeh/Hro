@@ -11,15 +11,15 @@ export function GymCard({ gym, distance, compact }: { gym: Gym; distance?: numbe
   return (
     <Link
       to={`/fityab/${gym.id}`}
-      className={`group block overflow-hidden rounded-3xl border border-ink-100 bg-white shadow-soft transition hover:-translate-y-0.5 dark:border-white/5 dark:bg-ink-900 ${compact ? 'w-64 shrink-0' : ''}`}
+      className={`group block overflow-hidden rounded-[1.75rem] bg-white shadow-card transition hover:-translate-y-0.5 dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none ${compact ? 'w-64 shrink-0' : ''}`}
     >
-      <Cover gradient={gym.cover} image={img} emoji="🏋️" className="h-32">
+      <Cover gradient={gym.cover} image={img} emoji="🏋️" className="m-2 h-32 rounded-[1.4rem]">
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/50 to-transparent p-3">
           <Badge color="slate" className="!bg-white/90 !text-ink-800">{toman(gym.sessionPrice)} / سانس</Badge>
           {distance !== undefined && <Badge color="slate" className="!bg-black/50 !text-white">{dec(distance)} کیلومتر</Badge>}
         </div>
       </Cover>
-      <div className="p-3.5">
+      <div className="px-4 pb-4 pt-1.5">
         <div className="flex items-center justify-between gap-2">
           <h3 className="truncate font-bold">{gym.name}</h3>
           <Stars value={gym.rating} />

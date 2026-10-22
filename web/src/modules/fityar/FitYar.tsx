@@ -70,7 +70,7 @@ function AIChat({ initial }: { initial: string }) {
         </div>
         <div className="flex-1">
           <div className="font-bold">فیت‌یار هوشمند</div>
-          <div className="text-[11px] text-emerald-500">● آنلاین · متخصص تغذیه و تمرین</div>
+          <div className="text-[11px] text-brand-500">● آنلاین · متخصص تغذیه و تمرین</div>
         </div>
         {chat.length > 0 && (
           <button onClick={clearAIChat} className="rounded-xl p-2 text-ink-400 hover:text-rose-500" aria-label="پاک کردن">
@@ -94,7 +94,7 @@ function AIChat({ initial }: { initial: string }) {
         )}
         {chat.map((m, i) => (
           <div key={i} className={clsx('flex', m.role === 'user' ? 'justify-start' : 'justify-end')}>
-            <div className={clsx('max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-7', m.role === 'user' ? 'rounded-tr-md bg-gradient-to-l from-emerald-500 to-teal-500 text-white' : 'rounded-tl-md bg-ink-100 dark:bg-white/5')}>
+            <div className={clsx('max-w-[85%] rounded-[1.75rem] px-4 py-3 text-sm leading-7', m.role === 'user' ? 'rounded-tr-md bg-gradient-to-l from-brand-500 to-violet-500 text-white' : 'rounded-tl-md bg-ink-100 dark:bg-white/5')}>
               <div className="whitespace-pre-line">{renderBold(m.text)}</div>
               {m.suggestions && (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -110,7 +110,7 @@ function AIChat({ initial }: { initial: string }) {
         ))}
         {busy && (
           <div className="flex justify-end">
-            <div className="flex gap-1 rounded-3xl bg-ink-100 px-4 py-4 dark:bg-white/5">
+            <div className="flex gap-1 rounded-[1.75rem] bg-ink-100 px-4 py-4 dark:bg-white/5">
               {[0, 1, 2].map((i) => <span key={i} className="h-2 w-2 animate-bounce rounded-full bg-ink-400" style={{ animationDelay: `${i * 0.15}s` }} />)}
             </div>
           </div>
@@ -165,7 +165,7 @@ function Coaches() {
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <Avatar name={u.name} src={u.avatar} size={60} />
-                    {c.online && <span className="absolute bottom-0.5 left-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-ink-900" />}
+                    {c.online && <span className="absolute bottom-0.5 left-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-brand-500 dark:border-ink-900" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="font-bold">{u.name}</div>
@@ -179,7 +179,7 @@ function Coaches() {
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {c.specialties.map((s) => <Badge key={s} color="sky">{s}</Badge>)}
                 </div>
-                <div className="mt-3 text-xs text-ink-500">شروع قیمت از <b className="text-emerald-600 dark:text-emerald-400">{toman(minPrice)}</b></div>
+                <div className="mt-3 text-xs text-ink-500">شروع قیمت از <b className="text-brand-600 dark:text-brand-400">{toman(minPrice)}</b></div>
               </Card>
             </Link>
           )

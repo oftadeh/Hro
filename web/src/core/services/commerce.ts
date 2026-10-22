@@ -149,7 +149,7 @@ export function saveRestaurant(input: Partial<Restaurant>) {
     else
       d.restaurants.unshift({
         id: uid('r-'), ownerId: me, name: 'رستوران من', description: '', address: '', lat: 35.72, lng: 51.39,
-        cover: 'from-lime-400 via-green-500 to-emerald-600', rating: 5, deliveryMinutes: 40, open: true, approved: true, ...input,
+        cover: 'from-lime-400 via-green-500 to-brand-600', rating: 5, deliveryMinutes: 40, open: true, approved: true, ...input,
       } as Restaurant)
   })
 }

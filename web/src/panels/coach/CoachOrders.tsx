@@ -50,7 +50,7 @@ export default function CoachOrders() {
             {o.status === 'pending' ? (
               <Button className="mt-3 w-full" onClick={() => { setOpen(o); setContent(TEMPLATE) }}>نوشتن و تحویل برنامه</Button>
             ) : (
-              <details className="mt-3 text-sm"><summary className="cursor-pointer text-xs font-bold text-emerald-600">مشاهده‌ی برنامه</summary><div className="mt-2 whitespace-pre-line leading-7">{o.content}</div></details>
+              <details className="mt-3 text-sm"><summary className="cursor-pointer text-xs font-bold text-brand-600">مشاهده‌ی برنامه</summary><div className="mt-2 whitespace-pre-line leading-7">{o.content}</div></details>
             )}
           </Card>
         ))}

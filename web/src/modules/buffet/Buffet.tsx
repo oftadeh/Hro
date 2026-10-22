@@ -23,7 +23,7 @@ export default function Buffet() {
       <PageHeader title="بوفه" subtitle="غذای رژیمی و سالم از رستوران‌های اطراف" actions={<CartButton kind="food" onClick={() => setCart(true)} />} />
       <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar">
         {restaurants.filter((r) => r.approved).map((r) => (
-          <Link key={r.id} to={`/buffet/${r.id}`} className="w-64 shrink-0 overflow-hidden rounded-3xl border border-ink-100 bg-white shadow-soft dark:border-white/5 dark:bg-ink-900">
+          <Link key={r.id} to={`/buffet/${r.id}`} className="w-64 shrink-0 overflow-hidden rounded-[1.75rem] bg-white shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
             <Cover gradient={r.cover} emoji="🥗" className="h-24" />
             <div className="p-3">
               <div className="flex items-center justify-between">

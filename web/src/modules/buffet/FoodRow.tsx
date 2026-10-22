@@ -5,7 +5,7 @@ import { Badge } from '@/ui/kit'
 
 export function FoodRow({ f, restaurant, onAdd }: { f: Food; restaurant?: string; onAdd: () => void }) {
   return (
-    <div className="flex gap-3 rounded-3xl border border-ink-100 bg-white p-3 shadow-soft dark:border-white/5 dark:bg-ink-900">
+    <div className="flex gap-3 rounded-[1.75rem] bg-white p-3 shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-lime-50 text-5xl dark:bg-lime-500/10">
         {f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : f.emoji}
       </div>

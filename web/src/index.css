@@ -15,15 +15,28 @@
     -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-ink-50 font-sans text-ink-900 antialiased dark:bg-ink-950 dark:text-ink-100;
+    @apply min-h-dvh bg-ink-50 font-sans text-ink-900 antialiased dark:bg-ink-950 dark:text-ink-100;
     font-feature-settings: 'ss01';
+    background-image:
+      radial-gradient(60rem 30rem at 100% -10%, rgb(124 77 255 / 0.10), transparent 60%),
+      radial-gradient(40rem 30rem at -10% 30%, rgb(70 185 210 / 0.08), transparent 60%);
+    background-attachment: fixed;
+  }
+  .dark body {
+    background-image:
+      radial-gradient(60rem 40rem at 80% -10%, rgb(37 66 120 / 0.55), transparent 60%),
+      radial-gradient(50rem 40rem at -10% 60%, rgb(22 40 80 / 0.6), transparent 65%),
+      linear-gradient(180deg, #0c1528 0%, #070c18 100%);
   }
   ::selection {
-    @apply bg-emerald-300/50;
+    @apply bg-brand-300/50;
   }
 }
 
 @layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-l from-brand-500 to-fuchsia-500 bg-clip-text text-transparent dark:from-gold-300 dark:to-gold-500;
+  }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -34,7 +47,7 @@
     padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
   }
   .glass {
-    @apply bg-white/80 backdrop-blur-xl dark:bg-ink-900/80;
+    @apply bg-white/75 backdrop-blur-2xl dark:bg-ink-950/60;
   }
 }
 
@@ -48,4 +61,9 @@
 .keyfit-marker {
   background: none;
   border: none;
+}
+
+/* نقشه در حالت تیره کمی تیره‌تر و آبی‌تر دیده شود */
+.dark .leaflet-container {
+  background: #0b1424;
 }

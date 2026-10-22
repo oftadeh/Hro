@@ -24,7 +24,7 @@ export function RoleSwitcher({ compact }: { compact?: boolean }) {
           onClick={() => go(r)}
           className={clsx(
             'flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-1.5 text-xs font-semibold transition',
-            active === r ? 'bg-ink-900 text-white dark:bg-white dark:text-ink-900' : 'bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-white/5 dark:text-ink-300',
+            active === r ? 'bg-ink-900 text-white dark:bg-gold-400 dark:text-ink-950' : 'bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-white/5 dark:text-ink-300',
           )}
         >
           <span>{ROLE_META[r].icon}</span>

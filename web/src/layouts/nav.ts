@@ -16,7 +16,7 @@ export const MODULES: NavItem[] = [
   { to: '/shop', label: 'فروشگاه', icon: ShoppingBag, color: 'from-violet-500 to-indigo-600', desc: 'مکمل و لوازم' },
   { to: '/buffet', label: 'بوفه', icon: UtensilsCrossed, color: 'from-lime-400 to-green-600', desc: 'غذای رژیمی' },
   { to: '/doctors', label: 'پزشک', icon: HeartPulse, color: 'from-cyan-400 to-blue-600', desc: 'ویزیت آنلاین' },
-  { to: '/wallet', label: 'کیف پول', icon: Wallet, color: 'from-emerald-400 to-teal-600', desc: 'اشتراک و اعتبار' },
+  { to: '/wallet', label: 'کیف پول', icon: Wallet, color: 'from-brand-400 to-violet-600', desc: 'اشتراک و اعتبار' },
 ]
 
 export const SIDEBAR: NavItem[] = [

@@ -32,7 +32,7 @@ export function StoriesBar() {
         <button onClick={() => setCreate(true)} className="flex w-16 shrink-0 flex-col items-center gap-1">
           <div className="relative">
             <Avatar name={me.name} src={me.avatar} size={60} />
-            <span className="absolute -bottom-0.5 -left-0.5 rounded-full border-2 border-white bg-emerald-500 p-0.5 text-white dark:border-ink-950">
+            <span className="absolute -bottom-0.5 -left-0.5 rounded-full border-2 border-white bg-brand-500 p-0.5 text-white dark:border-ink-950">
               <Plus size={12} />
             </span>
           </div>
@@ -87,7 +87,7 @@ function StoryViewer({ groups, startAuthor, onClose }: { groups: { authorId: str
   const u = users[group.authorId]
   return createPortal(
     <div className="fixed inset-0 z-[950] flex items-center justify-center bg-black">
-      <div className={`relative h-full w-full max-w-md overflow-hidden bg-gradient-to-br ${story.gradient} sm:h-[90dvh] sm:rounded-3xl`}>
+      <div className={`relative h-full w-full max-w-md overflow-hidden bg-gradient-to-br ${story.gradient} sm:h-[90dvh] sm:rounded-[1.75rem]`}>
         {story.image && <img src={story.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         <div className="absolute inset-x-0 top-0 z-10 space-y-3 bg-gradient-to-b from-black/50 to-transparent p-4">
           <div className="flex gap-1">

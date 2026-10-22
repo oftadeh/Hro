@@ -76,7 +76,7 @@ export default function GymDetail() {
       {gym.media.length > 1 && (
         <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
           {gym.media.map((m, i) => (
-            <button key={i} onClick={() => setMedia(i)} className={`h-16 w-24 shrink-0 overflow-hidden rounded-xl border-2 ${i === media ? 'border-emerald-500' : 'border-transparent'}`}>
+            <button key={i} onClick={() => setMedia(i)} className={`h-16 w-24 shrink-0 overflow-hidden rounded-xl border-2 ${i === media ? 'border-brand-500' : 'border-transparent'}`}>
               {m.type === 'video' ? <div className="flex h-full items-center justify-center bg-ink-900 text-xl text-white">▶</div> : <img src={m.url} alt="" className="h-full w-full object-cover" />}
             </button>
           ))}
@@ -168,7 +168,7 @@ export default function GymDetail() {
       <Sheet open={!!ticket} onClose={() => setTicket(undefined)} title="🎟️ بلیت ورود شما">
         {ticket && (
           <div className="text-center">
-            <div className="mx-auto w-fit rounded-3xl bg-white p-4 shadow-soft">
+            <div className="mx-auto w-fit rounded-[1.75rem] bg-white p-4 shadow-soft">
               <QRCodeSVG value={`KEYFIT:${ticket.id}:${ticket.code}`} size={180} />
             </div>
             <div className="mt-4 text-xs text-ink-500">کد ورود</div>
