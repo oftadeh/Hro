@@ -1,228 +1,306 @@
 /**
- * تصویرسازی‌های کی‌فیت — سبک یکپارچه‌ی «تخت مینیمال» (Flat Minimal):
- * پیکره‌های بدون صورت با شکل‌های توپر، بدون خط دور، پالت محدود برند،
- * یک شکل هندسی ساده در پس‌زمینه و حرکت‌های آرام و نرم.
+ * تصویرسازی‌های کی‌فیت — سبک یکپارچه‌ی «تخت مینیمال»:
+ * پیکره‌های بدون صورت با تناسبات طبیعی که از اندام‌های مخروطی (ران پهن‌تر از ساق)
+ * روی یک اسکلت ساخته می‌شوند، لباس با تفکیک رنگ، کتانی با زیره‌ی سفید،
+ * تجهیزات واقعی ورزشی و فقط یک سایه‌ی نرم زیر پا. حرکت‌ها آرام و طبیعی‌اند.
  */
 import { useId, type CSSProperties, type ReactNode } from 'react'
 import type { ChallengeMetric } from '@/core/types'
 
 type ArtProps = { size?: number; className?: string; style?: CSSProperties; mono?: boolean; bare?: boolean }
+type Pt = [number, number]
 
 // پالت
 const C = {
-  skin: '#f1c3a0',
-  skin2: '#d9a07c',
-  skinDark: '#a8704f',
+  skin: '#f5cba7',
+  skin2: '#e3ad86',
+  tan: '#d39a72',
+  tan2: '#bb8259',
+  brown: '#9c6644',
+  brown2: '#84553a',
   hair: '#2a2235',
+  hairBrown: '#6b4226',
+  hairBlonde: '#e9b95c',
   ink: '#2e2840',
   ink2: '#453d5c',
+  navy: '#2f2a5e',
+  navy2: '#3d3775',
   violet: '#8b5cf6',
+  violet2: '#7c4fe0',
   lav: '#c4b5fd',
   mint: '#5eead4',
   mint2: '#2dd4bf',
+  teal: '#22b8a5',
   peach: '#fcd679',
+  coral: '#fb7a8c',
+  coral2: '#ef5f74',
   pink: '#f0a6d8',
   white: '#ffffff',
+  sole: '#eef0f6',
 }
 
 const org = (x: number, y: number): CSSProperties => ({ transformOrigin: `${x}px ${y}px` })
 
-function Frame({ p, label, children, backdrop = C.white }: { p: ArtProps; label: string; children: ReactNode; backdrop?: string }) {
+function Frame({ p, label, children }: { p: ArtProps; label: string; children: ReactNode; backdrop?: string }) {
   const s = p.size ?? 120
   return (
     <svg data-art viewBox="0 0 160 160" width={s} height={s} className={p.className} style={p.style} role="img" aria-label={label}>
-      {!p.bare && (
-        <g>
-          <circle cx="80" cy="82" r="58" fill={backdrop} opacity=".14" />
-          <g className="kf-spin-slow" style={{ ...org(80, 82), animationDuration: '40s' }}>
-            <circle cx="132" cy="44" r="5" fill={C.peach} opacity=".9" />
-            <circle cx="30" cy="118" r="3.5" fill={C.mint} opacity=".9" />
-          </g>
-        </g>
-      )}
       {children}
     </svg>
   )
 }
 
-/** اندام توپر با سر گرد (برای بازو و پا) */
-const Limb = ({ d, c, w = 11 }: { d: string; c: string; w?: number }) => <path d={d} stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-const Shoe = ({ x, y, r = 0, c = C.ink }: { x: number; y: number; r?: number; c?: string }) => <rect x={x - 8} y={y - 4} width="16" height="8" rx="4" fill={c} transform={`rotate(${r} ${x} ${y})`} />
-const Floor = ({ y = 142, w = 40 }: { y?: number; w?: number }) => <ellipse cx="80" cy={y} rx={w} ry="4" fill="#000" opacity=".12" />
+const Floor = ({ y = 150, w = 34, x = 80 }: { y?: number; w?: number; x?: number }) => <ellipse cx={x} cy={y} rx={w} ry="3.6" fill="#1b1530" opacity=".18" />
+
+/* ───────── هندسه‌ی پیکره ───────── */
+
+/** قطعه‌ی مخروطی با سرهای گرد بین دو مفصل */
+function Seg({ a, b, r1, r2, c }: { a: Pt; b: Pt; r1: number; r2: number; c: string }) {
+  const dx = b[0] - a[0]
+  const dy = b[1] - a[1]
+  const L = Math.hypot(dx, dy) || 1
+  const nx = -dy / L
+  const ny = dx / L
+  const pts = [
+    [a[0] + nx * r1, a[1] + ny * r1],
+    [b[0] + nx * r2, b[1] + ny * r2],
+    [b[0] - nx * r2, b[1] - ny * r2],
+    [a[0] - nx * r1, a[1] - ny * r1],
+  ]
+  return (
+    <g fill={c}>
+      <polygon points={pts.map((q) => q.map((v) => v.toFixed(1)).join(',')).join(' ')} />
+      <circle cx={a[0]} cy={a[1]} r={r1} />
+      <circle cx={b[0]} cy={b[1]} r={r2} />
+    </g>
+  )
+}
+
+/** بازو: شانه ← آرنج ← مچ، با آستین اختیاری و دست */
+function Arm({ s, e, w, skin, sleeve, sleeveTo = 0.55 }: { s: Pt; e: Pt; w: Pt; skin: string; sleeve?: string; sleeveTo?: number }) {
+  const mid: Pt = [s[0] + (e[0] - s[0]) * sleeveTo, s[1] + (e[1] - s[1]) * sleeveTo]
+  return (
+    <g>
+      <Seg a={s} b={e} r1={4.3} r2={3.3} c={skin} />
+      <Seg a={e} b={w} r1={3.3} r2={2.5} c={skin} />
+      <circle cx={w[0]} cy={w[1]} r={3.3} fill={skin} />
+      {sleeve && <Seg a={s} b={mid} r1={5.4} r2={4.6} c={sleeve} />}
+    </g>
+  )
+}
+
+/** پا: لگن ← زانو ← مچ، با شلوارک یا ساپورت */
+function Leg({ h, k, a, skin, pants, full }: { h: Pt; k: Pt; a: Pt; skin: string; pants: string; full?: boolean }) {
+  const mid: Pt = [h[0] + (k[0] - h[0]) * 0.62, h[1] + (k[1] - h[1]) * 0.62]
+  return (
+    <g>
+      <Seg a={h} b={k} r1={6.6} r2={4.5} c={full ? pants : skin} />
+      <Seg a={k} b={a} r1={4.5} r2={3.1} c={full ? pants : skin} />
+      {!full && <Seg a={h} b={mid} r1={7.4} r2={6} c={pants} />}
+    </g>
+  )
+}
+
+/** کتانی با زیره‌ی سفید؛ dir جهت پنجه (۱ راست، -۱ چپ) و rot زاویه */
+function Shoe({ at, dir = 1, rot = 0, c = C.white, accent = C.violet }: { at: Pt; dir?: 1 | -1; rot?: number; c?: string; accent?: string }) {
+  const [x, y] = at
+  return (
+    <g transform={`rotate(${rot} ${x} ${y})`}>
+      <path d={dir > 0 ? `M${x - 4} ${y - 3}Q${x + 2} ${y - 5} ${x + 9} ${y}Q${x + 12} ${y + 3} ${x + 9} ${y + 4}H${x - 4}Q${x - 6} ${y + 1} ${x - 4} ${y - 3}Z` : `M${x + 4} ${y - 3}Q${x - 2} ${y - 5} ${x - 9} ${y}Q${x - 12} ${y + 3} ${x - 9} ${y + 4}H${x + 4}Q${x + 6} ${y + 1} ${x + 4} ${y - 3}Z`} fill={c} />
+      <rect x={dir > 0 ? x - 5 : x - 10} y={y + 3} width="15" height="2.2" rx="1.1" fill={C.sole} />
+      <path d={dir > 0 ? `M${x - 1} ${y - 2}L${x + 4} ${y + 1}` : `M${x + 1} ${y - 2}L${x - 4} ${y + 1}`} stroke={accent} strokeWidth="1.6" strokeLinecap="round" />
+    </g>
+  )
+}
+
+/** تنه: شانه‌ها ← لگن */
+const Torso = ({ sl, sr, hr, hl, c }: { sl: Pt; sr: Pt; hr: Pt; hl: Pt; c: string }) => (
+  <path
+    d={`M${sl[0]} ${sl[1]}Q${(sl[0] + sr[0]) / 2} ${Math.min(sl[1], sr[1]) - 3} ${sr[0]} ${sr[1]}Q${sr[0] + 1} ${(sr[1] + hr[1]) / 2} ${hr[0]} ${hr[1]}L${hl[0]} ${hl[1]}Q${sl[0] - 1} ${(sl[1] + hl[1]) / 2} ${sl[0]} ${sl[1]}Z`}
+    fill={c}
+  />
+)
+
+const Head = ({ at, skin, r = 8.2 }: { at: Pt; skin: string; r?: number }) => <circle cx={at[0]} cy={at[1]} r={r} fill={skin} />
+const Neck = ({ a, b, skin }: { a: Pt; b: Pt; skin: string }) => <Seg a={a} b={b} r1={2.8} r2={3} c={skin} />
 
 /* ───────────── پیکره‌ها ───────────── */
 
+/** دونده (نیم‌رخ، رو به راست) */
 export function Runner(p: ArtProps & { shirt?: string; pants?: string; accent?: string }) {
+  const sk = C.skin
   return (
     <Frame p={p} label="دونده">
-      <Floor y={140} w={34} />
-      <g className="kf-float" style={{ animationDuration: '2.6s' }}>
-        {/* خطوط سرعت */}
-        <g opacity=".55">
-          <rect x="26" y="62" width="24" height="3.5" rx="1.75" fill={C.white} />
-          <rect x="18" y="76" width="28" height="3.5" rx="1.75" fill={C.white} />
-          <rect x="30" y="90" width="18" height="3.5" rx="1.75" fill={C.white} />
-        </g>
-        {/* بازوی عقب */}
-        <Limb d="M86 58 L74 68 L66 62" c={C.skin2} w={8} />
-        {/* پای عقب: ران به عقب، ساق رو به بالا */}
-        <Limb d="M84 94 L72 114 L54 116" c="#7c4fe0" w={12} />
-        <Shoe x={50} y={114} r={-35} c={C.white} />
+      <Floor y={150} w={30} />
+      <g className="kf-float" style={{ animationDuration: '2.2s' }}>
+        {/* اندام‌های عقب */}
+        <Arm s={[86, 44]} e={[76, 56]} w={[70, 68]} skin={C.skin2} />
+        <Leg h={[78, 84]} k={[70, 110]} a={[52, 118]} skin={C.skin2} pants={C.violet2} full />
+        <Shoe at={[50, 121]} rot={-28} />
         {/* تنه */}
-        <path d="M82 52 Q93 47 102 52 L96 90 Q87 93 78 89 Z" fill={C.mint} />
-        <path d="M78 87 L96 89 L98 99 Q88 103 77 99 Z" fill="#7c4fe0" />
+        <Torso sl={[83, 42]} sr={[95, 44]} hr={[87, 86]} hl={[74, 84]} c={C.violet} />
+        <Torso sl={[83, 42]} sr={[95, 44]} hr={[89, 70]} hl={[77, 68]} c={C.coral} />
         {/* پای جلو */}
-        <Limb d="M90 96 L108 108 L110 128" c={C.violet} w={12} />
-        <Shoe x={114} y={130} r={0} c={C.white} />
-        {/* بازوی جلو */}
-        <Limb d="M98 58 L108 72 L120 66" c={C.skin} w={8} />
+        <Leg h={[83, 86]} k={[102, 102]} a={[97, 128]} skin={sk} pants={C.violet} full />
+        <Shoe at={[98, 131]} rot={4} />
         {/* سر */}
-        <rect x="91" y="42" width="7" height="9" rx="3" fill={C.skin2} />
-        <circle cx="98" cy="34" r="11" fill={C.skin} />
-        <path d="M87 33 Q87 21 99 21 Q110 22 109 32 Q103 27 95 30 Q91 32 87 33Z" fill={C.hair} />
-        <path d="M88 28 Q75 25 68 34 Q79 33 85 36Z" fill={C.hair} className="kf-sway" style={{ ...org(87, 30), animationDuration: '1.3s' }} />
+        <Neck a={[91, 36]} b={[89, 42]} skin={C.skin2} />
+        <Head at={[94, 27]} skin={sk} />
+        <path d="M86 26Q85 16 95 16Q103 17 103 25Q97 21 91 24Q88 25 86 26Z" fill={C.hairBrown} />
+        <path className="kf-sway" style={{ ...org(87, 22), animationDuration: '1.1s' }} d="M88 21Q78 18 72 27Q80 25 87 27Z" fill={C.hairBrown} />
+        {/* بازوی جلو */}
+        <Arm s={[92, 45]} e={[100, 60]} w={[111, 54]} skin={sk} />
       </g>
     </Frame>
   )
 }
 
+/** وزنه‌بردار (روبه‌رو، پرس بالای سر) */
 export function Lifter(p: ArtProps & { shirt?: string; pants?: string }) {
+  const sk = C.tan
   return (
     <Frame p={p} label="وزنه‌بردار">
-      <Floor />
-      {/* پاها */}
-      <Limb d="M73 94 L68 116 L66 134" c={C.ink} w={13} />
-      <Limb d="M87 94 L92 116 L94 134" c={C.ink} w={13} />
-      <Shoe x={62} y={137} c={C.ink2} />
-      <Shoe x={98} y={137} c={C.ink2} />
-      <g className="kf-press" style={{ animationDuration: '3.2s' }}>
-        {/* هالتر و بازوها */}
-        <rect x="22" y="27" width="116" height="5" rx="2.5" fill={C.ink2} />
-        <rect x="24" y="16" width="11" height="27" rx="4" fill={C.violet} />
-        <rect x="36" y="20" width="7" height="19" rx="3" fill={C.lav} />
-        <rect x="125" y="16" width="11" height="27" rx="4" fill={C.violet} />
-        <rect x="117" y="20" width="7" height="19" rx="3" fill={C.lav} />
-        <Limb d="M69 60 L58 46 L58 31" c={C.skin} w={9} />
-        <Limb d="M91 60 L102 46 L102 31" c={C.skin} w={9} />
+      <Floor y={150} w={34} />
+      <Leg h={[73, 92]} k={[66, 118]} a={[63, 144]} skin={sk} pants={C.navy} />
+      <Leg h={[87, 92]} k={[94, 118]} a={[97, 144]} skin={sk} pants={C.navy} />
+      <Shoe at={[61, 146]} dir={-1} />
+      <Shoe at={[99, 146]} />
+      <Torso sl={[67, 48]} sr={[93, 48]} hr={[89, 94]} hl={[71, 94]} c={C.navy2} />
+      <Torso sl={[67, 48]} sr={[93, 48]} hr={[90, 74]} hl={[70, 74]} c={C.mint2} />
+      <rect x="69" y="72" width="22" height="5" rx="2" fill={C.ink} />
+      <Neck a={[80, 38]} b={[80, 46]} skin={C.tan2} />
+      <Head at={[80, 30]} skin={sk} />
+      <path d="M71.5 29Q71 19 80 19Q89 19 88.5 29Q84 24 80 24Q75 24 71.5 29Z" fill={C.hair} />
+      <path d="M86 23Q96 24 96 34Q90 30 87 28Z" fill={C.hair} />
+      <g className="kf-press" style={{ animationDuration: '3s' }}>
+        <Arm s={[69, 50]} e={[59, 36]} w={[60, 20]} skin={sk} sleeve={C.mint2} sleeveTo={0.3} />
+        <Arm s={[91, 50]} e={[101, 36]} w={[100, 20]} skin={sk} sleeve={C.mint2} sleeveTo={0.3} />
+        <rect x="20" y="17" width="120" height="4.5" rx="2.25" fill={C.ink2} />
+        <rect x="22" y="5" width="9" height="28" rx="3.5" fill={C.navy} />
+        <rect x="32" y="9" width="6" height="20" rx="2.5" fill={C.violet} />
+        <rect x="129" y="5" width="9" height="28" rx="3.5" fill={C.navy} />
+        <rect x="122" y="9" width="6" height="20" rx="2.5" fill={C.violet} />
       </g>
-      {/* تنه و سر */}
-      <path d="M66 55 Q80 49 94 55 L90 94 Q80 98 70 94 Z" fill={C.pink} />
-      <rect x="77" y="44" width="6" height="9" rx="3" fill={C.skin2} />
-      <circle cx="80" cy="38" r="11" fill={C.skin} />
-      <path d="M69 37 Q69 26 80 26 Q91 26 91 37 Q86 31 80 31 Q74 31 69 37Z" fill={C.hair} />
-      <circle cx="80" cy="24" r="5.5" fill={C.hair} />
     </Frame>
   )
 }
 
+/** دوچرخه‌ی ثابت */
 export function Cyclist(p: ArtProps & { shirt?: string }) {
+  const sk = C.brown
   return (
     <Frame p={p} label="دوچرخه‌سوار">
-      <Floor y={140} w={56} />
-      {[44, 116].map((cx) => (
-        <g key={cx}>
-          <circle cx={cx} cy="112" r="22" fill="none" stroke={C.ink} strokeWidth="5" />
-          <g className="kf-spin" style={{ ...org(cx, 112), animationDuration: '2.4s' }}>
-            <path d={`M${cx - 18} 112H${cx + 18}M${cx} 94V130`} stroke={C.ink2} strokeWidth="2" />
-          </g>
-          <circle cx={cx} cy="112" r="3.5" fill={C.ink2} />
-        </g>
-      ))}
-      <path d="M44 112 L70 112 L94 82 L62 82 L70 112 M94 82 L116 112 M62 82 L58 72 M93 82 L97 68 L108 68" stroke={C.violet} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <rect x="50" y="68" width="16" height="6" rx="3" fill={C.ink} />
-      <g className="kf-float" style={{ animationDuration: '2.8s' }}>
-        <Limb d="M64 72 L80 88 L72 108" c={C.ink2} w={11} />
-        <path d="M60 74 Q70 52 92 50 L96 60 Q78 64 70 78 Z" fill={C.peach} />
-        <Limb d="M64 72 L84 84 L82 102" c={C.ink} w={11} />
-        <Shoe x={84} y={104} />
-        <Limb d="M92 56 L106 68" c={C.skin} w={8} />
-        <circle cx="102" cy="40" r="10.5" fill={C.skin} />
-        <path d="M91 39 Q90 27 102 27 Q113 28 113 38 Z" fill={C.pink} />
-        <rect x="88" y="37" width="27" height="4" rx="2" fill={C.pink} />
+      <Floor y={150} w={46} />
+      {/* بدنه‌ی دوچرخه */}
+      <rect x="36" y="146" width="88" height="5" rx="2.5" fill={C.ink2} />
+      <circle cx="58" cy="128" r="16" fill={C.lav} />
+      <g className="kf-spin" style={{ ...org(58, 128), animationDuration: '1.8s' }}>
+        <circle cx="58" cy="128" r="11" fill="none" stroke={C.white} strokeWidth="2" strokeDasharray="5 4" />
+      </g>
+      <circle cx="58" cy="128" r="4" fill={C.ink2} />
+      <path d="M58 146L66 104M98 146L108 92" stroke={C.ink} strokeWidth="5" strokeLinecap="round" />
+      <path d="M66 104L104 108" stroke={C.ink} strokeWidth="4" strokeLinecap="round" />
+      <rect x="56" y="96" width="20" height="6" rx="3" fill={C.ink} />
+      <path d="M104 90H118" stroke={C.ink} strokeWidth="4" strokeLinecap="round" />
+      <g className="kf-float" style={{ animationDuration: '1.6s' }}>
+        {/* پای عقب */}
+        <Leg h={[68, 92]} k={[86, 112]} a={[74, 132]} skin={C.brown2} pants={C.navy} />
+        <Shoe at={[74, 135]} rot={10} />
+        {/* تنه و سر */}
+        <Torso sl={[86, 52]} sr={[98, 58]} hr={[76, 96]} hl={[62, 90]} c={C.coral} />
+        <Neck a={[98, 46]} b={[95, 52]} skin={C.brown2} />
+        <Head at={[103, 39]} skin={sk} />
+        <path d="M94.5 38Q94 29 103 29Q111 29 111.5 37Q106 33 100 34Q97 35 94.5 38Z" fill={C.hair} />
+        {/* پای جلو */}
+        <Leg h={[72, 94]} k={[94, 98]} a={[90, 124]} skin={sk} pants={C.navy2} />
+        <Shoe at={[92, 127]} rot={6} />
+        {/* بازو */}
+        <Arm s={[95, 57]} e={[104, 74]} w={[115, 88]} skin={sk} sleeve={C.coral} sleeveTo={0.35} />
       </g>
     </Frame>
   )
 }
 
+/** حرکت درخت یوگا (روبه‌رو، دست‌ها بالای سر) */
 export function Yoga(p: ArtProps & { shirt?: string }) {
+  const sk = C.skin
   return (
-    <Frame p={p} label="مدیتیشن">
-      <Floor y={128} w={44} />
-      <g className="kf-breathe" style={{ ...org(80, 124), animationDuration: '5s' }}>
-        {/* پاهای ضربدری */}
-        <path d="M38 116 Q46 98 80 102 Q114 98 122 116 Q112 126 80 122 Q48 126 38 116Z" fill={C.ink} />
-        <circle cx="46" cy="116" r="5" fill={C.skin2} />
-        <circle cx="114" cy="116" r="5" fill={C.skin2} />
-        {/* تنه */}
-        <path d="M64 104 Q60 72 80 64 Q100 72 96 104 Z" fill={C.lav} />
-        {/* بازوها */}
-        <Limb d="M66 74 Q54 88 52 104" c={C.skin} w={8} />
-        <Limb d="M94 74 Q106 88 108 104" c={C.skin} w={8} />
-        <circle cx="52" cy="106" r="4.5" fill={C.skin} />
-        <circle cx="108" cy="106" r="4.5" fill={C.skin} />
-        {/* سر */}
-        <rect x="77" y="54" width="6" height="11" rx="3" fill={C.skin2} />
-        <circle cx="80" cy="46" r="11.5" fill={C.skin} />
-        <path d="M68.5 46 Q68 34 80 34 Q92 34 91.5 46 Q86 40 80 40 Q74 40 68.5 46Z" fill={C.hair} />
-        <circle cx="80" cy="31" r="6" fill={C.hair} />
-      </g>
-      <g className="kf-float" style={{ animationDuration: '4s' }}>
-        <path d="M128 70 Q136 64 132 56 Q142 62 134 74Z" fill={C.mint} />
-        <path d="M30 70 Q22 64 26 56 Q16 62 24 74Z" fill={C.pink} />
+    <Frame p={p} label="یوگا">
+      <Floor y={150} w={26} />
+      <g className="kf-breathe" style={{ ...org(80, 148), animationDuration: '5s' }}>
+        <Leg h={[76, 92]} k={[76, 120]} a={[77, 146]} skin={sk} pants={C.violet} full />
+        <Shoe at={[79, 148]} c={C.skin2} accent={C.skin2} />
+        <Leg h={[84, 92]} k={[104, 108]} a={[82, 116]} skin={sk} pants={C.violet2} full />
+        <Torso sl={[69, 46]} sr={[91, 46]} hr={[88, 94]} hl={[72, 94]} c={C.violet} />
+        <Torso sl={[69, 46]} sr={[91, 46]} hr={[88, 72]} hl={[72, 72]} c={C.pink} />
+        <Neck a={[80, 36]} b={[80, 44]} skin={C.skin2} />
+        <Head at={[80, 28]} skin={sk} />
+        <path d="M71.5 28Q71 18 80 18Q89 18 88.5 28Q84 23 80 23Q75 23 71.5 28Z" fill={C.hair} />
+        <path d="M72 26Q66 40 70 52Q74 42 74 30Z" fill={C.hair} />
+        <Arm s={[70, 48]} e={[60, 28]} w={[76, 8]} skin={sk} />
+        <Arm s={[90, 48]} e={[100, 28]} w={[84, 8]} skin={sk} />
       </g>
     </Frame>
   )
 }
 
+/** مربی با بلندگو */
 export function Coach(p: ArtProps & { shirt?: string }) {
+  const sk = C.skin
   return (
     <Frame p={p} label="مربی">
-      <Floor />
-      <Limb d="M74 96 L70 134" c={C.ink} w={12} />
-      <Limb d="M86 96 L90 134" c={C.ink} w={12} />
-      <Shoe x={66} y={137} c={C.ink2} />
-      <Shoe x={94} y={137} c={C.ink2} />
-      <path d="M64 56 Q80 50 96 56 L92 98 Q80 102 68 98 Z" fill={C.violet} />
-      <path d="M74 54 L80 70 L86 54" fill="none" stroke={C.white} strokeWidth="2" opacity=".7" />
-      <circle cx="80" cy="72" r="3" fill={C.peach} />
-      {/* بازوی تخته‌به‌دست */}
-      <Limb d="M66 60 L58 78 L66 88" c={C.skin} w={8} />
-      <rect x="50" y="74" width="20" height="26" rx="4" fill={C.white} transform="rotate(-10 60 87)" />
-      <rect x="54" y="82" width="12" height="2.5" rx="1.25" fill={C.lav} transform="rotate(-10 60 87)" />
-      <rect x="54" y="88" width="8" height="2.5" rx="1.25" fill={C.lav} transform="rotate(-10 60 87)" />
-      {/* دست اشاره */}
-      <g className="kf-sway" style={{ ...org(94, 60), animationDuration: '3.4s' }}>
-        <Limb d="M94 60 L106 46 L112 30" c={C.skin} w={8} />
+      <Floor y={150} w={32} />
+      <Leg h={[66, 92]} k={[63, 120]} a={[60, 146]} skin={sk} pants={C.navy} full />
+      <Leg h={[76, 92]} k={[80, 120]} a={[84, 146]} skin={sk} pants={C.navy2} full />
+      <Shoe at={[58, 148]} dir={-1} />
+      <Shoe at={[86, 148]} />
+      <Arm s={[60, 48]} e={[56, 70]} w={[68, 78]} skin={C.skin2} sleeve={C.mint2} sleeveTo={0.35} />
+      <Torso sl={[58, 44]} sr={[82, 44]} hr={[79, 94]} hl={[62, 94]} c={C.teal} />
+      <Neck a={[71, 34]} b={[70, 42]} skin={C.skin2} />
+      <Head at={[72, 26]} skin={sk} />
+      <path d="M63.5 25Q63 15 72 15Q81 15 80.5 23Q75 20 69 21Q66 22 63.5 25Z" fill={C.hairBrown} />
+      {/* بلندگو */}
+      <g className="kf-sway" style={{ ...org(84, 34), animationDuration: '2.6s' }}>
+        <Arm s={[80, 47]} e={[90, 58]} w={[86, 38]} skin={sk} sleeve={C.mint2} sleeveTo={0.35} />
+        <path d="M82 30L100 22V44L82 36Z" fill={C.white} />
+        <path d="M100 22V44" stroke={C.lav} strokeWidth="3" strokeLinecap="round" />
+        <rect x="78" y="29" width="6" height="8" rx="2" fill={C.ink2} />
       </g>
-      <rect x="77" y="45" width="6" height="9" rx="3" fill={C.skin2} />
-      <circle cx="80" cy="38" r="11" fill={C.skin} />
-      <path d="M69 36 Q70 25 81 25 Q92 26 91 36 Z" fill={C.mint2} />
-      <path d="M88 33 L100 33 Q100 37 90 37Z" fill={C.mint2} />
-      <g className="kf-float" style={{ animationDuration: '3.6s' }}>
-        <rect x="112" y="64" width="34" height="22" rx="11" fill={C.white} />
-        <path d="M118 86 L116 94 L124 86Z" fill={C.white} />
-        <circle cx="122" cy="75" r="2.5" fill={C.violet} />
-        <circle cx="129" cy="75" r="2.5" fill={C.mint2} />
-        <circle cx="136" cy="75" r="2.5" fill={C.pink} />
-      </g>
+      {[0, 0.5, 1].map((t, i) => (
+        <path key={i} className="kf-pulse" style={{ animationDelay: `${t}s`, animationDuration: '1.6s' }} d={`M${108 + i * 7} ${24 - i * 2}Q${112 + i * 8} 33 ${108 + i * 7} ${42 + i * 2}`} fill="none" stroke={C.coral} strokeWidth="2.2" strokeLinecap="round" />
+      ))}
     </Frame>
   )
 }
 
+/** پزشک با روپوش و گوشی */
 export function Doctor(p: ArtProps) {
+  const sk = C.tan
   return (
     <Frame p={p} label="پزشک">
-      <path d="M40 150 Q42 92 74 86 Q106 92 108 150Z" fill={C.white} />
-      <path d="M74 86 L64 112 L74 150 L84 112Z" fill={C.lav} />
-      <path d="M58 92 Q52 116 64 122 Q74 124 76 114" fill="none" stroke={C.ink2} strokeWidth="3" strokeLinecap="round" />
-      <circle cx="76" cy="113" r="4" fill={C.ink2} />
-      <rect x="70" y="72" width="8" height="15" rx="4" fill={C.skin2} />
-      <circle cx="74" cy="60" r="15" fill={C.skin} />
-      <path d="M59 62 Q56 42 74 42 Q92 42 90 62 Q88 52 80 50 Q70 50 62 56 Q60 60 59 62Z" fill={C.hair} />
-      <path d="M59 58 Q56 74 62 80 L64 66Z M89 58 Q92 74 86 80 L84 66Z" fill={C.hair} />
-      <g className="kf-heart" style={{ ...org(122, 56), animationDuration: '1.8s' }}>
-        <path d="M122 74 C102 62 100 46 110 41 C116 38 121 43 122 46 C123 43 128 38 134 41 C144 46 142 62 122 74Z" fill={C.pink} />
-        <path d="M111 47 Q109 52 111 57" stroke={C.white} strokeWidth="2.5" strokeLinecap="round" opacity=".7" fill="none" />
+      <Floor y={150} w={30} />
+      <Leg h={[74, 104]} k={[73, 126]} a={[72, 146]} skin={sk} pants={C.navy} full />
+      <Leg h={[86, 104]} k={[87, 126]} a={[88, 146]} skin={sk} pants={C.navy2} full />
+      <Shoe at={[70, 148]} dir={-1} />
+      <Shoe at={[90, 148]} />
+      <Torso sl={[68, 48]} sr={[92, 48]} hr={[90, 76]} hl={[70, 76]} c={C.lav} />
+      {/* روپوش */}
+      <path d="M64 47Q70 44 76 46L78 76L74 112H60Q58 80 64 47Z" fill={C.white} />
+      <path d="M96 47Q90 44 84 46L82 76L86 112H100Q102 80 96 47Z" fill={C.white} />
+      <path d="M76 46L80 56L84 46" fill="none" stroke={C.lav} strokeWidth="2" />
+      <path d="M74 48Q72 66 80 70Q88 66 86 48" fill="none" stroke={C.ink2} strokeWidth="2" strokeLinecap="round" />
+      <circle cx="80" cy="71" r="3" fill={C.ink2} />
+      <Neck a={[80, 38]} b={[80, 46]} skin={C.tan2} />
+      <Head at={[80, 30]} skin={sk} />
+      <path d="M71 31Q70 19 80 19Q90 19 89 31Q86 25 80 25Q74 25 71 31Z" fill={C.hair} />
+      <path d="M71 29Q68 40 72 44L74 32Z M89 29Q92 40 88 44L86 32Z" fill={C.hair} />
+      <Arm s={[68, 50]} e={[64, 72]} w={[72, 84]} skin={sk} sleeve={C.white} sleeveTo={0.9} />
+      <rect x="68" y="76" width="18" height="24" rx="3" fill={C.peach} transform="rotate(-6 77 88)" />
+      <rect x="71" y="82" width="12" height="2.4" rx="1.2" fill={C.white} transform="rotate(-6 77 88)" />
+      <rect x="71" y="88" width="8" height="2.4" rx="1.2" fill={C.white} transform="rotate(-6 77 88)" />
+      <Arm s={[92, 50]} e={[96, 72]} w={[86, 84]} skin={sk} sleeve={C.white} sleeveTo={0.9} />
+      <g className="kf-heart" style={{ ...org(122, 40), animationDuration: '1.8s' }}>
+        <path d="M122 54C108 45 107 34 114 31C118 29 121 32 122 34C123 32 126 29 130 31C137 34 136 45 122 54Z" fill={C.coral} />
       </g>
     </Frame>
   )
