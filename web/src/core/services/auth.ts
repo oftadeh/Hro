@@ -5,6 +5,7 @@ import { notify } from './ledger'
 import { touchDaily } from './engagement'
 import { faDigitsToEn } from '../format'
 import { ROLE_META } from '../config'
+import { setupCycle } from './cycle'
 
 export const DEMO_OTP = '1234'
 
@@ -13,25 +14,84 @@ export function normalizePhone(raw: string) {
   return p.startsWith('9') ? `0${p}` : p
 }
 
-/** ورود/ثبت‌نام با شماره موبایل و کد یکبار مصرف (فعلاً کد ثابت ۱۲۳۴) */
-export function loginWithOtp(rawPhone: string, otp: string, name?: string): User {
+function checkOtp(rawPhone: string, otp: string) {
   const phone = normalizePhone(rawPhone)
   if (!/^09\d{9}$/.test(phone)) throw new AppError('شماره موبایل معتبر نیست')
   if (faDigitsToEn(otp) !== DEMO_OTP) throw new AppError('کد تایید اشتباه است')
-  let user = db().users.find((u) => u.phone === phone)
+  return phone
+}
+
+/**
+ * تأیید کد یکبار مصرف (فعلاً کد ثابت ۱۲۳۴).
+ * اگر کاربر از قبل وجود داشته باشد وارد می‌شود؛ وگرنه باید مرحله‌ی ثبت‌نام (انتخاب جنسیت و...) را کامل کند.
+ */
+export function verifyOtp(rawPhone: string, otp: string): { exists: boolean; phone: string } {
+  const phone = checkOtp(rawPhone, otp)
+  const user = db().users.find((u) => u.phone === phone)
   if (user?.blocked) throw new AppError('حساب کاربری شما مسدود شده است')
-  if (!user) {
-    const created: User = { id: uid('u-'), name: name?.trim() || 'ورزشکار کی‌فیت', phone, city: 'تهران', roles: ['user'], xp: 0, streak: 0, following: [], createdAt: now() }
-    mutate((d) => {
-      d.users.push(created)
-      d.wallets[created.id] = 0
-      notify(d, created.id, 'به کی‌فیت خوش اومدی!', 'با خرید اشتراک بدون ثبت‌نام وارد باشگاه‌ها شو.', '', '/wallet')
-    })
-    user = created
+  if (user) {
+    useSession.getState().login(user.id, 'user')
+    touchDaily(user.id)
   }
-  useSession.getState().login(user.id, 'user')
-  touchDaily(user.id)
-  return user
+  return { exists: !!user, phone }
+}
+
+export interface RegisterInput {
+  phone: string
+  otp: string
+  name: string
+  gender: 'male' | 'female' | ''
+  birthYear?: number
+  heightCm?: number
+  weightKg?: number
+  goal?: User['goal']
+  activityLevel?: User['activityLevel']
+  cycle?: { lastPeriodStart: string; cycleLength: number; periodLength: number }
+}
+
+/** ثبت‌نام کاربر جدید؛ انتخاب جنسیت الزامی است چون چیدمان و پیشنهادها بر اساس آن شخصی‌سازی می‌شود */
+export function registerUser(input: RegisterInput): User {
+  const phone = checkOtp(input.phone, input.otp)
+  if (db().users.some((u) => u.phone === phone)) throw new AppError('این شماره قبلاً ثبت‌نام کرده است')
+  const name = input.name.trim()
+  if (name.length < 2) throw new AppError('نام و نام خانوادگی را وارد کنید')
+  if (input.gender !== 'male' && input.gender !== 'female') throw new AppError('لطفاً جنسیت خود را انتخاب کنید')
+  if (input.birthYear && (input.birthYear < 1300 || input.birthYear > 1400)) throw new AppError('سال تولد معتبر نیست')
+  if (input.heightCm && (input.heightCm < 100 || input.heightCm > 230)) throw new AppError('قد معتبر نیست')
+  if (input.weightKg && (input.weightKg < 30 || input.weightKg > 250)) throw new AppError('وزن معتبر نیست')
+  const created: User = {
+    id: uid('u-'),
+    name,
+    phone,
+    city: 'تهران',
+    gender: input.gender,
+    birthYear: input.birthYear || undefined,
+    heightCm: input.heightCm || undefined,
+    weightKg: input.weightKg || undefined,
+    goal: input.goal || undefined,
+    activityLevel: input.activityLevel,
+    privacy: { publicProfile: true, showBody: false },
+    roles: ['user'],
+    xp: 0,
+    streak: 0,
+    following: [],
+    createdAt: now(),
+  }
+  mutate((d) => {
+    d.users.push(created)
+    d.wallets[created.id] = 0
+    notify(d, created.id, 'به کی‌فیت خوش اومدی!', 'با خرید اشتراک بدون ثبت‌نام وارد باشگاه‌ها شو.', '', '/wallet')
+  })
+  useSession.getState().login(created.id, 'user')
+  touchDaily(created.id)
+  if (input.gender === 'female' && input.cycle?.lastPeriodStart) {
+    try {
+      setupCycle(input.cycle)
+    } catch {
+      /* ردیاب اختیاری است؛ بعداً از پروفایل قابل تنظیم است */
+    }
+  }
+  return created
 }
 
 export function loginAs(userId: string, role: Role = 'user') {
@@ -56,9 +116,13 @@ export function activateRole(role: Exclude<Role, 'admin' | 'user'>) {
 
 export function updateProfile(input: Partial<User>) {
   const me = currentUserId()
+  if (input.name !== undefined && input.name.trim().length < 2) throw new AppError('نام را وارد کنید')
+  if (input.heightCm && (input.heightCm < 100 || input.heightCm > 230)) throw new AppError('قد معتبر نیست')
+  if (input.weightKg && (input.weightKg < 30 || input.weightKg > 250)) throw new AppError('وزن معتبر نیست')
+  if (input.birthYear && (input.birthYear < 1300 || input.birthYear > 1400)) throw new AppError('سال تولد معتبر نیست')
   mutate((d) => {
     const u = d.users.find((x) => x.id === me)!
-    const { id: _id, roles: _r, xp: _x, ...safe } = input
+    const { id: _id, roles: _r, xp: _x, phone: _p, ...safe } = input
     Object.assign(u, safe)
   })
 }

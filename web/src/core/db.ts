@@ -9,7 +9,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import type {
-  Appointment, CartItem, Challenge, CheckIn, CoachProfile, DailyLog, DoctorProfile, Food, Gym, ID, Notification,
+  Appointment, CartItem, Challenge, CheckIn, CoachProfile, CycleProfile, DailyLog, DoctorProfile, Food, Gym, ID, Notification,
   Order, Payout, PlanOrder, PlatformSettings, Post, Product, Restaurant, Role, Story, Subscription, Thread,
   Transaction, User,
 } from './types'
@@ -46,6 +46,7 @@ export interface DBState {
   challenges: Challenge[]
   notifications: Notification[]
   dailyLogs: DailyLog[]
+  cycles: CycleProfile[]
   carts: Record<ID, CartItem[]>
   aiChats: Record<ID, AIChatMessage[]>
   settings: PlatformSettings
@@ -57,7 +58,7 @@ export const useDB = create<DBState>()(
     {
       name: 'keyfit-db',
       // نسخه‌ی داده‌های نمایشی؛ با تغییر ساختار، داده‌ها به حالت اولیه برمی‌گردند
-      version: 4,
+      version: 5,
       migrate: () => createSeed(),
       storage: createJSONStorage(() => localStorage),
     },

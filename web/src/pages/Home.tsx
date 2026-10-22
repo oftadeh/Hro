@@ -18,6 +18,8 @@ import { GymCard } from '@/modules/fityab/GymCard'
 import { ChallengeCard } from '@/modules/challenges/ChallengeCard'
 import { StoriesBar } from '@/modules/fitzone/Stories'
 import { WeekBars } from '@/ui/WeekBars'
+import { CycleCard, useCycle } from '@/modules/health/Cycle'
+import { TrainingFocus } from '@/modules/health/TrainingFocus'
 
 const QUOTES = [
   'پیشرفت مهم است، نه بی‌نقصی',
@@ -66,6 +68,8 @@ export default function Home() {
   const log = logs.find((l) => l.userId === me.id && l.day === today) ?? { water: 0, steps: 0, workoutMinutes: 0, calories: 0, missionsDone: [] as string[], rewardClaimed: false }
   const lvl = levelOf(me.xp)
   const [q, setQ] = useState('')
+  const { status: cycle } = useCycle()
+  const female = me.gender === 'female'
 
   const nearGyms = useMemo(
     () => gyms.filter((g) => g.approved).map((g) => ({ g, d: distanceKm(DEFAULT_CENTER, [g.lat, g.lng]) })).sort((a, b) => a.d - b.d).slice(0, 6),
@@ -111,12 +115,13 @@ export default function Home() {
       <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
         {/* کارت شاخص امروز */}
         <HeroHeader seed="today" className="min-h-[15rem] p-6">
-          <Runner size={190} className="pointer-events-none absolute -bottom-6 left-2 drop-shadow-2xl" />
+          <Runner size={190} male={me.gender === 'male'} className="pointer-events-none absolute -bottom-6 left-2 drop-shadow-2xl" />
           <div className="relative flex h-full min-h-[12rem] flex-col justify-between">
             <div>
               <div className="font-display text-[2.4rem] leading-[1.05]">تمرین امروز</div>
               <div className="mt-2 text-sm text-white/70">
                 {log.workoutMinutes >= 20 ? 'هدف امروز را کامل کردی' : `${num(Math.max(0, 20 - log.workoutMinutes))} دقیقه تا هدف روزانه`}
+                {cycle && <span className="mt-1 block text-xs text-white/60">فاز {cycle.info.label} · شدت پیشنهادی: {cycle.info.intensity}</span>}
               </div>
             </div>
             <div className="flex items-end justify-between">
@@ -142,6 +147,17 @@ export default function Home() {
           </Link>
         </div>
       </div>
+
+      {/* بخش شخصی‌سازی‌شده بر اساس جنسیت */}
+      <SectionTitle title={female ? 'سلامت بانوان' : 'برنامه‌ی تو'} action={<More to={female ? '/profile?tab=health' : '/fityar'} label={female ? 'جزئیات' : 'برنامه‌ی کامل'} />} />
+      {female ? (
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+          <CycleCard />
+          <TrainingFocus user={me} light={cycle?.inPeriod} />
+        </div>
+      ) : (
+        <TrainingFocus user={me} />
+      )}
 
       <div className="mt-6">
         <StoriesBar />

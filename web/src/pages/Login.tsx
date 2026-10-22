@@ -1,13 +1,16 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Check, Lock } from 'lucide-react'
+import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { ROLE_META } from '@/core/config'
-import { loginAs, loginWithOtp, DEMO_OTP } from '@/core/services/auth'
+import { loginAs, verifyOtp, registerUser, DEMO_OTP, type RegisterInput } from '@/core/services/auth'
+import { faDigitsToEn } from '@/core/format'
 import type { Role } from '@/core/types'
 import { run } from '@/ui/toast'
 import { RoleIcon } from '@/ui/icons'
 import { Runner, Lifter, Yoga, Trophy } from '@/ui/art'
+import { daysAgoKey, GOALS, ACTIVITY } from '@/core/profile'
 
 const DEMOS: { userId: string; role: Role }[] = [
   { userId: 'u-sara', role: 'user' },
@@ -38,11 +41,13 @@ const field = 'w-full rounded-2xl border border-transparent bg-white/[.07] px-4 
 export default function Login() {
   const users = useDB((s) => s.users)
   const nav = useNavigate()
-  const [step, setStep] = useState<'phone' | 'otp'>('phone')
+  const [step, setStep] = useState<'phone' | 'otp' | 'profile'>('phone')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
-  const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [f, setF] = useState({ name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
+  const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }))
+  const n = (v: string) => Number(faDigitsToEn(v)) || undefined
 
   const submit = async () => {
     if (step === 'phone') {
@@ -51,7 +56,13 @@ export default function Login() {
       return
     }
     setLoading(true)
-    await run(() => loginWithOtp(phone, otp, name))
+    if (step === 'otp') {
+      const r = await run(() => verifyOtp(phone, otp))
+      if (r && !r.exists) setStep('profile')
+    } else {
+      const cycle = f.gender === 'female' && f.track && f.ago !== '' ? { lastPeriodStart: daysAgoKey(n(f.ago) ?? 0), cycleLength: n(f.cycleLength) ?? 28, periodLength: n(f.periodLength) ?? 5 } : undefined
+      await run(() => registerUser({ phone, otp, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))
+    }
     setLoading(false)
   }
 
@@ -98,8 +109,8 @@ export default function Login() {
         </div>
 
         <div className="animate-sheet-up rounded-[2.25rem] bg-ink-850/80 p-7 backdrop-blur-2xl lg:p-9">
-          <h2 className="font-display text-[2.2rem] leading-none">ورود یا ثبت‌نام</h2>
-          <p className="mt-1 text-[13px] text-white/45">با شماره‌ی موبایل خود ادامه دهید</p>
+          <h2 className="font-display text-[2.2rem] leading-none">{step === 'profile' ? 'ساخت پروفایل' : 'ورود یا ثبت‌نام'}</h2>
+          <p className="mt-1 text-[13px] text-white/45">{step === 'profile' ? 'برنامه‌ها، پیشنهادها و چیدمان اپ بر اساس این اطلاعات شخصی‌سازی می‌شود' : 'با شماره‌ی موبایل خود ادامه دهید'}</p>
           <form
             className="mt-8 space-y-4"
             onSubmit={(e) => {
@@ -113,23 +124,21 @@ export default function Login() {
                   <span className="text-xs text-white/50">شماره موبایل</span>
                   <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" dir="ltr" className={`${field} text-left tracking-wider`} inputMode="tel" autoFocus />
                 </label>
-                <label className="block space-y-2">
-                  <span className="text-xs text-white/50">نام و نام خانوادگی (برای ثبت‌نام)</span>
-                  <input value={name} onChange={(e) => setName(e.target.value)} placeholder="اختیاری" className={field} />
-                </label>
               </>
-            ) : (
+            ) : step === 'otp' ? (
               <label className="block space-y-2">
                 <span className="text-xs text-white/50">کد تأیید ارسال‌شده به {phone}</span>
                 <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="• • • •" dir="ltr" className={`${field} text-center text-xl tracking-[1em]`} inputMode="numeric" maxLength={4} autoFocus />
                 <span className="block text-[11px] text-white/35">در نسخه‌ی آزمایشی، کد {DEMO_OTP} است.</span>
               </label>
+            ) : (
+              <Onboarding f={f} set={set} />
             )}
             <button type="submit" disabled={loading} className="grad-lavender flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-medium text-ink-950 shadow-glow transition hover:brightness-105 disabled:opacity-50">
-              {step === 'phone' ? 'دریافت کد تأیید' : 'ورود'}
+              {step === 'phone' ? 'دریافت کد تأیید' : step === 'otp' ? 'ورود' : 'ساخت حساب و شروع'}
               <ArrowLeft size={17} strokeWidth={1.5} />
             </button>
-            {step === 'otp' && (
+            {step !== 'phone' && (
               <button type="button" onClick={() => setStep('phone')} className="w-full text-center text-xs text-white/40 hover:text-white">
                 ویرایش شماره
               </button>
@@ -158,6 +167,123 @@ export default function Login() {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+type Form = {
+  name: string
+  gender: RegisterInput['gender']
+  birthYear: string
+  heightCm: string
+  weightKg: string
+  goal: RegisterInput['goal']
+  activityLevel: RegisterInput['activityLevel']
+  track: boolean
+  ago: string
+  cycleLength: string
+  periodLength: string
+}
+
+const chip = (on: boolean) => clsx('rounded-full px-3.5 py-2 text-xs transition', on ? 'grad-lavender font-medium text-ink-950' : 'bg-white/[.07] text-white/65 hover:bg-white/[.12]')
+
+function Onboarding({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void }) {
+  return (
+    <div className="space-y-5 animate-fade-up">
+      <label className="block space-y-2">
+        <span className="text-xs text-white/50">نام و نام خانوادگی</span>
+        <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً سارا محمدی" className={field} autoFocus />
+      </label>
+
+      <div className="space-y-2">
+        <span className="text-xs text-white/50">جنسیت <span className="text-coral-300">*</span></span>
+        <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="جنسیت">
+          {([
+            ['female', 'خانم', <Yoga key="f" size={78} />],
+            ['male', 'آقا', <Runner key="m" size={78} male />],
+          ] as const).map(([v, label, art]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={f.gender === v}
+              onClick={() => set('gender', v)}
+              className={clsx('relative flex h-28 items-end overflow-hidden rounded-3xl p-4 text-right transition', f.gender === v ? (v === 'female' ? 'grad-pink text-ink-950' : 'grad-mint text-ink-950') : 'bg-white/[.06] hover:bg-white/[.1]')}
+            >
+              <span className="relative z-10 font-display text-2xl leading-none">{label}</span>
+              <span className="absolute -left-2 -top-1">{art}</span>
+              {f.gender === v && (
+                <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-ink-950 text-white">
+                  <Check size={14} />
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {([
+          ['birthYear', 'سال تولد', '۱۳۷۵'],
+          ['heightCm', 'قد (سانتی‌متر)', '۱۷۰'],
+          ['weightKg', 'وزن (کیلوگرم)', '۶۵'],
+        ] as const).map(([k, label, ph]) => (
+          <label key={k} className="block space-y-2">
+            <span className="text-[11px] text-white/50">{label}</span>
+            <input value={f[k]} onChange={(e) => set(k, e.target.value)} placeholder={ph} inputMode="numeric" className={`${field} text-center`} />
+          </label>
+        ))}
+      </div>
+
+      <div className="space-y-2">
+        <span className="text-xs text-white/50">هدف</span>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(GOALS).map(([v, l]) => (
+            <button key={v} type="button" onClick={() => set('goal', v as Form['goal'])} className={chip(f.goal === v)}>
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <span className="text-xs text-white/50">سطح فعالیت</span>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(ACTIVITY).map(([v, l]) => (
+            <button key={v} type="button" onClick={() => set('activityLevel', v as Form['activityLevel'])} className={chip(f.activityLevel === v)}>
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {f.gender === 'female' && (
+        <div className="animate-fade-up rounded-3xl bg-coral-300/10 p-4">
+          <label className="flex items-center justify-between gap-3">
+            <span>
+              <span className="block text-sm font-medium">ردیاب چرخه‌ی قاعدگی</span>
+              <span className="mt-0.5 flex items-center gap-1 text-[11px] text-white/50">
+                <Lock size={11} /> کاملاً خصوصی؛ برای تنظیم شدت تمرین و تغذیه در هر فاز
+              </span>
+            </span>
+            <input type="checkbox" checked={f.track} onChange={(e) => set('track', e.target.checked)} className="h-5 w-5 accent-coral-300" />
+          </label>
+          {f.track && (
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {([
+                ['ago', 'آخرین پریود چند روز پیش شروع شد؟', '۳'],
+                ['cycleLength', 'طول چرخه (روز)', '۲۸'],
+                ['periodLength', 'طول پریود (روز)', '۵'],
+              ] as const).map(([k, label, ph]) => (
+                <label key={k} className="flex flex-col justify-end space-y-2">
+                  <span className="text-[11px] leading-5 text-white/50">{label}</span>
+                  <input value={f[k]} onChange={(e) => set(k, e.target.value)} placeholder={ph} inputMode="numeric" className={`${field} text-center`} />
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

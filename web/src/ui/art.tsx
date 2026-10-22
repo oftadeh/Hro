@@ -127,7 +127,7 @@ const Neck = ({ a, b, skin }: { a: Pt; b: Pt; skin: string }) => <Seg a={a} b={b
 /* ───────────── پیکره‌ها ───────────── */
 
 /** دونده (نیم‌رخ، رو به راست) */
-export function Runner(p: ArtProps & { shirt?: string; pants?: string; accent?: string }) {
+export function Runner(p: ArtProps & { shirt?: string; pants?: string; accent?: string; male?: boolean }) {
   const sk = C.skin
   return (
     <Frame p={p} label="دونده">
@@ -146,8 +146,14 @@ export function Runner(p: ArtProps & { shirt?: string; pants?: string; accent?: 
         {/* سر */}
         <Neck a={[91, 36]} b={[89, 42]} skin={C.skin2} />
         <Head at={[94, 27]} skin={sk} />
-        <path d="M86 26Q85 16 95 16Q103 17 103 25Q97 21 91 24Q88 25 86 26Z" fill={C.hairBrown} />
-        <path className="kf-sway" style={{ ...org(87, 22), animationDuration: '1.1s' }} d="M88 21Q78 18 72 27Q80 25 87 27Z" fill={C.hairBrown} />
+        {p.male ? (
+          <path d="M86 27Q84 16 95 16Q104 17 103 25Q98 21 92 23Q89 24 86 27Z" fill={C.hair} />
+        ) : (
+          <>
+            <path d="M86 26Q85 16 95 16Q103 17 103 25Q97 21 91 24Q88 25 86 26Z" fill={C.hairBrown} />
+            <path className="kf-sway" style={{ ...org(87, 22), animationDuration: '1.1s' }} d="M88 21Q78 18 72 27Q80 25 87 27Z" fill={C.hairBrown} />
+          </>
+        )}
         {/* بازوی جلو */}
         <Arm s={[92, 45]} e={[100, 60]} w={[111, 54]} skin={sk} />
       </g>

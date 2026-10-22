@@ -185,10 +185,28 @@ ${m.complete ? '' : '\n برای دقت بیشتر قد و وزنت رو در پ
 
 export const localExpert: AIProvider = {
   name: 'local',
-  async reply(history, profile) {
+  async reply(history, profile, ctx) {
     const last = [...history].reverse().find((m) => m.role === 'user')?.text ?? ''
     await new Promise((r) => setTimeout(r, 500 + Math.random() * 600))
-    return answer(last, profile)
+    const c = ctx?.cycle
+    // پرسش درباره‌ی چرخه
+    if (/پریود|قاعدگی|عادت ماهانه|چرخه|دوره‌ی ماهانه/.test(last)) {
+      if (!c)
+        return {
+          text: profile.gender === 'female' ? 'برای راهنمایی دقیق، ردیاب چرخه را در پروفایل فعال کن تا فاز امروزت را بدانم.' : 'این بخش مخصوص بانوان است. برای سوالات سلامت می‌توانی با پزشکان کی‌فیت مشورت کنی.',
+          suggestions: [{ label: profile.gender === 'female' ? 'فعال‌سازی ردیاب چرخه' : 'مشاوره با پزشک', link: profile.gender === 'female' ? '/profile?tab=health' : '/doctors' }],
+        }
+      return {
+        text: `**امروز روز ${c.day} چرخه‌ات و در فاز ${c.phase} هستی** (شدت پیشنهادی تمرین: ${c.intensity}).\n\n**تمرین:** ${c.workout}\n\n**تغذیه:** ${c.nutrition}\n\n${c.daysToNext} روز تا پریود بعدی. اگر درد شدید یا نامنظمی طولانی داری، حتماً با پزشک مشورت کن.`,
+        suggestions: [{ label: 'مشاوره با پزشک زنان', link: '/doctors' }],
+      }
+    }
+    const r = answer(last, profile)
+    // افزودن نکته‌ی فاز به برنامه‌های تمرین و تغذیه
+    if (c && /برنامه/.test(r.text)) {
+      r.text += `\n\n**متناسب با چرخه‌ات:** امروز در فاز ${c.phase} هستی؛ شدت ${c.intensity} مناسب است. ${c.workout}`
+    }
+    return r
   },
 }
 

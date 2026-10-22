@@ -33,16 +33,16 @@ function slots(): string[] {
 export function createSeed(): DBState {
   const users: User[] = [
     mkUser('u-sara', 'سارا محمدی', ['user'], { phone: '09121111111', xp: 740, streak: 6, gender: 'female', heightCm: 165, weightKg: 62, birthYear: 1377, goal: 'fit', bio: 'عاشق دویدن و یوگا', following: ['u-coach1', 'u-ali'] }),
-    mkUser('u-ali', 'علی رضایی', ['user', 'gym'], { phone: '09122222222', xp: 1300, streak: 12, bio: 'مدیر باشگاه‌های آیرون‌من و پالس' }),
-    mkUser('u-coach1', 'مهدی کریمی', ['user', 'coach'], { phone: '09123333333', xp: 3100, streak: 40, bio: 'مربی بدنسازی و فیتنس | ۱۰ سال سابقه' }),
-    mkUser('u-coach2', 'نگار احمدی', ['user', 'coach'], { phone: '09124444444', xp: 2200, streak: 18, bio: 'مربی تغذیه و کاهش وزن' }),
-    mkUser('u-seller', 'رضا پاورمکس', ['user', 'seller'], { phone: '09125555555', xp: 300, bio: 'فروشگاه مکمل پاورمکس' }),
-    mkUser('u-doctor', 'دکتر لیلا صادقی', ['user', 'doctor'], { phone: '09126666666', xp: 500, bio: 'متخصص پزشکی ورزشی' }),
+    mkUser('u-ali', 'علی رضایی', ['user', 'gym'], { gender: 'male', phone: '09122222222', xp: 1300, streak: 12, bio: 'مدیر باشگاه‌های آیرون‌من و پالس' }),
+    mkUser('u-coach1', 'مهدی کریمی', ['user', 'coach'], { gender: 'male', phone: '09123333333', xp: 3100, streak: 40, bio: 'مربی بدنسازی و فیتنس | ۱۰ سال سابقه' }),
+    mkUser('u-coach2', 'نگار احمدی', ['user', 'coach'], { gender: 'female', phone: '09124444444', xp: 2200, streak: 18, bio: 'مربی تغذیه و کاهش وزن' }),
+    mkUser('u-seller', 'رضا پاورمکس', ['user', 'seller'], { gender: 'male', phone: '09125555555', xp: 300, bio: 'فروشگاه مکمل پاورمکس' }),
+    mkUser('u-doctor', 'دکتر لیلا صادقی', ['user', 'doctor'], { gender: 'female', phone: '09126666666', xp: 500, bio: 'متخصص پزشکی ورزشی' }),
     mkUser('u-rest', 'سالادبار سبزینه', ['user', 'restaurant'], { phone: '09127777777', xp: 150 }),
     mkUser('u-admin', 'مدیر کی‌فیت', ['user', 'admin'], { phone: '09120000001', xp: 0 }),
-    mkUser('u-mina', 'مینا کاظمی', ['user'], { xp: 980, streak: 9, bio: 'کراس‌فیت' }),
-    mkUser('u-reza', 'رضا نوری', ['user'], { xp: 1650, streak: 21, bio: 'دونده‌ی ماراتن' }),
-    mkUser('u-hamed', 'حامد یوسفی', ['user'], { xp: 420, streak: 3 }),
+    mkUser('u-mina', 'مینا کاظمی', ['user'], { gender: 'female', xp: 980, streak: 9, bio: 'کراس‌فیت' }),
+    mkUser('u-reza', 'رضا نوری', ['user'], { gender: 'male', xp: 1650, streak: 21, bio: 'دونده‌ی ماراتن' }),
+    mkUser('u-hamed', 'حامد یوسفی', ['user'], { gender: 'male', xp: 420, streak: 3 }),
   ]
 
   const gymBase = { ownerId: 'u-ali', city: 'تهران', phone: '021-88000000', approved: true, createdAt: ago(500), media: [] as Gym['media'] }
@@ -146,6 +146,13 @@ export function createSeed(): DBState {
     { userId: 'u-sara', day: today, water: 3, steps: 3200, workoutMinutes: 0, calories: 900, sleepHours: 7, missionsDone: [], rewardClaimed: false },
   ]
 
+  // چرخه‌ی نمونه برای کاربر نمایشی (روز سوم قاعدگی)
+  const dayAgo = (n: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() - n)
+    return dayKey(d)
+  }
+
   return {
     version: 1,
     users,
@@ -185,6 +192,7 @@ export function createSeed(): DBState {
       { id: 'n-2', userId: 'u-sara', title: 'چالش جدید', body: 'چالش «ماراتن مجازی ۴۲ کیلومتر» شروع شد!', icon: '', link: '/challenges/ch-run', read: false, at: ago(20) },
     ],
     dailyLogs,
+    cycles: [{ userId: 'u-sara', lastPeriodStart: dayAgo(2), cycleLength: 28, periodLength: 5, history: [dayAgo(58), dayAgo(30), dayAgo(2)], logs: [{ day: dayAgo(1), flow: 'medium', symptoms: ['cramps'], mood: 'ok' }] }],
     carts: {},
     aiChats: {},
     settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000 },

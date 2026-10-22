@@ -15,6 +15,7 @@ export function checkIn(gymId: string, prefer: 'subscription' | 'wallet' = 'subs
   const gym = db().gyms.find((g) => g.id === gymId)
   if (!gym || !gym.approved) throw new AppError('باشگاه در دسترس نیست')
   const user = db().users.find((u) => u.id === userId)!
+  if (gym.gender !== 'mixed' && user.gender && user.gender !== gym.gender) throw new AppError(gym.gender === 'female' ? 'این باشگاه ویژه‌ی بانوان است' : 'این باشگاه ویژه‌ی آقایان است')
   let created!: CheckIn
   mutate((d) => {
     const sub = d.subscriptions.find((s) => s.userId === userId && new Date(s.expiresAt) > new Date())

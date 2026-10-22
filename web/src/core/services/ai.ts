@@ -2,6 +2,7 @@ import { mutate, currentUserId, db } from '../db'
 import { ai, type AIReply } from '../ai'
 import { now } from '../id'
 import { completeMission } from './engagement'
+import { cycleStatus } from './cycle'
 
 export async function askAI(text: string): Promise<AIReply> {
   const me = currentUserId()
@@ -11,7 +12,8 @@ export async function askAI(text: string): Promise<AIReply> {
   })
   const history = (db().aiChats[me] ?? []).slice(-12).map(({ role, text }) => ({ role, text }))
   const profile = db().users.find((u) => u.id === me)!
-  const reply = await ai.reply(history, profile)
+  const st = cycleStatus(me)
+  const reply = await ai.reply(history, profile, st ? { cycle: { day: st.day, phase: st.info.label, intensity: st.info.intensity, workout: st.info.workout, nutrition: st.info.nutrition, daysToNext: st.daysToNext } } : undefined)
   mutate((d) => {
     d.aiChats[me].push({ role: 'assistant', text: reply.text, suggestions: reply.suggestions, at: now() })
   })

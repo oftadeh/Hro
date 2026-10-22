@@ -25,12 +25,33 @@ export interface User {
   weightKg?: number
   birthYear?: number
   goal?: 'lose' | 'gain' | 'fit'
+  activityLevel?: 'low' | 'medium' | 'high'
+  /** اطلاعات سلامت؛ فقط برای خود کاربر */
+  health?: { injuries?: string; conditions?: string; allergies?: string }
+  privacy?: { publicProfile: boolean; showBody: boolean }
   xp: number
   streak: number
   lastActiveDay?: string // YYYY-MM-DD
   following: ID[]
   createdAt: ISODate
   blocked?: boolean
+}
+
+/** پروفایل چرخه‌ی قاعدگی (فقط بانوان، خصوصی) */
+export interface CycleLog {
+  day: string // YYYY-MM-DD
+  flow?: 'light' | 'medium' | 'heavy'
+  symptoms: string[]
+  mood?: 'great' | 'ok' | 'low'
+}
+
+export interface CycleProfile {
+  userId: ID
+  lastPeriodStart: string // YYYY-MM-DD
+  cycleLength: number
+  periodLength: number
+  history: string[]
+  logs: CycleLog[]
 }
 
 export interface Subscription {

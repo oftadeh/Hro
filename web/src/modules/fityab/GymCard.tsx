@@ -17,6 +17,9 @@ export function GymCard({ gym, distance, compact }: { gym: Gym; distance?: numbe
           <h3 className="font-display text-[1.8rem] leading-[1.1]">{gym.name.replace('باشگاه ', '')}</h3>
           <div className="mt-1 text-[11px] text-white/75">{gym.sports.slice(0, 2).join(' · ')}</div>
         </div>
+        {gym.gender !== 'mixed' && (
+          <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-medium text-ink-950 ${gym.gender === 'female' ? 'grad-pink' : 'grad-mint'}`}>ویژه‌ی {GENDER_LABEL[gym.gender]}</span>
+        )}
         {distance !== undefined && (
           <span className="absolute left-3 top-3 rounded-full bg-white/25 px-2.5 py-1 text-[11px] tabular-nums text-white backdrop-blur">{dec(distance)} کیلومتر</span>
         )}

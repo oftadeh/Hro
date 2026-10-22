@@ -10,6 +10,7 @@ import { useMe, useBalance } from '@/ui/hooks'
 import { BOTTOM, SIDEBAR } from './nav'
 import { Logo } from './Logo'
 import { RoleSwitcher } from './RoleSwitcher'
+import { GenderPrompt } from '@/modules/profile/GenderPrompt'
 
 const iconBtn = 'relative flex h-10 w-10 items-center justify-center rounded-full bg-ink-900/[.05] text-ink-600 transition hover:text-ink-950 dark:bg-white/[.06] dark:text-ink-200 dark:hover:text-white'
 
@@ -110,6 +111,7 @@ export function AppShell() {
           <Suspense fallback={<Loader />}>
             <Outlet />
           </Suspense>
+          <GenderPrompt />
         </main>
 
         {!hideBottom && (

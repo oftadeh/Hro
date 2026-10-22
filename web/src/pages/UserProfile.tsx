@@ -1,60 +1,113 @@
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { MessageCircle } from 'lucide-react'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Lock, MessageCircle } from 'lucide-react'
 import { useDB } from '@/core/db'
-import { ROLE_META } from '@/core/config'
 import { num } from '@/core/format'
-import { levelOf } from '@/core/services/engagement'
+import { ACTIVITY, GOALS, bodyOf } from '@/core/profile'
 import { toggleFollow } from '@/core/services/fitzone'
 import { openThread } from '@/core/services/fityar'
-import { Avatar, Badge, Button, Card, Empty, PageHeader, SectionTitle } from '@/ui/kit'
+import { Button, Card, Empty, PageHeader, SectionTitle } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 import { PostCard } from '@/modules/fitzone/PostCard'
-import { RoleIcon } from '@/ui/icons'
+import { Achievements, ProfileHero, StatRow, achievementsOf } from '@/modules/profile/parts'
 
+/** پروفایل عمومی؛ اطلاعات سلامت و چرخه‌ی قاعدگی هرگز اینجا نمایش داده نمی‌شود */
 export default function UserProfile() {
   const { id } = useParams()
+  const [params] = useSearchParams()
   const me = useMe()!
   const nav = useNavigate()
   const user = useDB((s) => s.users.find((u) => u.id === id))
   const posts = useDB((s) => s.posts)
   const users = useDB((s) => s.users)
+  const checkins = useDB((s) => s.checkins.filter((c) => c.userId === id).length)
+  const allCh = useDB((s) => s.challenges)
+  const chs = allCh.filter((c) => c.participants.some((p) => p.userId === id))
   if (!user) return <Empty icon="" title="کاربر یافت نشد" />
-  if (user.id === me.id) return <Navigate to="/profile" replace />
-  const lvl = levelOf(user.xp)
+  const self = user.id === me.id
+  if (self && !params.get('preview')) return <Navigate to="/profile" replace />
   const following = me.following.includes(user.id)
   const followers = users.filter((u) => u.following.includes(user.id)).length
   const theirPosts = posts.filter((p) => p.authorId === user.id)
   const isCoach = user.roles.includes('coach')
   const isDoctor = user.roles.includes('doctor')
+  const privacy = user.privacy ?? { publicProfile: true, showBody: false }
+  const visible = privacy.publicProfile || following || self
+  const wins = chs.filter((c) => (c.participants.find((p) => p.userId === user.id)?.score ?? 0) >= c.goal).length
+  const ach = achievementsOf(user, { checkins, challenges: chs.length, wins, posts: theirPosts.length, followers }).filter((a) => a.done)
+  const body = bodyOf(user)
+
   return (
     <div className="animate-fade-up">
-      <PageHeader back title={user.name} />
-      <Card className="text-center">
-        <Avatar name={user.name} src={user.avatar} size={88} ring className="mx-auto" />
-        <div className="mt-2 text-lg font-semibold">{user.name}</div>
-        {user.bio && <p className="text-sm text-ink-500">{user.bio}</p>}
-        <div className="mt-2 flex flex-wrap justify-center gap-1">
-          <Badge color="amber">{lvl.title}</Badge>
-          <Badge color="rose">{num(user.streak)} روز</Badge>
-          {user.roles.filter((r) => r !== 'user' && r !== 'admin').map((r) => <Badge key={r}><RoleIcon role={r} size={12} /> {ROLE_META[r].label}</Badge>)}
+      <PageHeader back title={self ? 'نمای عمومی پروفایل شما' : user.name} />
+      <ProfileHero
+        user={user}
+        actions={
+          self ? undefined : (
+            <>
+              <button onClick={() => toggleFollow(user.id)} className={`flex h-10 items-center rounded-full px-5 text-sm font-medium transition ${following ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-white text-ink-950 hover:brightness-95'}`}>
+                {following ? 'دنبال می‌کنی' : 'دنبال کردن'}
+              </button>
+              <button onClick={() => run(() => nav(`/messages/${openThread(user.id, isCoach ? 'coach' : isDoctor ? 'doctor' : 'direct')}`))} className="flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm transition hover:bg-white/15">
+                <MessageCircle size={15} /> پیام
+              </button>
+              {isCoach && (
+                <button onClick={() => nav(`/fityar/coach/${user.id}`)} className="flex h-10 items-center rounded-full grad-lavender px-4 text-sm font-medium text-ink-950">
+                  پکیج‌های مربی
+                </button>
+              )}
+              {isDoctor && (
+                <button onClick={() => nav(`/doctors/${user.id}`)} className="flex h-10 items-center rounded-full grad-mint px-4 text-sm font-medium text-ink-950">
+                  رزرو ویزیت
+                </button>
+              )}
+            </>
+          )
+        }
+      />
+      <StatRow items={[['پست', theirPosts.length], ['دنبال‌کننده', followers], ['ورود به باشگاه', visible ? checkins : 0], ['امتیاز', user.xp]]} />
+
+      {!visible ? (
+        <Card className="mt-6 flex flex-col items-center gap-2 py-10 text-center">
+          <Lock size={22} className="text-ink-400" />
+          <div className="text-sm font-medium">این پروفایل خصوصی است</div>
+          <div className="text-xs text-ink-500">برای دیدن پست‌ها و فعالیت‌ها، {user.name.split(' ')[0]} را دنبال کنید.</div>
+        </Card>
+      ) : (
+        <>
+          {privacy.showBody && (user.goal || body.bmi) && (
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              {(
+                [
+                  ['هدف', user.goal ? GOALS[user.goal] : '—'],
+                  ['سطح فعالیت', user.activityLevel ? ACTIVITY[user.activityLevel] : '—'],
+                  ['قد / وزن', user.heightCm && user.weightKg ? `${num(user.heightCm)} / ${num(user.weightKg)}` : '—'],
+                ] as const
+              ).map(([l, v]) => (
+                <div key={l} className="rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
+                  <div className="text-[11px] text-ink-400">{l}</div>
+                  <div className="mt-1 text-sm font-medium tabular-nums">{v}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {ach.length > 0 && (
+            <>
+              <SectionTitle title="نشان‌ها" />
+              <Achievements list={ach} />
+            </>
+          )}
+          <SectionTitle title="پست‌ها" />
+          <div className="space-y-4">{theirPosts.length ? theirPosts.map((p) => <PostCard key={p.id} post={p} />) : <Empty icon="" title="هنوز پستی ندارد" />}</div>
+        </>
+      )}
+      {self && (
+        <div className="mt-6 text-center">
+          <Button variant="outline" size="sm" onClick={() => nav('/profile?tab=settings')}>
+            تنظیمات حریم خصوصی
+          </Button>
         </div>
-        <div className="mt-3 flex justify-center gap-6 text-sm">
-          <div><b>{num(theirPosts.length)}</b> پست</div>
-          <div><b>{num(followers)}</b> دنبال‌کننده</div>
-          <div><b>{num(user.xp)}</b> XP</div>
-        </div>
-        <div className="mt-4 flex justify-center gap-2">
-          <Button variant={following ? 'outline' : 'primary'} onClick={() => toggleFollow(user.id)}>{following ? 'دنبال می‌کنی' : 'دنبال کردن'}</Button>
-          <Button variant="secondary" icon={<MessageCircle size={16} />} onClick={() => run(() => nav(`/messages/${openThread(user.id, isCoach ? 'coach' : isDoctor ? 'doctor' : 'direct')}`))}>پیام</Button>
-          {isCoach && <Button variant="dark" onClick={() => nav(`/fityar/coach/${user.id}`)}>پکیج‌های مربی</Button>}
-          {isDoctor && <Button variant="dark" onClick={() => nav(`/doctors/${user.id}`)}>رزرو ویزیت</Button>}
-        </div>
-      </Card>
-      <SectionTitle title="پست‌ها" />
-      <div className="space-y-4">
-        {theirPosts.length ? theirPosts.map((p) => <PostCard key={p.id} post={p} />) : <Empty icon="" title="هنوز پستی ندارد" />}
-      </div>
+      )}
     </div>
   )
 }
