@@ -22,7 +22,7 @@ export default function VendorOrders({ kind }: { kind: Order['kind'] }) {
   return (
     <div className="animate-fade-up">
       <PageHeader title="سفارش‌ها" subtitle={`${num(list.filter((o) => o.status !== 'delivered' && o.status !== 'cancelled').length)} سفارش در جریان`} />
-      {list.length === 0 && <Empty icon="📦" title="هنوز سفارشی ندارید" />}
+      {list.length === 0 && <Empty icon="" title="هنوز سفارشی ندارید" />}
       <div className="grid gap-3 lg:grid-cols-2">
         {list.map((o) => {
           const next = NEXT[o.status]
@@ -30,7 +30,7 @@ export default function VendorOrders({ kind }: { kind: Order['kind'] }) {
             <Card key={o.id}>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-bold">{users[o.userId]?.name}</div>
+                  <div className="text-sm font-semibold">{users[o.userId]?.name}</div>
                   <div className="text-[11px] text-ink-400">{faDateTime(o.createdAt)}</div>
                 </div>
                 <Badge color={ORDER_STATUS[o.status].color}>{ORDER_STATUS[o.status].label}</Badge>
@@ -43,11 +43,11 @@ export default function VendorOrders({ kind }: { kind: Order['kind'] }) {
                   </div>
                 ))}
               </div>
-              <div className="mt-2 text-xs text-ink-500">📍 {o.address}</div>
+              <div className="mt-2 text-xs text-ink-500">{o.address}</div>
               <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-3 dark:border-white/5">
                 <b>{toman(o.total)}</b>
                 <div className="flex gap-2">
-                  {o.status === 'paid' && <Button size="sm" variant="ghost" className="text-rose-500" onClick={() => setOrderStatus(o.id, 'cancelled')}>لغو</Button>}
+                  {o.status === 'paid' && <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => setOrderStatus(o.id, 'cancelled')}>لغو</Button>}
                   {next && <Button size="sm" onClick={() => setOrderStatus(o.id, next.to)}>{next.label}</Button>}
                 </div>
               </div>

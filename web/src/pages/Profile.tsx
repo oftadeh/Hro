@@ -7,7 +7,8 @@ import { num } from '@/core/format'
 import { activateRole, updateProfile } from '@/core/services/auth'
 import { levelOf } from '@/core/services/engagement'
 import type { Role, User } from '@/core/types'
-import { Avatar, Badge, Button, Card, Field, ImagePicker, Input, NumberInput, PageHeader, Progress, SectionTitle, Select, Sheet, Textarea } from '@/ui/kit'
+import { Avatar, Badge, Button, Card, IconTile, Field, ImagePicker, Input, NumberInput, PageHeader, Progress, SectionTitle, Select, Sheet, Textarea } from '@/ui/kit'
+import { RoleIcon } from '@/ui/icons'
 import { useMe } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 
@@ -37,10 +38,10 @@ export default function Profile() {
       <PageHeader title="پروفایل من" actions={<Button variant="outline" size="sm" onClick={openEdit}>ویرایش</Button>} />
       <Card className="text-center">
         <Avatar name={me.name} src={me.avatar} size={96} ring className="mx-auto" />
-        <div className="mt-3 text-xl font-extrabold">{me.name}</div>
+        <div className="mt-3 text-xl font-semibold">{me.name}</div>
         {me.bio && <p className="mt-1 text-sm text-ink-500">{me.bio}</p>}
         <div className="mt-2 flex flex-wrap justify-center gap-1">
-          {me.roles.map((r) => <Badge key={r} color="sky">{ROLE_META[r].icon} {ROLE_META[r].label}</Badge>)}
+          {me.roles.map((r) => <Badge key={r}><RoleIcon role={r} size={12} /> {ROLE_META[r].label}</Badge>)}
         </div>
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">
           {[
@@ -50,14 +51,14 @@ export default function Profile() {
             ['ورود به باشگاه', checkins],
           ].map(([l, v]) => (
             <div key={l as string}>
-              <div className="text-lg font-black">{num(v as number)}</div>
+              <div className="text-xl font-light tabular-nums">{num(v as number)}</div>
               <div className="text-[11px] text-ink-400">{l}</div>
             </div>
           ))}
         </div>
       </Card>
 
-      <SectionTitle title="🎖️ سطح و دستاوردها" />
+      <SectionTitle title="سطح و دستاوردها" />
       <Card>
         <div className="flex items-center justify-between text-sm">
           <b>سطح {num(lvl.level)} — {lvl.title}</b>
@@ -66,19 +67,19 @@ export default function Profile() {
         <Progress value={lvl.progress} className="mt-2" />
         <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
           {LEVELS.map((l) => (
-            <div key={l.level} className={`rounded-2xl p-2 text-center text-xs ${me.xp >= l.xp ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300' : 'bg-ink-50 text-ink-300 dark:bg-white/5'}`}>
-              <div className="text-xl">{me.xp >= l.xp ? '🏅' : '🔒'}</div>
-              {l.title}
+            <div key={l.level} className={`rounded-xl border p-2.5 text-center text-xs ${me.xp >= l.xp ? 'border-brand-300 text-ink-900 dark:border-brand-300/50 dark:text-brand-200' : 'hairline text-ink-400'}`}>
+              <div className="text-[10px] tabular-nums text-ink-400">سطح {num(l.level)}</div>
+              <div className="mt-0.5">{l.title}</div>
             </div>
           ))}
         </div>
         <div className="mt-3 flex justify-around text-center text-xs text-ink-500">
-          <div><div className="text-lg font-black text-orange-500">🔥 {num(me.streak)}</div>روز پیاپی</div>
-          <div><div className="text-lg font-black text-amber-500">🏆 {num(challenges)}</div>چالش</div>
+          <div><div className="text-2xl font-extralight tabular-nums text-ink-900 dark:text-white">{num(me.streak)}</div>روز پیاپی</div>
+          <div><div className="text-2xl font-extralight tabular-nums text-ink-900 dark:text-white">{num(challenges)}</div>چالش</div>
         </div>
       </Card>
 
-      <SectionTitle title="🤝 همکاری با کی‌فیت" />
+      <SectionTitle title="همکاری با کی‌فیت" />
       <p className="-mt-2 mb-3 text-xs text-ink-500">با فعال‌کردن هر نقش، پنل مدیریت اختصاصی آن را دریافت می‌کنید و خدماتتان در ماژول مربوطه به کاربران نمایش داده می‌شود.</p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {[...PRO_ROLES, ...(me.roles.includes('admin') ? (['admin'] as const) : [])].map((r) => {
@@ -86,9 +87,9 @@ export default function Profile() {
           const meta = ROLE_META[r]
           return (
             <Card key={r} className="flex items-center gap-3">
-              <span className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.color} text-2xl`}>{meta.icon}</span>
+              <IconTile><RoleIcon role={r} size={18} /></IconTile>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold">{meta.label}</div>
+                <div className="text-sm font-semibold">{meta.label}</div>
                 <div className="truncate text-[11px] text-ink-500">{meta.desc}</div>
               </div>
               {has ? (
@@ -104,7 +105,7 @@ export default function Profile() {
       <div className="mt-6 grid gap-2 sm:grid-cols-3">
         <Link to="/orders"><Button variant="outline" className="w-full">سفارش‌های من</Button></Link>
         <Button variant="outline" icon={<RotateCcw size={16} />} onClick={() => { if (confirm('همه‌ی داده‌ها به حالت نمایشی اولیه برگردد؟')) { resetDemo(); logout() } }}>بازنشانی داده‌های نمایشی</Button>
-        <Button variant="ghost" className="text-rose-500" icon={<LogOut size={16} />} onClick={logout}>خروج از حساب</Button>
+        <Button variant="ghost" className="text-coral-500" icon={<LogOut size={16} />} onClick={logout}>خروج از حساب</Button>
       </div>
 
       <Sheet open={edit} onClose={() => setEdit(false)} title="ویرایش پروفایل" wide>

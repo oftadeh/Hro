@@ -5,7 +5,7 @@ const pin = L.divIcon({
   className: 'keyfit-marker',
   iconSize: [30, 40],
   iconAnchor: [15, 40],
-  html: '<div style="font-size:34px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))">📍</div>',
+  html: '<div style="font-size:34px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))"></div>',
 })
 
 function Clicker({ onPick }: { onPick: (lat: number, lng: number) => void }) {

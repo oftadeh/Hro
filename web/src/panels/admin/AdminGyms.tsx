@@ -19,9 +19,9 @@ export default function AdminGyms() {
       <div className="grid gap-3 md:grid-cols-2">
         {list.map((g) => (
           <Card key={g.id} className="flex gap-3">
-            <Cover gradient={g.cover} image={g.media.find((m) => m.type === 'image')?.url} emoji="🏋️" className="h-24 w-24 shrink-0 rounded-2xl" />
+            <Cover gradient={g.cover} image={g.media.find((m) => m.type === 'image')?.url} emoji="" className="h-24 w-24 shrink-0 rounded-2xl" />
             <div className="min-w-0 flex-1">
-              <Link to={`/fityab/${g.id}`} className="font-bold">{g.name}</Link>
+              <Link to={`/fityab/${g.id}`} className="font-semibold">{g.name}</Link>
               <div className="text-xs text-ink-500">مالک: {users[g.ownerId]?.name} · {g.address}</div>
               <div className="mt-1 flex flex-wrap gap-1">
                 <Badge color="slate">{toman(g.sessionPrice)}</Badge>
@@ -29,7 +29,7 @@ export default function AdminGyms() {
               </div>
               <div className="mt-2">
                 {g.approved ? (
-                  <Button size="sm" variant="ghost" className="text-rose-500" onClick={() => setGymApproval(g.id, false)}>غیرفعال‌سازی</Button>
+                  <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => setGymApproval(g.id, false)}>غیرفعال‌سازی</Button>
                 ) : (
                   <Button size="sm" onClick={() => setGymApproval(g.id, true)}>تایید و انتشار</Button>
                 )}

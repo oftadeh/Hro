@@ -26,14 +26,14 @@ export default function CoachDashboard() {
         actions={
           coach && (
             <Button size="sm" variant={coach.online ? 'primary' : 'outline'} onClick={() => saveCoachProfile({ online: !coach.online })}>
-              {coach.online ? '● آنلاین' : '○ آفلاین'}
+              {coach.online ? 'آنلاین' : 'آفلاین'}
             </Button>
           )
         }
       />
       {!coach?.plans.length && (
-        <Card className="mb-4 border-amber-200 bg-amber-50 text-sm dark:border-amber-500/20 dark:bg-amber-500/10">
-          ⚠️ هنوز پکیجی تعریف نکرده‌اید. <Link to="profile" className="font-bold text-amber-700 underline dark:text-amber-300">پروفایل و پکیج‌ها را تکمیل کنید</Link> تا در فیت‌یار دیده شوید.
+        <Card className="mb-4 border-brand-200 bg-brand-50 text-sm dark:border-brand-500/20 dark:bg-brand-500/10">
+          هنوز پکیجی تعریف نکرده‌اید. <Link to="profile" className="font-semibold text-brand-700 underline dark:text-brand-300">پروفایل و پکیج‌ها را تکمیل کنید</Link> تا در فیت‌یار دیده شوید.
         </Card>
       )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -44,15 +44,15 @@ export default function CoachDashboard() {
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div>
-          <SectionTitle title="سفارش‌های در انتظار" action={<Link to="orders" className="text-xs font-bold text-brand-600">همه</Link>} />
-          {pending.length === 0 && <Empty icon="✅" title="همه‌ی برنامه‌ها تحویل شده" />}
+          <SectionTitle title="سفارش‌های در انتظار" action={<Link to="orders" className="text-xs font-semibold text-brand-600">همه</Link>} />
+          {pending.length === 0 && <Empty icon="" title="همه‌ی برنامه‌ها تحویل شده" />}
           <div className="space-y-2">
             {pending.slice(0, 5).map((o) => (
               <Link to="orders" key={o.id}>
                 <Card className="flex items-center gap-3 py-3">
                   <Avatar name={users[o.userId]?.name ?? ''} size={38} />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold">{users[o.userId]?.name}</div>
+                    <div className="text-sm font-semibold">{users[o.userId]?.name}</div>
                     <div className="truncate text-xs text-ink-500">{o.title}</div>
                   </div>
                   <span className="text-[11px] text-ink-400">{timeAgo(o.createdAt)}</span>
@@ -63,7 +63,7 @@ export default function CoachDashboard() {
         </div>
         <div>
           <SectionTitle title="آخرین گفتگوها" />
-          {chats.length === 0 && <Empty icon="💬" title="گفتگویی نیست" />}
+          {chats.length === 0 && <Empty icon="" title="گفتگویی نیست" />}
           <div className="space-y-2">
             {chats.slice(0, 5).map((t) => {
               const other = users[t.members.find((m) => m !== me.id)!]
@@ -72,7 +72,7 @@ export default function CoachDashboard() {
                   <Card className="flex items-center gap-3 py-3">
                     <Avatar name={other?.name ?? ''} size={38} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold">{other?.name}</div>
+                      <div className="text-sm font-semibold">{other?.name}</div>
                       <div className="truncate text-xs text-ink-500">{t.messages[t.messages.length - 1]?.text}</div>
                     </div>
                   </Card>

@@ -22,7 +22,7 @@ export default function Messages() {
                 <Avatar name={other?.name ?? '?'} src={other?.avatar} size={48} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold">{other?.name}</span>
+                    <span className="font-semibold">{other?.name}</span>
                     <Badge color={t.context === 'doctor' ? 'sky' : t.context === 'coach' ? 'violet' : 'slate'}>{t.context === 'doctor' ? 'پزشک' : t.context === 'coach' ? 'مربی' : 'دوست'}</Badge>
                   </div>
                   <div className="truncate text-xs text-ink-500">{last?.text ?? 'گفتگو را شروع کنید'}</div>
@@ -33,7 +33,7 @@ export default function Messages() {
           })}
         </Card>
       ) : (
-        <Empty icon="💬" title="هنوز گفتگویی نداری" desc="از فیت‌یار با یک مربی چت کن." />
+        <Empty icon="" title="هنوز گفتگویی نداری" desc="از فیت‌یار با یک مربی چت کن." />
       )}
     </div>
   )

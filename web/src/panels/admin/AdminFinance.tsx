@@ -23,19 +23,19 @@ export default function AdminFinance() {
     <div className="animate-fade-up">
       <PageHeader title="مالی و تسویه" />
       <SectionTitle title="درخواست‌های تسویه" />
-      {payouts.length === 0 && <Empty icon="🏦" title="درخواستی نیست" />}
+      {payouts.length === 0 && <Empty icon="" title="درخواستی نیست" />}
       <div className="grid gap-3 md:grid-cols-2">
         {payouts.map((p) => (
           <Card key={p.id} className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
-              <div className="font-bold">{name(p.userId)} — {toman(p.amount)}</div>
+              <div className="font-semibold">{name(p.userId)} — {toman(p.amount)}</div>
               <div className="truncate text-[11px] text-ink-400" dir="ltr">{p.iban}</div>
               <div className="text-[11px] text-ink-400">{faDateTime(p.createdAt)}</div>
             </div>
             {p.status === 'pending' ? (
               <div className="flex gap-1">
                 <Button size="sm" onClick={() => resolvePayout(p.id, true)}>پرداخت شد</Button>
-                <Button size="sm" variant="ghost" className="text-rose-500" onClick={() => resolvePayout(p.id, false)}>رد</Button>
+                <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => resolvePayout(p.id, false)}>رد</Button>
               </div>
             ) : (
               <Badge color={p.status === 'paid' ? 'emerald' : 'rose'}>{p.status === 'paid' ? 'پرداخت شد' : 'رد شد'}</Badge>
@@ -67,8 +67,8 @@ export default function AdminFinance() {
                 <td className="p-3"><Badge color="slate">{TYPE_LABEL[t.type]}</Badge> {t.description}</td>
                 <td className="p-3 text-xs">{name(t.payerId ?? t.from)}{t.from === 'subscription' && ' (اشتراک)'}</td>
                 <td className="p-3 text-xs">{name(t.to)}</td>
-                <td className="p-3 font-bold">{toman(t.amount)}</td>
-                <td className="p-3 font-bold text-brand-600">{t.commission ? toman(t.commission) : '—'}</td>
+                <td className="p-3 font-semibold">{toman(t.amount)}</td>
+                <td className="p-3 font-semibold text-brand-600">{t.commission ? toman(t.commission) : '—'}</td>
                 <td className="p-3 text-xs text-ink-400">{faDateTime(t.createdAt)}</td>
               </tr>
             ))}

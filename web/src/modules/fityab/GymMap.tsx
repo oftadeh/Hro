@@ -8,20 +8,21 @@ import { useSession } from '@/core/db'
 
 // کاشی‌های کارتو: روشن برای تم روشن و سرمه‌ای برای تم تیره (مانند طرح ناوبری)
 const TILES = {
-  light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
 }
 
 const icon = (active: boolean, price: number, dark: boolean) => {
-  const bg = active ? (dark ? '#e8bf5a' : '#0f172a') : dark ? '#3b82f6' : '#6a35f2'
-  const fg = active && dark ? '#0a1120' : '#fff'
+  const bg = active ? (dark ? '#d8c49c' : '#b0915c') : dark ? '#f1f0ed' : '#0e0e0d'
+  const fg = active ? '#0e0e0d' : dark ? '#0e0e0d' : '#fff'
   return L.divIcon({
     className: 'keyfit-marker',
-    iconSize: [90, 40],
-    iconAnchor: [45, 40],
-    html: `<div style="display:flex;flex-direction:column;align-items:center;transform:scale(${active ? 1.12 : 1});transition:transform .2s">
-      <div style="background:${bg};color:${fg};font:800 11px Vazirmatn;padding:5px 10px;border-radius:12px;box-shadow:0 10px 22px -8px ${bg};white-space:nowrap;border:2px solid ${dark ? 'rgba(255,255,255,.15)' : '#fff'}">${num(price / 1000)}هزار</div>
-      <div style="width:10px;height:10px;background:${bg};transform:rotate(45deg);margin-top:-6px;border-radius:2px"></div>
+    iconSize: [80, 34],
+    iconAnchor: [40, 34],
+    html: `<div style="display:flex;flex-direction:column;align-items:center">
+      <div style="background:${bg};color:${fg};font:500 11px Vazirmatn;padding:4px 9px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 12px -4px rgba(0,0,0,.35)">${num(price / 1000)} هزار</div>
+      <div style="width:1px;height:8px;background:${bg}"></div>
+      <div style="width:5px;height:5px;border-radius:50%;background:${bg}"></div>
     </div>`,
   })
 }
@@ -38,21 +39,21 @@ export function GymMap({ gyms, center, user, selected, onSelect, className = 'h-
   const dark = useSession((s) => s.theme) === 'dark'
   const sel = gyms.find((g) => g.id === selected)
   return (
-    <MapContainer center={center} zoom={12} className={`w-full overflow-hidden rounded-[2rem] ${className}`} scrollWheelZoom attributionControl={false} zoomControl={false}>
+    <MapContainer center={center} zoom={12} className={`w-full overflow-hidden rounded-3xl ${className}`} scrollWheelZoom attributionControl={false} zoomControl={false}>
       <TileLayer key={dark ? 'd' : 'l'} url={dark ? TILES.dark : TILES.light} subdomains="abcd" />
       <Fly center={center} />
-      {user && sel && <Polyline positions={[user, [sel.lat, sel.lng]]} pathOptions={{ color: dark ? '#e8bf5a' : '#7c4dff', weight: 4, dashArray: '2 10', lineCap: 'round' }} />}
+      {user && sel && <Polyline positions={[user, [sel.lat, sel.lng]]} pathOptions={{ color: dark ? '#d8c49c' : '#0e0e0d', weight: 2, dashArray: '4 8', lineCap: 'round' }} />}
       {user && (
         <>
-          <CircleMarker center={user} radius={18} pathOptions={{ stroke: false, fillColor: '#3b82f6', fillOpacity: 0.18 }} />
-          <CircleMarker center={user} radius={8} pathOptions={{ color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1 }} />
+          <CircleMarker center={user} radius={18} pathOptions={{ stroke: false, fillColor: '#6a8189', fillOpacity: 0.18 }} />
+          <CircleMarker center={user} radius={8} pathOptions={{ color: '#fff', weight: 3, fillColor: '#6a8189', fillOpacity: 1 }} />
         </>
       )}
       {gyms.map((g) => (
         <Marker key={g.id} position={[g.lat, g.lng]} icon={icon(g.id === selected, g.sessionPrice, dark)} eventHandlers={{ click: () => onSelect?.(g.id) }}>
           {!onSelect && (
             <Popup>
-              <Link to={`/fityab/${g.id}`} className="font-bold">
+              <Link to={`/fityab/${g.id}`} className="font-semibold">
                 {g.name}
               </Link>
             </Popup>

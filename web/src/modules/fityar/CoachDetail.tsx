@@ -5,13 +5,14 @@ import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
 import { bookCall, buyCoachPlan, openThread } from '@/core/services/fityar'
 import { toggleFollow } from '@/core/services/fitzone'
+import { PerkPrice } from '@/ui/PerkPrice'
 import type { CoachPlan } from '@/core/types'
 import { Avatar, Badge, Button, Card, Empty, Field, PageHeader, SectionTitle, Sheet, Stars, Textarea } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { PostCard } from '@/modules/fitzone/PostCard'
 
-const KIND = { workout: '🏋️ تمرینی', diet: '🥗 تغذیه', both: '⭐ تمرین + تغذیه' } as const
+const KIND = { workout: 'تمرینی', diet: 'تغذیه', both: 'تمرین + تغذیه' } as const
 
 export default function CoachDetail() {
   const { id } = useParams()
@@ -25,7 +26,7 @@ export default function CoachDetail() {
   const [answers, setAnswers] = useState('')
   const [call, setCall] = useState(false)
 
-  if (!coach || !user) return <Empty icon="🔍" title="مربی یافت نشد" />
+  if (!coach || !user) return <Empty icon="" title="مربی یافت نشد" />
   const following = me.following.includes(user.id)
 
   const openBuy = (p: CoachPlan) => {
@@ -41,16 +42,16 @@ export default function CoachDetail() {
     <div className="animate-fade-up">
       <PageHeader back="/fityar?tab=coaches" title={user.name} subtitle={coach.title} />
       <Card className="relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-l from-sky-400 to-indigo-600" />
+        <div className="absolute inset-x-0 top-0 h-24 bg-ink-950" />
         <div className="relative flex flex-col items-center pt-8 text-center">
           <Avatar name={user.name} src={user.avatar} size={96} className="border-4 border-white dark:border-ink-900" />
-          <div className="mt-2 text-xl font-extrabold">{user.name}</div>
+          <div className="mt-2 text-xl font-semibold">{user.name}</div>
           <div className="text-sm text-ink-500">{coach.title}</div>
           <div className="mt-2 flex items-center gap-3 text-xs">
             <Stars value={coach.rating} />
             <span>{num(coach.students)} شاگرد</span>
             <span>{num(coach.experienceYears)} سال سابقه</span>
-            {coach.online && <Badge color="emerald">● آنلاین</Badge>}
+            {coach.online && <Badge color="emerald">آنلاین</Badge>}
           </div>
           <p className="mt-3 max-w-lg text-sm leading-7 text-ink-600 dark:text-ink-300">{coach.bio}</p>
           <div className="mt-3 flex flex-wrap justify-center gap-1.5">
@@ -73,7 +74,7 @@ export default function CoachDetail() {
       {coach.certificates.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {coach.certificates.map((c) => (
-            <span key={c} className="flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <span key={c} className="flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
               <Award size={13} /> {c}
             </span>
           ))}
@@ -85,18 +86,18 @@ export default function CoachDetail() {
         {coach.plans.map((p) => (
           <Card key={p.id} className="flex flex-col">
             <Badge color="violet" className="w-fit">{KIND[p.kind]}</Badge>
-            <div className="mt-2 font-bold">{p.title}</div>
+            <div className="mt-2 font-semibold">{p.title}</div>
             <p className="mt-1 flex-1 text-xs leading-6 text-ink-500">{p.description}</p>
             <div className="mt-3 flex items-center justify-between">
               <div>
-                <div className="text-lg font-black">{toman(p.price)}</div>
+                <div className="text-lg font-semibold">{toman(p.price)}</div>
                 <div className="text-[11px] text-ink-400">{num(p.durationWeeks)} هفته</div>
               </div>
               <Button onClick={() => openBuy(p)}>خرید برنامه</Button>
             </div>
           </Card>
         ))}
-        {!coach.plans.length && <Empty icon="📋" title="هنوز پکیجی تعریف نشده" />}
+        {!coach.plans.length && <Empty icon="" title="هنوز پکیجی تعریف نشده" />}
       </div>
 
       <SectionTitle title="پست‌ها" />
@@ -112,14 +113,14 @@ export default function CoachDetail() {
             </Field>
             <div className="flex items-center justify-between rounded-2xl bg-ink-50 p-3 text-sm dark:bg-white/5">
               <span>مبلغ</span>
-              <b>{toman(plan.price)}</b>
+              <PerkPrice userId={me.id} module="fityar" amount={plan.price} />
             </div>
             <div className="text-xs text-ink-400">موجودی کیف پول: {toman(bal)}</div>
             <Button
               className="w-full"
               size="lg"
               onClick={async () => {
-                const ok = await runOk(() => buyCoachPlan(user.id, plan.id, answers), 'برنامه خریداری شد؛ مربی به‌زودی آن را تحویل می‌دهد 🎯')
+                const ok = await runOk(() => buyCoachPlan(user.id, plan.id, answers), 'برنامه خریداری شد؛ مربی به‌زودی آن را تحویل می‌دهد')
                 if (ok) {
                   setPlan(undefined)
                   nav('/fityar?tab=plans')
@@ -136,14 +137,14 @@ export default function CoachDetail() {
         <p className="text-sm leading-7 text-ink-500">یک تماس صوتی/تصویری ۳۰ دقیقه‌ای با {user.name}. پس از رزرو، مربی از طریق پیام‌ها زمان دقیق را هماهنگ می‌کند.</p>
         <div className="my-4 flex items-center justify-between rounded-2xl bg-ink-50 p-3 text-sm dark:bg-white/5">
           <span>هزینه‌ی تماس</span>
-          <b>{toman(coach.callPrice)}</b>
+          <PerkPrice userId={me.id} module="fityar" amount={coach.callPrice} />
         </div>
         <Button
           className="w-full"
           size="lg"
           icon={<PhoneCall size={18} />}
           onClick={async () => {
-            const t = await run(() => bookCall(user.id), 'تماس رزرو شد 📞')
+            const t = await run(() => bookCall(user.id), 'تماس رزرو شد')
             if (t) nav(`/messages/${t}`)
           }}
         >

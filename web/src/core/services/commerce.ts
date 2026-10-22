@@ -4,6 +4,7 @@ import { uid, now } from '../id'
 import type { CartItem, Food, Order, Product, Restaurant } from '../types'
 import { applyPayment, notify } from './ledger'
 import { addXP } from './engagement'
+import { discountPct } from './perks'
 import { toman } from '../format'
 
 export const finalPrice = (p: Product) => Math.round((p.price * (100 - p.discount)) / 100)
@@ -52,7 +53,9 @@ export function checkout(kind: CartItem['kind'], address: string) {
   if (address.trim().length < 5) throw new AppError('آدرس تحویل را وارد کنید')
   const lines = cartLines(me, kind)
   if (!lines.length) throw new AppError('سبد خرید خالی است')
-  const total = lines.reduce((a, l) => a + l.price * l.qty, 0)
+  const gross = lines.reduce((a, l) => a + l.price * l.qty, 0)
+  const pct = discountPct(me, kind === 'product' ? 'shop' : 'buffet')
+  const total = gross - Math.round((gross * pct) / 100)
   if ((db().wallets[me] ?? 0) < total) throw new AppError(`موجودی کافی نیست. مبلغ سفارش ${toman(total)} است`)
 
   const byVendor = new Map<string, typeof lines>()
@@ -65,7 +68,7 @@ export function checkout(kind: CartItem['kind'], address: string) {
       const payee = kind === 'product' ? vendorId : d.restaurants.find((r) => r.id === vendorId)!.ownerId
       applyPayment(d, {
         type: kind === 'product' ? 'shop_order' : 'food_order',
-        from: me, to: payee, amount: orderTotal, module: kind === 'product' ? 'shop' : 'buffet', refId: orderId,
+        from: me, to: payee, amount: orderTotal, module: kind === 'product' ? 'shop' : 'buffet', refId: orderId, discountPct: pct,
         description: kind === 'product' ? 'سفارش فروشگاه' : 'سفارش غذای رژیمی',
       })
       if (kind === 'product') {
@@ -83,11 +86,11 @@ export function checkout(kind: CartItem['kind'], address: string) {
       }
       d.orders.unshift(order)
       orderIds.push(orderId)
-      notify(d, payee, kind === 'product' ? 'سفارش جدید 🛍️' : 'سفارش غذای جدید 🥗', `مبلغ ${toman(orderTotal)}`, kind === 'product' ? '🛍️' : '🥗', kind === 'product' ? '/panel/seller/orders' : '/panel/restaurant/orders')
+      notify(d, payee, kind === 'product' ? 'سفارش جدید' : 'سفارش غذای جدید', `مبلغ ${toman(orderTotal)}`, kind === 'product' ? '' : '', kind === 'product' ? '/panel/seller/orders' : '/panel/restaurant/orders')
     }
     d.carts[me] = (d.carts[me] ?? []).filter((c) => c.kind !== kind)
     addXP(d, me, 20)
-    notify(d, me, 'سفارش ثبت شد ✅', `مبلغ ${toman(total)} از کیف پول کسر شد.`, '✅', '/orders')
+    notify(d, me, 'سفارش ثبت شد', `مبلغ ${toman(total)} از کیف پول کسر شد.`, '', '/orders')
   })
   return orderIds
 }
@@ -102,8 +105,11 @@ export function setOrderStatus(orderId: string, status: Order['status']) {
       if (tx) {
         d.wallets[tx.to] = (d.wallets[tx.to] ?? 0) - (tx.amount - tx.commission)
         d.wallets.platform = (d.wallets.platform ?? 0) - tx.commission
-        d.wallets[o.userId] = (d.wallets[o.userId] ?? 0) + tx.amount
-        d.transactions.unshift({ id: uid('tx-'), type: 'refund', from: tx.to, to: o.userId, amount: tx.amount, commission: 0, refId: o.id, description: 'بازگشت وجه سفارش لغوشده', createdAt: now() })
+        // تخفیفی که کی‌فیت پرداخته بود به حساب پلتفرم برمی‌گردد
+        const paid = tx.amount - (tx.discount ?? 0)
+        d.wallets.platform += tx.discount ?? 0
+        d.wallets[o.userId] = (d.wallets[o.userId] ?? 0) + paid
+        d.transactions.unshift({ id: uid('tx-'), type: 'refund', from: tx.to, to: o.userId, amount: paid, commission: 0, refId: o.id, description: 'بازگشت وجه سفارش لغوشده', createdAt: now() })
       }
       if (o.kind === 'shop')
         o.items.forEach((i) => {
@@ -116,7 +122,7 @@ export function setOrderStatus(orderId: string, status: Order['status']) {
     }
     o.status = status
     const labels: Record<Order['status'], string> = { paid: 'پرداخت شد', preparing: 'در حال آماده‌سازی', shipped: 'ارسال شد', delivered: 'تحویل شد', cancelled: 'لغو شد' }
-    notify(d, o.userId, 'وضعیت سفارش', `سفارش شما: ${labels[status]}`, '📦', '/orders')
+    notify(d, o.userId, 'وضعیت سفارش', `سفارش شما: ${labels[status]}`, '', '/orders')
   })
 }
 
@@ -129,7 +135,7 @@ export function saveProduct(input: Partial<Product>) {
     else
       d.products.unshift({
         id: uid('p-'), sellerId: me, name: '', brand: '', category: 'supplement', price: 0, discount: 0, stock: 0,
-        description: '', emoji: '📦', rating: 5, sold: 0, createdAt: now(), ...input,
+        description: '', emoji: '', rating: 5, sold: 0, createdAt: now(), ...input,
       } as Product)
   })
 }
@@ -149,7 +155,7 @@ export function saveRestaurant(input: Partial<Restaurant>) {
     else
       d.restaurants.unshift({
         id: uid('r-'), ownerId: me, name: 'رستوران من', description: '', address: '', lat: 35.72, lng: 51.39,
-        cover: 'from-lime-400 via-green-500 to-brand-600', rating: 5, deliveryMinutes: 40, open: true, approved: true, ...input,
+        cover: 'from-ink-700 via-ink-800 to-brand-600', rating: 5, deliveryMinutes: 40, open: true, approved: true, ...input,
       } as Restaurant)
   })
 }
@@ -161,7 +167,7 @@ export function saveFood(input: Partial<Food>) {
     if (ex) Object.assign(ex, input)
     else
       d.foods.unshift({
-        id: uid('f-'), description: '', calories: 0, protein: 0, carbs: 0, fat: 0, tags: [], emoji: '🍽️', available: true, ...input,
+        id: uid('f-'), description: '', calories: 0, protein: 0, carbs: 0, fat: 0, tags: [], emoji: '', available: true, ...input,
       } as Food)
   })
 }

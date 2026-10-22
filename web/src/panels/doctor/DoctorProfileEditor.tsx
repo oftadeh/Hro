@@ -26,7 +26,7 @@ export default function DoctorProfileEditor() {
           <Button className="w-full" onClick={() => run(() => saveDoctorProfile({ specialty: f.specialty, medicalCode: f.medicalCode, visitPrice: f.visitPrice, bio: f.bio }), 'ذخیره شد')}>ذخیره</Button>
         </Card>
         <Card className="space-y-3">
-          <div className="font-extrabold">نوبت‌های آزاد</div>
+          <div className="font-semibold">نوبت‌های آزاد</div>
           <div className="flex gap-2">
             <Input type="datetime-local" value={slot} onChange={(e) => setSlot(e.target.value)} dir="ltr" />
             <Button variant="secondary" onClick={() => {
@@ -37,7 +37,7 @@ export default function DoctorProfileEditor() {
           </div>
           <div className="flex flex-wrap gap-2">
             {(doc?.slots ?? []).map((s) => (
-              <span key={s} className="flex items-center gap-1 rounded-xl bg-cyan-50 px-3 py-1.5 text-xs dark:bg-cyan-500/10">
+              <span key={s} className="flex items-center gap-1 rounded-xl bg-aqua-50 px-3 py-1.5 text-xs dark:bg-aqua-500/10">
                 {faDateTime(s)}
                 <button onClick={() => saveDoctorProfile({ slots: doc!.slots.filter((x) => x !== s) })} aria-label="حذف"><X size={12} /></button>
               </span>

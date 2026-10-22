@@ -6,6 +6,7 @@ import { timeAgo } from '@/core/format'
 import { markNotificationsRead } from '@/core/services/engagement'
 import { Card, Empty, PageHeader } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
+import { Bell } from 'lucide-react'
 
 export default function Notifications() {
   const me = useMe()!
@@ -23,9 +24,9 @@ export default function Notifications() {
           {mine.slice(0, 60).map((n) => {
             const body = (
               <div className={clsx('flex gap-3 p-4', !n.read && 'bg-brand-50/60 dark:bg-brand-500/5')}>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-ink-100 text-lg dark:bg-white/5">{n.icon}</span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border hairline text-ink-500"><Bell size={15} strokeWidth={1.5} /></span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold">{n.title}</div>
+                  <div className="text-sm font-semibold">{n.title}</div>
                   <div className="text-xs leading-6 text-ink-500">{n.body}</div>
                   <div className="text-[11px] text-ink-400">{timeAgo(n.at)}</div>
                 </div>
@@ -36,7 +37,7 @@ export default function Notifications() {
           })}
         </Card>
       ) : (
-        <Empty icon="🔔" title="اعلانی نداری" />
+        <Empty icon="" title="اعلانی نداری" />
       )}
     </div>
   )

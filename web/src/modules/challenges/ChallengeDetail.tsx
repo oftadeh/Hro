@@ -6,13 +6,15 @@ import { useDB } from '@/core/db'
 import { daysLeft, faDate, num, toman } from '@/core/format'
 import { joinChallenge, logChallengeProgress, rankings, settleChallenge } from '@/core/services/challenges'
 import { ROLE_META } from '@/core/config'
-import { Avatar, Badge, Button, Card, Empty, Field, HeroHeader, Input, NumberInput, PageHeader, Progress, RaisedSheet, SectionTitle, Sheet, Stat } from '@/ui/kit'
+import { freeChallengeLeft } from '@/core/services/perks'
+import { Avatar, Badge, Button, Card, Empty, Field, HeroHeader, Money, Input, NumberInput, PageHeader, Progress, RaisedSheet, SectionTitle, Sheet, Stat } from '@/ui/kit'
 import { useMe, useUserMap, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
+import { MetricIcon } from '@/ui/icons'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
 import { PostCard } from '@/modules/fitzone/PostCard'
 
-const MEDALS = ['🥇', '🥈', '🥉']
+const MEDALS = ['', '', '']
 
 export default function ChallengeDetail() {
   const { id } = useParams()
@@ -21,13 +23,15 @@ export default function ChallengeDetail() {
   const posts = useDB((s) => s.posts)
   const users = useUserMap()
   const bal = useBalance(me.id)
+  useDB((s) => s.subscriptions)
+  const freeEntries = freeChallengeLeft(me.id)
   const [log, setLog] = useState(false)
   const [value, setValue] = useState(0)
   const [note, setNote] = useState('')
   const [share, setShare] = useState(false)
   const [join, setJoin] = useState(false)
 
-  if (!c) return <Empty icon="🔍" title="چالش یافت نشد" />
+  if (!c) return <Empty icon="" title="چالش یافت نشد" />
   const ranked = rankings(c)
   const myIdx = ranked.findIndex((p) => p.userId === me.id)
   const mine = ranked[myIdx]
@@ -40,22 +44,24 @@ export default function ChallengeDetail() {
   return (
     <div className="animate-fade-up">
       <PageHeader back="/challenges" title={c.title} actions={<Button variant="outline" size="sm" icon={<Share2 size={15} />} onClick={() => setShare(true)}>فیت‌زون</Button>} />
-      <HeroHeader gradient={c.gradient} className="px-5 pb-14 pt-6 text-center">
-        <div className="text-6xl drop-shadow-xl">{c.emoji}</div>
-        <div className="mt-2 text-xs font-semibold text-white/80">صندوق جایزه</div>
-        <div className="text-[2.5rem] font-black leading-tight tracking-tight">{toman(c.pool)}</div>
-        {c.extraReward && <div className="mx-auto mt-2 w-fit rounded-full bg-white/20 px-3 py-1 text-xs backdrop-blur">🎁 {c.extraReward}</div>}
+      <HeroHeader className="px-6 pb-14 pt-8 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-brand-300/30 text-brand-300">
+          <MetricIcon metric={c.metric} size={20} />
+        </div>
+        <div className="mt-5 text-[11px] tracking-wide text-white/50">صندوق جایزه</div>
+        <div className="mt-1 text-[2.6rem] font-extralight leading-tight tracking-tightest sm:text-5xl"><Money value={c.pool} /></div>
+        {c.extraReward && <div className="mx-auto mt-4 w-fit rounded-full border border-white/15 px-3 py-1 text-xs text-white/70">+ {c.extraReward}</div>}
       </HeroHeader>
-      <RaisedSheet className="mx-auto max-w-3xl">
+      <RaisedSheet className="mx-3 sm:mx-auto sm:max-w-3xl">
         <div className="grid grid-cols-3 text-center">
           {[
             ['زمان باقی‌مانده', c.status === 'finished' ? 'پایان‌یافته' : left > 0 ? `${num(left)} روز` : 'اعلام نتایج'],
             ['شرکت‌کننده', `${num(c.participants.length)} / ${num(c.maxParticipants)}`],
             ['هدف', `${num(c.goal)} ${c.unit}`],
           ].map(([k, v], i) => (
-            <div key={k} className={i === 1 ? 'border-x border-ink-100 dark:border-white/10' : ''}>
+            <div key={k} className={i === 1 ? 'border-x hairline' : ''}>
               <div className="text-[11px] text-ink-400">{k}</div>
-              <div className="mt-0.5 text-sm font-black">{v}</div>
+              <div className="mt-0.5 text-sm font-semibold">{v}</div>
             </div>
           ))}
         </div>
@@ -80,20 +86,20 @@ export default function ChallengeDetail() {
           </div>
 
           {mine ? (
-            <Card className="bg-gradient-to-br from-white to-brand-50 dark:from-ink-900/70 dark:to-ink-850/70">
+            <Card>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs text-ink-500">پیشرفت تو</div>
-                  <div className="text-2xl font-black">
+                  <div className="text-2xl font-semibold">
                     {num(mine.score)} <span className="text-sm font-normal text-ink-400">/ {num(c.goal)} {c.unit}</span>
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-ink-500">رتبه</div>
-                  <div className="text-3xl font-black text-brand-600 dark:text-gold-300">{MEDALS[myIdx] ?? num(myIdx + 1)}</div>
+                  <div className="text-3xl font-semibold text-brand-600 dark:text-gold-300">{MEDALS[myIdx] ?? num(myIdx + 1)}</div>
                 </div>
               </div>
-              <Progress value={mine.score / c.goal} className="mt-3 h-2.5" tone="from-coral-400 to-fuchsia-600" />
+              <Progress value={mine.score / c.goal} className="mt-3 h-2.5" tone="from-coral-400 to-ink-900" />
               {c.status === 'active' && left > 0 && (
                 <Button className="mt-4 w-full" onClick={() => setLog(true)}>
                   ثبت پیشرفت امروز
@@ -102,19 +108,19 @@ export default function ChallengeDetail() {
             </Card>
           ) : c.status === 'active' ? (
             <Button size="lg" className="w-full" icon={<Trophy size={18} />} onClick={() => setJoin(true)}>
-              شرکت در چالش {c.entryFee ? `(${toman(c.entryFee)})` : '(رایگان)'}
+              شرکت در چالش {c.entryFee ? (freeEntries > 0 ? '(رایگان با اشتراک)' : `(${toman(c.entryFee)})`) : '(رایگان)'}
             </Button>
           ) : null}
 
           {c.status === 'finished' && c.winners && (
             <Card>
-              <div className="mb-3 font-extrabold">🏆 برندگان</div>
+              <div className="mb-3 font-semibold">برندگان</div>
               {c.winners.length === 0 && <div className="text-sm text-ink-500">برنده‌ای ثبت نشد.</div>}
               {c.winners.map((w) => (
                 <div key={w.userId} className="flex items-center gap-3 py-2">
                   <span className="text-2xl">{MEDALS[w.rank - 1] ?? w.rank}</span>
                   <Avatar name={users[w.userId]?.name ?? ''} size={36} />
-                  <div className="flex-1 font-bold">{users[w.userId]?.name}</div>
+                  <div className="flex-1 font-semibold">{users[w.userId]?.name}</div>
                   <b className="text-brand-600">{toman(w.amount)}</b>
                 </div>
               ))}
@@ -131,8 +137,8 @@ export default function ChallengeDetail() {
 
         <div className="space-y-4">
           <Card>
-            <div className="mb-3 flex items-center gap-2 font-extrabold">
-              <Gift size={18} className="text-rose-500" /> جوایز
+            <div className="mb-3 flex items-center gap-2 font-semibold">
+              <Gift size={18} className="text-coral-500" /> جوایز
             </div>
             {c.prizes.map((p) => (
               <div key={p.rank} className="flex items-center justify-between py-1.5 text-sm">
@@ -143,24 +149,24 @@ export default function ChallengeDetail() {
             <div className="mt-2 text-[11px] text-ink-400">صندوق با هر شرکت‌کننده‌ی جدید بزرگ‌تر می‌شود.</div>
           </Card>
           <Card>
-            <div className="mb-3 font-extrabold">📊 جدول رده‌بندی</div>
+            <div className="mb-3 font-semibold">جدول رده‌بندی</div>
             <div className="space-y-1">
               {ranked.slice(0, 20).map((p, i) => {
                 const u = users[p.userId]
                 return (
                   <Link to={`/u/${p.userId}`} key={p.userId} className={clsx('flex items-center gap-2 rounded-2xl p-2', p.userId === me.id && 'bg-brand-50 dark:bg-gold-400/10')}>
-                    <span className="w-6 text-center font-black text-ink-400">{MEDALS[i] ?? num(i + 1)}</span>
+                    <span className="w-6 text-center font-semibold text-ink-400">{MEDALS[i] ?? num(i + 1)}</span>
                     <Avatar name={u?.name ?? ''} src={u?.avatar} size={32} />
-                    <span className="flex-1 truncate text-sm font-semibold">{u?.name}</span>
-                    <span className="text-xs font-bold">{num(p.score)}</span>
+                    <span className="flex-1 truncate text-sm font-medium">{u?.name}</span>
+                    <span className="text-xs font-semibold">{num(p.score)}</span>
                   </Link>
                 )
               })}
-              {ranked.length === 0 && <div className="py-4 text-center text-sm text-ink-400">اولین نفر باش! 🚀</div>}
+              {ranked.length === 0 && <div className="py-4 text-center text-sm text-ink-400">اولین نفر باش!</div>}
             </div>
           </Card>
           {canSettle && (
-            <Button variant="outline" className="w-full" onClick={() => run(() => settleChallenge(c.id, me.roles.includes('admin')), 'چالش بسته و جوایز پرداخت شد 🏆')}>
+            <Button variant="outline" className="w-full" onClick={() => run(() => settleChallenge(c.id, me.roles.includes('admin')), 'چالش بسته و جوایز پرداخت شد')}>
               پایان چالش و پرداخت جوایز
             </Button>
           )}
@@ -169,14 +175,14 @@ export default function ChallengeDetail() {
 
       <Sheet open={join} onClose={() => setJoin(false)} title={`شرکت در «${c.title}»`}>
         <p className="text-sm leading-7 text-ink-500">
-          {c.entryFee ? `ورودی ${toman(c.entryFee)} از کیف پولت کسر و به صندوق جایزه اضافه می‌شود.` : 'شرکت در این چالش رایگان است.'} با ثبت روزانه‌ی پیشرفتت در رده‌بندی بالا برو!
+          {c.entryFee ? (freeEntries > 0 ? `ورودی این چالش با مزیت اشتراکت رایگان است (${num(freeEntries)} ورود رایگان باقی‌مانده).` : `ورودی ${toman(c.entryFee)} از کیف پولت کسر و به صندوق جایزه اضافه می‌شود.`) : 'شرکت در این چالش رایگان است.'} با ثبت روزانه‌ی پیشرفتت در رده‌بندی بالا برو!
         </p>
         <div className="my-3 text-xs text-ink-400">موجودی کیف پول: {toman(bal)}</div>
         <Button
           className="w-full"
           size="lg"
           onClick={async () => {
-            const ok = await runOk(() => joinChallenge(c.id), 'به چالش پیوستی! 🏁')
+            const ok = await runOk(() => joinChallenge(c.id), 'به چالش پیوستی!')
             if (ok) setJoin(false)
           }}
         >
@@ -195,7 +201,7 @@ export default function ChallengeDetail() {
           <Button
             className="w-full"
             onClick={async () => {
-              const ok = await runOk(() => logChallengeProgress(c.id, value, note), 'ثبت شد 💪')
+              const ok = await runOk(() => logChallengeProgress(c.id, value, note), 'ثبت شد')
               if (ok) {
                 setLog(false)
                 setValue(0)

@@ -25,7 +25,7 @@ export function loginWithOtp(rawPhone: string, otp: string, name?: string): User
     mutate((d) => {
       d.users.push(created)
       d.wallets[created.id] = 0
-      notify(d, created.id, 'به کی‌فیت خوش اومدی! 🎉', 'با خرید اشتراک بدون ثبت‌نام وارد باشگاه‌ها شو.', '🎉', '/wallet')
+      notify(d, created.id, 'به کی‌فیت خوش اومدی!', 'با خرید اشتراک بدون ثبت‌نام وارد باشگاه‌ها شو.', '', '/wallet')
     })
     user = created
   }

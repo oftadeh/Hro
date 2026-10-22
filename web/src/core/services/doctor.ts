@@ -3,6 +3,7 @@ import { uid, now } from '../id'
 import type { DoctorProfile } from '../types'
 import { applyPayment, notify } from './ledger'
 import { faDateTime } from '../format'
+import { consumeFree, discountPct } from './perks'
 
 export function bookAppointment(doctorId: string, at: string, reason: string) {
   const me = currentUserId()
@@ -12,15 +13,16 @@ export function bookAppointment(doctorId: string, at: string, reason: string) {
   if (reason.trim().length < 5) throw new AppError('علت مراجعه را بنویسید')
   mutate((d) => {
     const id = uid('ap-')
-    applyPayment(d, { type: 'doctor_visit', from: me, to: doctorId, amount: doc.visitPrice, module: 'doctor', refId: id, description: 'ویزیت آنلاین پزشک' })
+    const free = consumeFree(d, me, 'doctor')
+    applyPayment(d, { type: 'doctor_visit', from: me, to: doctorId, amount: doc.visitPrice, module: 'doctor', refId: id, discountPct: free ? 100 : discountPct(me, 'doctor', d), description: free ? 'ویزیت پزشک (رایگان با اشتراک)' : 'ویزیت آنلاین پزشک' })
     const dd = d.doctors.find((x) => x.userId === doctorId)!
     dd.slots = dd.slots.filter((s) => s !== at)
     d.appointments.unshift({ id, userId: me, doctorId, at, price: doc.visitPrice, reason, status: 'booked', createdAt: now() })
-    notify(d, doctorId, 'نوبت جدید 🩺', `نوبت ${faDateTime(at)} رزرو شد.`, '🩺', '/panel/doctor')
-    notify(d, me, 'نوبت شما ثبت شد 🩺', `${faDateTime(at)} — از بخش پیام‌ها با پزشک در ارتباط باشید.`, '🩺', '/doctors')
+    notify(d, doctorId, 'نوبت جدید', `نوبت ${faDateTime(at)} رزرو شد.`, '', '/panel/doctor')
+    notify(d, me, 'نوبت شما ثبت شد', `${faDateTime(at)} — از بخش پیام‌ها با پزشک در ارتباط باشید.`, '', '/doctors')
     // ایجاد گفتگو برای ویزیت آنلاین
     if (!d.threads.find((t) => t.members.includes(me) && t.members.includes(doctorId))) {
-      d.threads.unshift({ id: uid('t-'), members: [me, doctorId], context: 'doctor', updatedAt: now(), messages: [{ id: uid('m-'), from: me, text: `🩺 نوبت ویزیت: ${faDateTime(at)}\nعلت: ${reason}`, at: now(), kind: 'system' }] })
+      d.threads.unshift({ id: uid('t-'), members: [me, doctorId], context: 'doctor', updatedAt: now(), messages: [{ id: uid('m-'), from: me, text: `نوبت ویزیت: ${faDateTime(at)}\nعلت: ${reason}`, at: now(), kind: 'system' }] })
     }
   })
 }
@@ -33,7 +35,7 @@ export function completeAppointment(id: string, prescription: string) {
     a.status = 'done'
     a.prescription = prescription
     d.doctors.find((x) => x.userId === me)!.visits += 1
-    notify(d, a.userId, 'نتیجه‌ی ویزیت آماده است 📋', 'توصیه‌های پزشک را در بخش پزشک ببینید.', '📋', '/doctors')
+    notify(d, a.userId, 'نتیجه‌ی ویزیت آماده است', 'توصیه‌های پزشک را در بخش پزشک ببینید.', '', '/doctors')
   })
 }
 

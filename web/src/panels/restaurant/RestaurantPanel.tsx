@@ -4,10 +4,11 @@ import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
 import { deleteFood, saveFood, saveRestaurant } from '@/core/services/commerce'
 import type { Food, Restaurant } from '@/core/types'
-import { Badge, Button, Card, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, Select, Sheet, Textarea } from '@/ui/kit'
+import { Badge, Button, Card, coverFor, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, Select, Sheet, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { LocationPicker } from '../shared/LocationPicker'
+import { FoodIcon } from '@/ui/icons'
 
 export default function RestaurantPanel() {
   const me = useMe()!
@@ -24,7 +25,7 @@ export default function RestaurantPanel() {
     <div className="animate-fade-up">
       <PageHeader title="منو و رستوران" subtitle="غذاهای رژیمی شما در ماژول بوفه" actions={<Button size="sm" variant="outline" icon={<Plus size={16} />} onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 35.72, lng: 51.39 })}>رستوران جدید</Button>} />
       {mine.length === 0 ? (
-        <Empty icon="🥗" title="هنوز رستورانی ثبت نکرده‌اید" action={<Button onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 35.72, lng: 51.39 })}>ثبت رستوران</Button>} />
+        <Empty icon="" title="هنوز رستورانی ثبت نکرده‌اید" action={<Button onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 35.72, lng: 51.39 })}>ثبت رستوران</Button>} />
       ) : (
         <>
           {mine.length > 1 && (
@@ -34,28 +35,28 @@ export default function RestaurantPanel() {
           )}
           {current && (
             <Card className="flex flex-wrap items-center gap-3">
-              <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${current.cover}`} />
+              <div className={`h-14 w-14 rounded-xl ${coverFor(current.id)}`} />
               <div className="min-w-0 flex-1">
-                <div className="font-bold">{current.name}</div>
+                <div className="font-semibold">{current.name}</div>
                 <div className="text-xs text-ink-500">{current.description}</div>
               </div>
               <Button size="sm" variant={current.open ? 'primary' : 'outline'} onClick={() => saveRestaurant({ id: current.id, open: !current.open })}>{current.open ? 'باز است' : 'بسته است'}</Button>
               <Button size="sm" variant="outline" icon={<Pencil size={14} />} onClick={() => setEditR(current)}>ویرایش</Button>
-              <Button size="sm" icon={<Plus size={14} />} onClick={() => setEditF({ restaurantId: current.id, name: '', price: 0, calories: 0, protein: 0, carbs: 0, fat: 0, emoji: '🍽️', tags: [] })}>غذای جدید</Button>
+              <Button size="sm" icon={<Plus size={14} />} onClick={() => setEditF({ restaurantId: current.id, name: '', price: 0, calories: 0, protein: 0, carbs: 0, fat: 0, emoji: '', tags: [] })}>غذای جدید</Button>
             </Card>
           )}
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {menu.map((f) => (
               <Card key={f.id} className="flex gap-3">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-lime-50 text-3xl dark:bg-lime-500/10">{f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : f.emoji}</div>
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 text-3xl dark:bg-emerald-500/10">{f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : <FoodIcon size={24} className="text-ink-400" />}</div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold">{f.name}</div>
+                  <div className="text-sm font-semibold">{f.name}</div>
                   <div className="text-xs text-ink-500">{toman(f.price)} · {num(f.calories)} کالری</div>
                   {!f.available && <Badge color="rose">ناموجود</Badge>}
                   <div className="mt-2 flex gap-1">
                     <Button size="sm" variant="outline" onClick={() => setEditF(f)}>ویرایش</Button>
                     <Button size="sm" variant="ghost" onClick={() => saveFood({ ...f, available: !f.available })}>{f.available ? 'ناموجود کن' : 'موجود کن'}</Button>
-                    <Button size="sm" variant="ghost" className="text-rose-500" icon={<Trash2 size={13} />} onClick={() => confirm('حذف شود؟') && deleteFood(f.id)} />
+                    <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={13} />} onClick={() => confirm('حذف شود؟') && deleteFood(f.id)} />
                   </div>
                 </div>
               </Card>
@@ -88,7 +89,6 @@ export default function RestaurantPanel() {
             <Field label="کربوهیدرات (گرم)"><NumberInput value={editF.carbs ?? 0} onChange={(v) => setEditF({ ...editF, carbs: v })} /></Field>
             <Field label="چربی (گرم)"><NumberInput value={editF.fat ?? 0} onChange={(v) => setEditF({ ...editF, fat: v })} /></Field>
             <Field label="برچسب‌ها" hint="با ویرگول"><Input value={(editF.tags ?? []).join('، ')} onChange={(e) => setEditF({ ...editF, tags: e.target.value.split(/[،,]/).map((x) => x.trim()).filter(Boolean) })} /></Field>
-            <Field label="ایموجی"><Input value={editF.emoji} onChange={(e) => setEditF({ ...editF, emoji: e.target.value })} maxLength={4} /></Field>
             <div className="sm:col-span-2"><Field label="توضیح"><Textarea rows={2} value={editF.description} onChange={(e) => setEditF({ ...editF, description: e.target.value })} /></Field></div>
             <Button className="sm:col-span-2" onClick={async () => {
               const ok = await runOk(() => saveFood(editF), 'ذخیره شد')

@@ -14,6 +14,7 @@ import { GymMap } from './GymMap'
 import { GENDER_LABEL } from './GymCard'
 import { directionsUrl, neshanUrl, wazeUrl } from './nav'
 import { PostCard } from '@/modules/fitzone/PostCard'
+import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
 
 export default function GymDetail() {
   const { id } = useParams()
@@ -27,8 +28,9 @@ export default function GymDetail() {
   const [confirm, setConfirm] = useState(false)
   const [ticket, setTicket] = useState<CheckIn>()
   const [media, setMedia] = useState(0)
+  const [share, setShare] = useState(false)
 
-  if (!gym) return <Empty icon="🔍" title="باشگاه یافت نشد" />
+  if (!gym) return <Empty icon="" title="باشگاه یافت نشد" />
   const active = checkins.find((c) => c.gymId === gym.id && c.userId === me.id && c.status === 'active')
   const canSub = !!sub && sub.credit >= gym.sessionPrice
   const gymPosts = posts.filter((p) => p.gymId === gym.id)
@@ -62,11 +64,11 @@ export default function GymDetail() {
       />
 
       {/* گالری عکس و فیلم */}
-      <div className="overflow-hidden rounded-[2rem]">
+      <div className="overflow-hidden rounded-3xl">
         {current?.type === 'video' ? (
           <video src={current.url} controls playsInline className="aspect-video w-full bg-black object-cover" />
         ) : (
-          <Cover gradient={gym.cover} image={current?.url} emoji="🏋️" className="aspect-video">
+          <Cover gradient={gym.cover} image={current?.url} emoji="" className="aspect-video">
             <div className="absolute bottom-3 right-3 flex gap-1">
               {gym.sports.map((s) => <Badge key={s} color="slate" className="!bg-white/90 !text-ink-800">{s}</Badge>)}
             </div>
@@ -77,7 +79,7 @@ export default function GymDetail() {
         <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
           {gym.media.map((m, i) => (
             <button key={i} onClick={() => setMedia(i)} className={`h-16 w-24 shrink-0 overflow-hidden rounded-xl border-2 ${i === media ? 'border-brand-500' : 'border-transparent'}`}>
-              {m.type === 'video' ? <div className="flex h-full items-center justify-center bg-ink-900 text-xl text-white">▶</div> : <img src={m.url} alt="" className="h-full w-full object-cover" />}
+              {m.type === 'video' ? <div className="flex h-full items-center justify-center bg-ink-900 text-xl text-white"></div> : <img src={m.url} alt="" className="h-full w-full object-cover" />}
             </button>
           ))}
         </div>
@@ -98,7 +100,7 @@ export default function GymDetail() {
             </div>
             <SectionTitle title="امکانات" />
             <div className="flex flex-wrap gap-2">
-              {gym.facilities.map((f) => <Badge key={f} color="emerald">✓ {f}</Badge>)}
+              {gym.facilities.map((f) => <Badge key={f}>{f}</Badge>)}
             </div>
           </Card>
 
@@ -123,11 +125,11 @@ export default function GymDetail() {
         <div>
           <Card className="sticky top-20">
             <div className="text-xs text-ink-500">هزینه‌ی هر سانس</div>
-            <div className="text-2xl font-black">{toman(gym.sessionPrice)}</div>
+            <div className="text-2xl font-semibold">{toman(gym.sessionPrice)}</div>
             <div className="mt-3 rounded-2xl bg-ink-50 p-3 text-xs leading-6 text-ink-600 dark:bg-white/5 dark:text-ink-300">
-              ✅ بدون ثبت‌نام و پرداخت در باشگاه
-              <br />✅ کد ورود را در پذیرش نشان دهید
-              <br />✅ پرداخت از {sub ? 'اعتبار اشتراک' : 'کیف پول'}
+              بدون ثبت‌نام و پرداخت در باشگاه
+              <br />کد ورود را در پذیرش نشان دهید
+              <br />پرداخت از {sub ? 'اعتبار اشتراک' : 'کیف پول'}
             </div>
             {active ? (
               <Button className="mt-4 w-full" size="lg" variant="dark" icon={<Ticket size={18} />} onClick={() => setTicket(active)}>
@@ -141,7 +143,7 @@ export default function GymDetail() {
             <div className="mt-4 flex items-center justify-center gap-1">
               <span className="text-xs text-ink-400">امتیاز شما:</span>
               {[1, 2, 3, 4, 5].map((s) => (
-                <button key={s} onClick={() => run(() => rateGym(gym.id, s), 'ممنون از امتیازت ⭐')} className="text-lg grayscale hover:grayscale-0">⭐</button>
+                <button key={s} onClick={() => run(() => rateGym(gym.id, s), 'ممنون از امتیازت')} className="text-lg grayscale hover:grayscale-0"></button>
               ))}
             </div>
           </Card>
@@ -165,22 +167,24 @@ export default function GymDetail() {
         </div>
       </Sheet>
 
-      <Sheet open={!!ticket} onClose={() => setTicket(undefined)} title="🎟️ بلیت ورود شما">
+      <Sheet open={!!ticket} onClose={() => setTicket(undefined)} title="بلیت ورود شما">
         {ticket && (
           <div className="text-center">
-            <div className="mx-auto w-fit rounded-[1.75rem] bg-white p-4 shadow-soft">
+            <div className="mx-auto w-fit rounded-2xl bg-white p-4 shadow-soft">
               <QRCodeSVG value={`KEYFIT:${ticket.id}:${ticket.code}`} size={180} />
             </div>
             <div className="mt-4 text-xs text-ink-500">کد ورود</div>
-            <div className="text-4xl font-black tracking-[.3em]" dir="ltr">{ticket.code}</div>
+            <div className="text-4xl font-semibold tracking-[.3em]" dir="ltr">{ticket.code}</div>
             <p className="mt-3 text-sm text-ink-500">این کد یا QR را در پذیرش «{gym.name}» نشان دهید.</p>
             <p className="text-xs text-ink-400">{faDateTime(ticket.createdAt)}</p>
             <a href={directionsUrl(gym.lat, gym.lng)} target="_blank" rel="noreferrer">
               <Button className="mt-4 w-full" icon={<Navigation size={16} />}>مسیریابی تا باشگاه</Button>
             </a>
+            <Button variant="outline" className="mt-2 w-full" onClick={() => { setTicket(undefined); setShare(true) }}>اشتراک در فیت‌زون</Button>
           </div>
         )}
       </Sheet>
+      <CreatePostSheet open={share} onClose={() => setShare(false)} gymId={gym.id} initialText={`امروز در ${gym.name} تمرین کردم.`} />
     </div>
   )
 }

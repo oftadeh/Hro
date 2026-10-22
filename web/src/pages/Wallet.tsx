@@ -5,7 +5,7 @@ import { useDB } from '@/core/db'
 import { SUBSCRIPTION_PLANS } from '@/core/config'
 import { daysLeft, num, toman } from '@/core/format'
 import { activeSubscription, buySubscription, topUp } from '@/core/services/wallet'
-import { Badge, Button, Card, Field, HeroHeader, MetricRow, NumberInput, PageHeader, RaisedSheet, SectionTitle, Sheet } from '@/ui/kit'
+import { Badge, Button, Card, Field, HeroHeader, MetricRow, Money, NumberInput, PageHeader, SectionTitle, Sheet } from '@/ui/kit'
 import { KeyCard } from '@/ui/KeyCard'
 import { useMe, useBalance } from '@/ui/hooks'
 import { runOk } from '@/ui/toast'
@@ -31,58 +31,69 @@ export default function WalletPage() {
 
   return (
     <div className="animate-fade-up">
-      <PageHeader title="کیف پول و اشتراک" />
-      <HeroHeader className="px-5 pb-14 pt-6 text-center">
-        <div className="text-xs font-semibold text-white/70">موجودی کیف پول</div>
-        <div className="mt-1 text-[2.6rem] font-black leading-none tracking-tight">
-          {num(bal)} <span className="text-base font-bold text-white/60">تومان</span>
-        </div>
-        <div className="mt-5 flex justify-center gap-2">
-          <button onClick={() => setCharge(true)} className="flex items-center gap-1.5 rounded-2xl bg-white px-5 py-2.5 text-sm font-black text-brand-700 shadow-soft dark:bg-gradient-to-l dark:from-gold-300 dark:to-gold-500 dark:text-ink-950">
-            <Plus size={16} /> شارژ
-          </button>
-          <a href="#plans" className="flex items-center gap-1.5 rounded-2xl bg-white/15 px-5 py-2.5 text-sm font-bold backdrop-blur">
-            <CreditCard size={16} /> اشتراک
-          </a>
-        </div>
-      </HeroHeader>
-      <RaisedSheet>
-        <div className="grid gap-4 md:grid-cols-2">
+      <PageHeader title="کیف پول و عضویت" />
+      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+        <HeroHeader className="flex flex-col justify-between p-6">
+          <div>
+            <div className="text-[11px] tracking-wide text-white/50">موجودی کیف پول</div>
+            <div className="mt-2 text-[2.6rem] font-extralight leading-tight tracking-tightest sm:text-5xl">
+              <Money value={bal} />
+            </div>
+          </div>
+          <div className="mt-8 flex gap-2">
+            <button onClick={() => setCharge(true)} className="flex h-10 items-center gap-1.5 rounded-xl bg-brand-300 px-5 text-sm font-medium text-ink-950 transition hover:bg-brand-200">
+              <Plus size={16} strokeWidth={1.5} /> افزایش موجودی
+            </button>
+            <a href="#plans" className="flex h-10 items-center gap-1.5 rounded-xl border border-white/15 px-5 text-sm text-white/80 transition hover:border-white/30">
+              <CreditCard size={16} strokeWidth={1.5} /> عضویت
+            </a>
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/10 pt-5 text-xs">
+            <div>
+              <div className="flex items-center gap-1.5 text-white/45"><ArrowDownLeft size={13} strokeWidth={1.5} /> ورودی ۳۰ روز</div>
+              <div className="mt-1 text-base font-light tabular-nums">{toman(inSum)}</div>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 text-white/45"><ArrowUpRight size={13} strokeWidth={1.5} /> هزینه‌ی ۳۰ روز</div>
+              <div className="mt-1 text-base font-light tabular-nums">{toman(outSum)}</div>
+            </div>
+          </div>
+        </HeroHeader>
+        <div className="space-y-3">
           {sub ? (
             <KeyCard
-              tilt
-              tone={sub.plan.id === 'plan-diamond' ? 'navy' : 'coral'}
-              title={`KEYFIT ${sub.plan.name}`}
+              tone={sub.plan.id === 'plan-diamond' ? 'champagne' : sub.plan.id === 'plan-gold' ? 'black' : 'graphite'}
+              title={`KEYFIT · ${sub.plan.name}`}
               subtitle="اعتبار ورود به باشگاه‌ها"
-              amount={toman(sub.credit)}
-              footer={<><span>{me.name}</span><span>{num(daysLeft(sub.expiresAt))} روز مانده</span></>}
+              amount={sub.credit}
+              footer={<><span>{me.name}</span><span>{num(daysLeft(sub.expiresAt))} روز باقی‌مانده</span></>}
             />
           ) : (
-            <KeyCard tone="violet" title="KEYFIT" subtitle="اشتراک فعال نداری" amount="۰ تومان" footer={<span>با اشتراک، بیش از مبلغ پرداختی اعتبار بگیر</span>} />
+            <KeyCard tone="graphite" title="KEYFIT" subtitle="عضویت فعال ندارید" amount="۰ تومان" footer={<span>با عضویت، بیش از مبلغ پرداختی اعتبار بگیرید</span>} />
           )}
-          <div className="space-y-2.5">
-            <MetricRow tone="rose" icon={<ArrowDownLeft size={20} />} title="ورودی این ماه" value={toman(inSum)} progress={inSum / Math.max(1, inSum + outSum)} />
-            <MetricRow tone="sky" icon={<ArrowUpRight size={20} />} title="خرج این ماه" value={toman(outSum)} progress={outSum / Math.max(1, inSum + outSum)} />
-            {sub && <MetricRow tone="amber" icon={<Ticket size={20} />} title="مصرف اعتبار اشتراک" value={`${num((1 - sub.credit / sub.plan.credit) * 100)}٪`} progress={1 - sub.credit / sub.plan.credit} />}
-          </div>
+          {sub && (
+            <Card className="px-4 py-1">
+              <MetricRow tone="amber" icon={<Ticket size={17} />} title="مصرف اعتبار ورود" value={`${num((1 - sub.credit / sub.plan.credit) * 100)}٪`} progress={1 - sub.credit / sub.plan.credit} />
+            </Card>
+          )}
         </div>
-      </RaisedSheet>
+      </div>
 
-      <div id="plans" /><SectionTitle title="✨ پلن‌های اشتراک کی‌فیت" />
+      <div id="plans" /><SectionTitle title="عضویت‌ها" />
       <div className="grid gap-4 md:grid-cols-3">
         {SUBSCRIPTION_PLANS.map((p) => (
-          <Card key={p.id} className={clsx('relative flex flex-col', p.popular && 'ring-2 ring-brand-400 dark:ring-gold-400/70')}>
-            {p.popular && <Badge color="amber" className="absolute left-4 top-4">محبوب‌ترین</Badge>}
-            <div className={`h-12 w-12 rounded-[1rem] bg-gradient-to-br shadow-soft ${p.color}`} />
-            <div className="mt-3 text-lg font-extrabold">{p.name}</div>
-            <div className="text-2xl font-black">{toman(p.price)}</div>
+          <Card key={p.id} className={clsx('relative flex flex-col p-6', p.popular && 'border-ink-950 dark:border-brand-300/50')}>
+            {p.popular && <Badge color="amber" className="absolute left-5 top-5">پیشنهاد ما</Badge>}
+            <div className="text-[11px] tracking-[.25em] text-ink-400">KEYFIT</div>
+            <div className="mt-3 text-lg font-medium">{p.name}</div>
+            <div className="mt-4 text-3xl font-extralight tabular-nums tracking-tight">{toman(p.price)}</div>
             <div className="text-xs text-ink-400">{num(p.durationDays)} روزه · {num(Math.round(((p.credit - p.price) / p.price) * 100))}٪ اعتبار هدیه</div>
-            <ul className="mt-4 flex-1 space-y-2 text-sm">
+            <ul className="mt-6 flex-1 space-y-3 border-t hairline pt-5 text-[13px] text-ink-600 dark:text-ink-300">
               {p.perks.map((perk) => (
-                <li key={perk} className="flex gap-2"><Check size={16} className="mt-0.5 shrink-0 text-brand-500" /> {perk}</li>
+                <li key={perk} className="flex gap-2"><Check size={15} strokeWidth={1.5} className="mt-0.5 shrink-0 text-brand-500" /> {perk}</li>
               ))}
             </ul>
-            <Button className="mt-4 w-full" variant={p.popular ? 'primary' : 'outline'} onClick={() => setBuy(p.id)}>
+            <Button className="mt-6 w-full" variant={p.popular ? 'primary' : 'outline'} onClick={() => setBuy(p.id)}>
               {sub?.planId === p.id ? 'تمدید' : 'خرید'}
             </Button>
           </Card>
@@ -98,7 +109,7 @@ export default function WalletPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2">
             {AMOUNTS.map((a) => (
-              <button key={a} onClick={() => setAmount(a)} className={clsx('rounded-2xl border p-3 text-sm font-bold', amount === a ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-gold-400 dark:bg-gold-400/10 dark:text-gold-300' : 'border-ink-200 dark:border-white/10')}>
+              <button key={a} onClick={() => setAmount(a)} className={clsx('rounded-2xl border p-3 text-sm font-semibold', amount === a ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-gold-400 dark:bg-gold-400/10 dark:text-gold-300' : 'border-ink-200 dark:border-white/10')}>
                 {toman(a)}
               </button>
             ))}
@@ -112,7 +123,7 @@ export default function WalletPage() {
             loading={busy}
             onClick={async () => {
               setBusy(true)
-              const ok = await runOk(() => topUp(amount), 'کیف پول شارژ شد 💳')
+              const ok = await runOk(() => topUp(amount), 'کیف پول شارژ شد')
               setBusy(false)
               if (ok) setCharge(false)
             }}
@@ -131,7 +142,7 @@ export default function WalletPage() {
               <p className="text-sm text-ink-500">اشتراک {p.name} — {toman(p.price)} از کیف پول کسر و {toman(p.credit)} اعتبار ورود دریافت می‌کنید.</p>
               <div className="text-xs text-ink-400">موجودی: {toman(bal)}</div>
               <Button className="w-full" size="lg" onClick={async () => {
-                const ok = await runOk(() => buySubscription(p.id), `اشتراک ${p.name} فعال شد ✨`)
+                const ok = await runOk(() => buySubscription(p.id), `اشتراک ${p.name} فعال شد`)
                 if (ok) setBuy(undefined)
               }}>
                 پرداخت از کیف پول

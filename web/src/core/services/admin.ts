@@ -21,7 +21,7 @@ export function setGymApproval(gymId: string, approved: boolean) {
     const g = d.gyms.find((x) => x.id === gymId)
     if (!g) return
     g.approved = approved
-    notify(d, g.ownerId, approved ? 'باشگاه شما تایید شد ✅' : 'باشگاه شما غیرفعال شد', approved ? `«${g.name}» اکنون در فیت‌یاب نمایش داده می‌شود.` : `«${g.name}» از فیت‌یاب حذف شد.`, approved ? '✅' : '⚠️', '/panel/gym')
+    notify(d, g.ownerId, approved ? 'باشگاه شما تایید شد' : 'باشگاه شما غیرفعال شد', approved ? `«${g.name}» اکنون در فیت‌یاب نمایش داده می‌شود.` : `«${g.name}» از فیت‌یاب حذف شد.`, approved ? '' : '', '/panel/gym')
   })
 }
 
@@ -34,7 +34,7 @@ export function resolvePayout(id: string, ok: boolean) {
       d.wallets[p.userId] = (d.wallets[p.userId] ?? 0) + p.amount
       d.transactions.unshift({ id: uid('tx-'), type: 'refund', from: 'gateway', to: p.userId, amount: p.amount, commission: 0, description: 'برگشت درخواست تسویه', createdAt: now() })
     }
-    notify(d, p.userId, ok ? 'تسویه انجام شد 🏦' : 'درخواست تسویه رد شد', `${toman(p.amount)}`, '🏦', '/wallet')
+    notify(d, p.userId, ok ? 'تسویه انجام شد' : 'درخواست تسویه رد شد', `${toman(p.amount)}`, '', '/wallet')
   })
 }
 
@@ -47,7 +47,7 @@ export function toggleBlockUser(userId: string) {
 
 export function broadcast(title: string, body: string) {
   mutate((d) => {
-    d.users.forEach((u) => notify(d, u.id, title, body, '📣'))
+    d.users.forEach((u) => notify(d, u.id, title, body, ''))
   })
 }
 
@@ -59,7 +59,8 @@ export function platformStats() {
     if (['topup', 'withdraw', 'refund', 'challenge_prize'].includes(t.type)) continue
     gmv += t.amount
     const key = t.type === 'subscription' ? 'subscription' : t.module ?? 'other'
-    revenueByModule[key] = (revenueByModule[key] ?? 0) + t.commission
+    // درآمد خالص = کمیسیون منهای تخفیف‌هایی که کی‌فیت پرداخته
+    revenueByModule[key] = (revenueByModule[key] ?? 0) + t.commission - (t.discount ?? 0)
   }
   const revenue = Object.values(revenueByModule).reduce((a, b) => a + b, 0)
   return { gmv, revenue, revenueByModule }

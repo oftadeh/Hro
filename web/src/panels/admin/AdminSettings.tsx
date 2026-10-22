@@ -36,7 +36,7 @@ export default function AdminSettings() {
             </Field>
           </Card>
           <Card className="space-y-3">
-            <div className="font-extrabold">📣 ارسال اعلان همگانی</div>
+            <div className="font-semibold">ارسال اعلان همگانی</div>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان" />
             <Textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="متن اعلان" />
             <Button className="w-full" disabled={!title.trim()} onClick={() => { run(() => broadcast(title, body), 'اعلان ارسال شد'); setTitle(''); setBody('') }}>ارسال به همه‌ی کاربران</Button>

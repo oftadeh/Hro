@@ -9,24 +9,25 @@ import { useUserMap } from '@/ui/hooks'
 import { toast } from '@/ui/toast'
 import { CartSheet } from './CartSheet'
 import { CartButton, CATEGORIES } from './Shop'
+import { CategoryIcon } from '@/ui/icons'
 
 export default function ProductDetail() {
   const { id } = useParams()
   const p = useDB((s) => s.products.find((x) => x.id === id))
   const users = useUserMap()
   const [cart, setCart] = useState(false)
-  if (!p) return <Empty icon="🔍" title="محصول یافت نشد" />
+  if (!p) return <Empty icon="" title="محصول یافت نشد" />
   return (
     <div className="animate-fade-up">
       <PageHeader back="/shop" title={p.name} subtitle={p.brand} actions={<CartButton kind="product" onClick={() => setCart(true)} />} />
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-ink-100 to-violet-100 text-[9rem] dark:from-white/5 dark:to-violet-500/10">
-          {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : p.emoji}
+        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-ink-900/[.035] dark:bg-white/[.04]">
+          {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
         </div>
         <div className="space-y-4">
           <Card>
             <Badge color="violet">{CATEGORIES[p.category]}</Badge>
-            <h1 className="mt-2 text-xl font-extrabold leading-9">{p.name}</h1>
+            <h1 className="mt-2 text-xl font-semibold leading-9">{p.name}</h1>
             <div className="mt-1 flex items-center gap-3 text-xs text-ink-500">
               <Stars value={p.rating} />
               <span>{num(p.sold)} فروش</span>
@@ -41,7 +42,7 @@ export default function ProductDetail() {
                     <Badge color="rose">٪{num(p.discount)} تخفیف</Badge>
                   </div>
                 )}
-                <div className="text-2xl font-black">{toman(finalPrice(p))}</div>
+                <div className="text-2xl font-semibold">{toman(finalPrice(p))}</div>
               </div>
               <div className="text-xs text-ink-400">{p.stock > 0 ? `${num(p.stock)} عدد موجود` : 'ناموجود'}</div>
             </div>
@@ -60,7 +61,7 @@ export default function ProductDetail() {
           </Card>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <Card className="flex items-center gap-2"><ShieldCheck className="text-brand-500" /> ضمانت اصالت کالا</Card>
-            <Card className="flex items-center gap-2"><Truck className="text-sky-500" /> ارسال سریع تهران</Card>
+            <Card className="flex items-center gap-2"><Truck className="text-aqua-500" /> ارسال سریع تهران</Card>
           </div>
         </div>
       </div>

@@ -19,14 +19,14 @@ export default function GymCheckins() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="پذیرش ورود" subtitle="کد ورود ورزشکار را وارد یا QR را اسکن کنید" />
-      <Card className="bg-gradient-to-br from-orange-50 to-rose-50 dark:from-orange-500/10 dark:to-rose-500/10">
+      <Card className="p-5">
         <form
           className="flex flex-col gap-3 sm:flex-row"
           onSubmit={async (e) => {
             e.preventDefault()
             const ci = await run(() => verifyEntry(code))
             if (ci) {
-              toast.success(`ورود ${users[ci.userId]?.name} تایید شد ✅`)
+              toast.success(`ورود ${users[ci.userId]?.name} تایید شد`)
               setCode('')
             }
           }}
@@ -36,16 +36,16 @@ export default function GymCheckins() {
         </form>
       </Card>
       <div className="mt-4 space-y-2">
-        {list.length === 0 && <Empty icon="🎟️" title="هنوز ورودی ثبت نشده" />}
+        {list.length === 0 && <Empty icon="" title="هنوز ورودی ثبت نشده" />}
         {list.map((c) => (
           <Card key={c.id} className="flex items-center gap-3 py-3">
             <Avatar name={users[c.userId]?.name ?? ''} size={40} />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold">{users[c.userId]?.name}</div>
+              <div className="text-sm font-semibold">{users[c.userId]?.name}</div>
               <div className="text-[11px] text-ink-400">{gyms.find((g) => g.id === c.gymId)?.name} · {faDateTime(c.createdAt)}</div>
             </div>
             <div className="text-left">
-              <div className="text-xs font-bold">{toman(c.price)}</div>
+              <div className="text-xs font-semibold">{toman(c.price)}</div>
               <Badge color={c.status === 'used' ? 'slate' : 'emerald'}>{c.status === 'used' ? 'وارد شد' : 'در انتظار ورود'}</Badge>
             </div>
           </Card>

@@ -1,5 +1,9 @@
+/**
+ * کیت طراحی کی‌فیت — زبان بصری مینیمال و خنثی:
+ * سیاه/سفید گرم، یک رنگ تأکیدی شامپاینی، خطوط باریک، آیکون خطی و تایپوگرافی سبک.
+ */
 import clsx from 'clsx'
-import { ArrowRight, Star, X } from 'lucide-react'
+import { ArrowRight, Inbox, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
@@ -15,22 +19,20 @@ export function Button({
       {...rest}
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-2xl font-bold transition duration-200 active:scale-[.97] disabled:opacity-45 disabled:active:scale-100',
+        'inline-flex items-center justify-center gap-2 rounded-xl font-medium tracking-tight transition duration-200 active:scale-[.98] disabled:opacity-40 disabled:active:scale-100',
         size === 'sm' && 'h-9 px-3.5 text-xs',
         size === 'md' && 'h-11 px-5 text-sm',
-        size === 'lg' && 'h-14 rounded-[1.1rem] px-6 text-base',
-        // روشن: گرادیان بنفش | تیره: طلایی (مانند دکمه‌ی End در طرح ناوبری)
-        variant === 'primary' &&
-          'bg-gradient-to-l from-brand-500 via-brand-600 to-violet-700 text-white shadow-glow hover:brightness-110 dark:from-gold-300 dark:via-gold-400 dark:to-gold-600 dark:text-ink-950 dark:shadow-gold',
-        variant === 'secondary' && 'bg-brand-50 text-brand-700 hover:bg-brand-100 dark:bg-white/[.07] dark:text-brand-200 dark:hover:bg-white/10',
-        variant === 'ghost' && 'text-ink-500 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-white/5',
-        variant === 'outline' && 'border border-ink-200 bg-white/60 text-ink-700 hover:bg-white dark:border-white/10 dark:bg-white/[.03] dark:text-ink-200 dark:hover:bg-white/[.07]',
-        variant === 'danger' && 'bg-coral-500 text-white shadow-[0_12px_28px_-12px_rgb(244_80_110/.7)] hover:bg-coral-600',
-        variant === 'dark' && 'bg-ink-900 text-white hover:bg-ink-800 dark:bg-white dark:text-ink-950',
+        size === 'lg' && 'h-12 px-6 text-[15px]',
+        variant === 'primary' && 'bg-ink-950 text-white hover:bg-ink-800 dark:bg-brand-300 dark:text-ink-950 dark:hover:bg-brand-200',
+        variant === 'dark' && 'bg-ink-950 text-white hover:bg-ink-800 dark:bg-white dark:text-ink-950',
+        variant === 'secondary' && 'bg-ink-100 text-ink-900 hover:bg-ink-200 dark:bg-white/[.07] dark:text-ink-100 dark:hover:bg-white/10',
+        variant === 'ghost' && 'text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-white/5',
+        variant === 'outline' && 'border hairline bg-transparent text-ink-800 hover:bg-white dark:text-ink-100 dark:hover:bg-white/[.04]',
+        variant === 'danger' && 'bg-coral-600 text-white hover:bg-coral-700',
         className,
       )}
     >
-      {loading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : icon}
+      {loading ? <span className="h-4 w-4 animate-spin rounded-full border-[1.5px] border-current border-t-transparent" /> : icon}
       {children}
     </button>
   )
@@ -41,8 +43,8 @@ export function Card({ className, children, onClick }: { className?: string; chi
     <div
       onClick={onClick}
       className={clsx(
-        'rounded-[1.75rem] border border-white/70 bg-white p-4 shadow-card dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none dark:backdrop-blur-xl',
-        onClick && 'cursor-pointer transition hover:-translate-y-0.5',
+        'rounded-2xl border hairline bg-white p-4 dark:bg-ink-900',
+        onClick && 'cursor-pointer transition hover:border-ink-300 dark:hover:border-white/15',
         className,
       )}
     >
@@ -51,25 +53,25 @@ export function Card({ className, children, onClick }: { className?: string; chi
   )
 }
 
-export function Badge({ children, color = 'emerald', className }: { children: ReactNode; color?: 'emerald' | 'amber' | 'rose' | 'sky' | 'violet' | 'slate'; className?: string }) {
+export function Badge({ children, color = 'slate', className }: { children: ReactNode; color?: 'emerald' | 'amber' | 'rose' | 'sky' | 'violet' | 'slate'; className?: string }) {
   const map = {
-    emerald: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300',
-    amber: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-    rose: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
-    sky: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
-    violet: 'bg-brand-100 text-brand-700 dark:bg-brand-400/15 dark:text-brand-200',
-    slate: 'bg-ink-100 text-ink-600 dark:bg-white/10 dark:text-ink-300',
+    emerald: 'text-emerald-700 bg-emerald-500/[.08] dark:text-emerald-300',
+    amber: 'text-brand-700 bg-brand-500/10 dark:text-brand-300',
+    rose: 'text-coral-700 bg-coral-500/10 dark:text-coral-300',
+    sky: 'text-aqua-700 bg-aqua-500/10 dark:text-aqua-300',
+    violet: 'text-ink-800 bg-ink-900/[.06] dark:text-ink-200 dark:bg-white/[.07]',
+    slate: 'text-ink-600 bg-ink-900/[.05] dark:text-ink-300 dark:bg-white/[.06]',
   }
-  return <span className={clsx('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold', map[color], className)}>{children}</span>
+  return <span className={clsx('inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium', map[color], className)}>{children}</span>
 }
 
 const fieldCls =
-  'w-full rounded-2xl border border-transparent bg-ink-100/70 px-4 py-3 text-sm outline-none transition placeholder:text-ink-400 focus:border-brand-300 focus:bg-white focus:ring-4 focus:ring-brand-500/10 dark:bg-white/[.06] dark:focus:border-gold-400/40 dark:focus:bg-white/[.08] dark:focus:ring-gold-400/10'
+  'w-full rounded-xl border hairline bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink-400 focus:border-ink-900 dark:bg-white/[.03] dark:focus:border-brand-300/60'
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs font-semibold text-ink-600 dark:text-ink-300">{label}</span>
+      <span className="text-xs font-medium text-ink-500 dark:text-ink-400">{label}</span>
       {children}
       {hint && <span className="block text-[11px] text-ink-400">{hint}</span>}
     </label>
@@ -77,7 +79,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export const Input = (p: InputHTMLAttributes<HTMLInputElement>) => <input {...p} className={clsx(fieldCls, p.className)} />
-export const Textarea = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea rows={4} {...p} className={clsx(fieldCls, 'resize-none', p.className)} />
+export const Textarea = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea rows={4} {...p} className={clsx(fieldCls, 'resize-none leading-7', p.className)} />
 export const Select = (p: SelectHTMLAttributes<HTMLSelectElement>) => <select {...p} className={clsx(fieldCls, p.className)} />
 
 /** ورودی عددی که ارقام فارسی را هم می‌پذیرد */
@@ -92,7 +94,7 @@ export function NumberInput({ value, onChange, ...rest }: { value: number; onCha
         onChange(en ? Number(en) : 0)
       }}
       dir="ltr"
-      className="text-left"
+      className="text-left tabular-nums"
     />
   )
 }
@@ -112,18 +114,18 @@ export function Sheet({ open, onClose, title, children, wide }: { open: boolean;
   if (!open) return null
   return createPortal(
     <div className="fixed inset-0 z-[900] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-ink-950/50 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-ink-950/40 backdrop-blur-sm" onClick={onClose} />
       <div
         className={clsx(
-          'relative max-h-[92dvh] w-full animate-sheet-up overflow-y-auto rounded-t-[2.25rem] bg-white p-5 pb-8 pt-3 shadow-2xl dark:border dark:border-white/10 dark:bg-ink-900/95 dark:backdrop-blur-2xl sm:rounded-[2.25rem]',
+          'relative max-h-[92dvh] w-full animate-sheet-up overflow-y-auto rounded-t-3xl border-t hairline bg-white p-6 pt-3 shadow-soft dark:bg-ink-900 sm:rounded-3xl sm:border',
           wide ? 'sm:max-w-2xl' : 'sm:max-w-md',
         )}
       >
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-ink-200 dark:bg-white/20" />
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h3 className="text-lg font-extrabold">{title}</h3>
-          <button onClick={onClose} className="rounded-full bg-ink-100 p-2 text-ink-500 hover:bg-ink-200 dark:bg-white/[.07] dark:text-ink-300" aria-label="بستن">
-            <X size={16} />
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-ink-200 dark:bg-white/15 sm:hidden" />
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <h3 className="text-base font-semibold tracking-tight">{title}</h3>
+          <button onClick={onClose} className="rounded-full p-1.5 text-ink-400 transition hover:bg-ink-100 hover:text-ink-900 dark:hover:bg-white/5 dark:hover:text-white" aria-label="بستن">
+            <X size={18} strokeWidth={1.5} />
           </button>
         </div>
         {children}
@@ -133,18 +135,17 @@ export function Sheet({ open, onClose, title, children, wide }: { open: boolean;
   )
 }
 
+/** کنترل تکه‌ای (Segmented control) */
 export function Tabs<T extends string>({ value, onChange, items, className }: { value: T; onChange: (v: T) => void; items: { value: T; label: ReactNode }[]; className?: string }) {
   return (
-    <div className={clsx('flex gap-1 overflow-x-auto rounded-[1.1rem] bg-white p-1 shadow-card no-scrollbar dark:bg-white/[.05] dark:shadow-none', className)}>
+    <div className={clsx('flex gap-0.5 overflow-x-auto rounded-xl bg-ink-900/[.05] p-0.5 no-scrollbar dark:bg-white/[.06]', className)}>
       {items.map((it) => (
         <button
           key={it.value}
           onClick={() => onChange(it.value)}
           className={clsx(
-            'flex flex-1 items-center justify-center whitespace-nowrap rounded-[.85rem] px-3 py-2 text-sm font-bold transition',
-            value === it.value
-              ? 'bg-gradient-to-l from-brand-500 to-violet-700 text-white shadow-glow dark:from-gold-300 dark:to-gold-500 dark:text-ink-950 dark:shadow-none'
-              : 'text-ink-400 hover:text-ink-700 dark:hover:text-ink-200',
+            'flex flex-1 items-center justify-center whitespace-nowrap rounded-[10px] px-3 py-1.5 text-[13px] font-medium transition',
+            value === it.value ? 'bg-white text-ink-950 shadow-card dark:bg-ink-700 dark:text-white' : 'text-ink-500 hover:text-ink-900 dark:hover:text-ink-100',
           )}
         >
           {it.label}
@@ -162,10 +163,10 @@ export function Chips<T extends string>({ value, onChange, items }: { value: T; 
           key={it.value}
           onClick={() => onChange(it.value)}
           className={clsx(
-            'whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold transition',
+            'whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium transition',
             value === it.value
-              ? 'bg-brand-600 text-white shadow-glow dark:bg-gold-400 dark:text-ink-950 dark:shadow-none'
-              : 'bg-white text-ink-500 shadow-card hover:text-ink-800 dark:bg-white/[.06] dark:text-ink-300 dark:shadow-none',
+              ? 'border-ink-950 bg-ink-950 text-white dark:border-brand-300 dark:bg-brand-300 dark:text-ink-950'
+              : 'hairline text-ink-600 hover:border-ink-400 dark:text-ink-300',
           )}
         >
           {it.label}
@@ -175,37 +176,40 @@ export function Chips<T extends string>({ value, onChange, items }: { value: T; 
   )
 }
 
-const AVATAR_GRADIENTS = ['from-brand-400 to-violet-700', 'from-coral-400 to-fuchsia-600', 'from-aqua-300 to-sky-600', 'from-gold-300 to-orange-500', 'from-fuchsia-400 to-brand-600', 'from-sky-400 to-indigo-600']
-
 export function Avatar({ name, src, size = 40, ring, className }: { name: string; src?: string; size?: number; ring?: boolean; className?: string }) {
-  const g = AVATAR_GRADIENTS[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_GRADIENTS.length]
-  const initials = name.replace('دکتر ', '').split(' ').map((w) => w[0]).slice(0, 2).join('‌')
+  const initial = name.replace('دکتر ', '').trim()[0] ?? ''
   return (
-    <div
-      className={clsx('shrink-0 rounded-full', ring && 'bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600 p-[2.5px]', className)}
-      style={{ width: size, height: size }}
-    >
+    <div className={clsx('shrink-0 rounded-full', ring && 'p-[2px] ring-1 ring-brand-400 ring-offset-0', className)} style={{ width: size, height: size }}>
       {src ? (
-        <img src={src} alt={name} className="h-full w-full rounded-full border-2 border-white object-cover dark:border-ink-900" />
+        <img src={src} alt={name} className="h-full w-full rounded-full object-cover" />
       ) : (
-        <div className={clsx('flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br font-bold text-white', g, ring && 'border-2 border-white dark:border-ink-900')} style={{ fontSize: size * 0.36 }}>
-          {initials}
+        <div className="flex h-full w-full items-center justify-center rounded-full bg-ink-200 font-medium text-ink-700 dark:bg-ink-700 dark:text-ink-100" style={{ fontSize: size * 0.4 }}>
+          {initial}
         </div>
       )}
     </div>
   )
 }
 
-export function Cover({ gradient, emoji, image, className, children }: { gradient: string; emoji?: string; image?: string; className?: string; children?: ReactNode }) {
+// پالت کاورهای خنثی؛ هر گرادیان قدیمی به یکی از این‌ها نگاشت می‌شود
+const COVERS = [
+  'bg-[radial-gradient(120%_120%_at_100%_0%,#3e3d39_0%,#171716_60%)]',
+  'bg-[radial-gradient(120%_120%_at_0%_0%,#5a4830_0%,#1e1e1c_65%)]',
+  'bg-[radial-gradient(120%_120%_at_100%_100%,#435258_0%,#171716_65%)]',
+  'bg-[radial-gradient(120%_120%_at_0%_100%,#523431_0%,#171716_65%)]',
+  'bg-[radial-gradient(120%_120%_at_50%_0%,#57554f_0%,#0e0e0d_70%)]',
+]
+export const coverFor = (seed: string) => COVERS[[...seed].reduce((a, c) => a + c.charCodeAt(0), 0) % COVERS.length]
+
+export function Cover({ gradient, image, className, children, label }: { gradient: string; emoji?: string; image?: string; className?: string; children?: ReactNode; label?: string }) {
   return (
-    <div className={clsx('relative overflow-hidden bg-gradient-to-br', gradient, className)}>
+    <div className={clsx('relative overflow-hidden', coverFor(gradient), className)}>
       {image ? (
         <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <>
-          <div className="absolute -left-6 -top-6 h-28 w-28 rounded-full bg-white/15 blur-xl" />
-          <div className="absolute -bottom-10 right-4 h-36 w-36 rounded-full bg-black/10 blur-2xl" />
-          {emoji && <div className="absolute inset-0 flex items-center justify-center text-5xl drop-shadow-lg">{emoji}</div>}
+          <div className="absolute inset-0 opacity-[.07] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:28px_28px]" />
+          {label && <div className="absolute bottom-3 left-4 text-[11px] font-medium uppercase tracking-[.25em] text-white/40">{label}</div>}
         </>
       )}
       {children}
@@ -213,31 +217,32 @@ export function Cover({ gradient, emoji, image, className, children }: { gradien
   )
 }
 
-export function Empty({ icon, title, desc, action }: { icon: string; title: string; desc?: string; action?: ReactNode }) {
+export function Empty({ title, desc, action }: { icon?: string; title: string; desc?: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-ink-200 px-6 py-12 text-center dark:border-white/10">
-      <div className="mb-3 text-4xl">{icon}</div>
-      <div className="font-bold">{title}</div>
-      {desc && <p className="mt-1 max-w-xs text-sm text-ink-500">{desc}</p>}
-      {action && <div className="mt-4">{action}</div>}
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed hairline px-6 py-14 text-center">
+      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full border hairline text-ink-400">
+        <Inbox size={18} strokeWidth={1.5} />
+      </div>
+      <div className="text-sm font-medium">{title}</div>
+      {desc && <p className="mt-1 max-w-xs text-xs leading-6 text-ink-500">{desc}</p>}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   )
 }
 
 const TILE = {
-  emerald: 'bg-brand-500 text-white shadow-glow',
-  violet: 'bg-violet-600 text-white shadow-glow',
-  amber: 'bg-gold-400 text-ink-950 shadow-gold',
-  sky: 'bg-aqua-400 text-white shadow-[0_12px_26px_-10px_rgb(70_185_210/.7)]',
-  rose: 'bg-coral-500 text-white shadow-[0_12px_26px_-10px_rgb(244_80_110/.7)]',
+  emerald: 'bg-ink-900/[.05] text-ink-900 dark:bg-white/[.06] dark:text-white',
+  violet: 'bg-ink-900/[.05] text-ink-900 dark:bg-white/[.06] dark:text-white',
+  amber: 'bg-brand-500/10 text-brand-700 dark:text-brand-300',
+  sky: 'bg-aqua-500/10 text-aqua-700 dark:text-aqua-300',
+  rose: 'bg-coral-500/10 text-coral-700 dark:text-coral-300',
 } as const
 
 export type Tone = keyof typeof TILE
 
-/** کاشی آیکون رنگی با گوشه‌ی گرد (الهام از کارت‌های Volume/Open) */
-export function IconTile({ tone = 'emerald', size = 44, children, className }: { tone?: Tone; size?: number; children: ReactNode; className?: string }) {
+export function IconTile({ tone = 'emerald', size = 40, children, className }: { tone?: Tone; size?: number; children: ReactNode; className?: string }) {
   return (
-    <span className={clsx('flex shrink-0 items-center justify-center rounded-[.95rem]', TILE[tone], className)} style={{ width: size, height: size }}>
+    <span className={clsx('flex shrink-0 items-center justify-center rounded-xl [&_svg]:stroke-[1.5]', TILE[tone], className)} style={{ width: size, height: size }}>
       {children}
     </span>
   )
@@ -246,123 +251,104 @@ export function IconTile({ tone = 'emerald', size = 44, children, className }: {
 export function Stat({ label, value, icon, hint, tone = 'emerald' }: { label: string; value: ReactNode; icon?: ReactNode; hint?: ReactNode; tone?: Tone }) {
   return (
     <Card className="p-4">
-      <div className="flex items-center gap-3">
-        {icon && <IconTile tone={tone}>{icon}</IconTile>}
-        <div className="min-w-0">
-          <div className="text-[11px] font-semibold text-ink-400">{label}</div>
-          <div className="mt-0.5 truncate text-lg font-black tracking-tight text-ink-900 dark:text-white">{value}</div>
-          {hint && <div className="text-[10px] text-ink-400">{hint}</div>}
-        </div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="text-xs text-ink-500">{label}</div>
+        {icon && <IconTile tone={tone} size={30}>{icon}</IconTile>}
       </div>
+      <div className="mt-3 truncate text-xl font-medium tabular-nums tracking-tight text-ink-950 dark:text-white">{value}</div>
+      {hint && <div className="mt-0.5 text-[11px] text-ink-400">{hint}</div>}
     </Card>
   )
 }
 
-/** سطر شاخص با آیکون، عنوان، درصد و نوار پیشرفت باریک */
-export function MetricRow({ icon, tone = 'rose', title, value, progress, onClick, done }: { icon: ReactNode; tone?: Tone; title: ReactNode; value?: ReactNode; progress?: number; onClick?: () => void; done?: boolean }) {
+/** سطر شاخص با آیکون، عنوان، مقدار و نوار پیشرفت باریک */
+export function MetricRow({ icon, tone = 'emerald', title, value, progress, onClick, done }: { icon: ReactNode; tone?: Tone; title: ReactNode; value?: ReactNode; progress?: number; onClick?: () => void; done?: boolean }) {
   return (
-    <div
-      onClick={onClick}
-      className={clsx('flex items-center gap-3 rounded-[1.4rem] bg-ink-50 p-3 transition dark:bg-white/[.04]', onClick && 'cursor-pointer hover:bg-ink-100 dark:hover:bg-white/[.07]', done && 'opacity-60')}
-    >
-      <IconTile tone={tone} size={46}>{icon}</IconTile>
+    <div onClick={onClick} className={clsx('flex items-center gap-3 py-3', onClick && 'cursor-pointer', done && 'opacity-50')}>
+      <IconTile tone={tone}>{icon}</IconTile>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className={clsx('truncate text-sm font-bold', done && 'line-through')}>{title}</span>
-          {value !== undefined && <span className="shrink-0 text-xs font-bold text-ink-400">{value}</span>}
+          <span className={clsx('truncate text-sm', done && 'line-through')}>{title}</span>
+          {value !== undefined && <span className="shrink-0 text-xs tabular-nums text-ink-500">{value}</span>}
         </div>
-        {progress !== undefined && <Progress value={progress} tone={TONE_BAR[tone]} className="mt-2 h-1.5" />}
+        {progress !== undefined && <Progress value={progress} className="mt-2" />}
       </div>
     </div>
   )
 }
 
-const TONE_BAR: Record<Tone, string> = {
-  emerald: 'from-brand-400 to-brand-600',
-  violet: 'from-violet-400 to-violet-700',
-  amber: 'from-gold-300 to-gold-500',
-  sky: 'from-aqua-300 to-aqua-500',
-  rose: 'from-coral-400 to-coral-600',
-}
-
 export function PageHeader({ title, subtitle, back, actions }: { title: ReactNode; subtitle?: ReactNode; back?: boolean | string; actions?: ReactNode }) {
   const nav = useNavigate()
   return (
-    <div className="mb-5 flex items-center gap-3">
+    <div className="mb-6 flex items-center gap-3">
       {back && (
         <button
           onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink-600 shadow-card hover:text-brand-600 dark:bg-white/[.06] dark:text-ink-200 dark:shadow-none"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border hairline text-ink-700 transition hover:bg-white dark:text-ink-200 dark:hover:bg-white/5"
           aria-label="بازگشت"
         >
-          <ArrowRight size={18} />
+          <ArrowRight size={18} strokeWidth={1.5} />
         </button>
       )}
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-[1.4rem] font-black tracking-tight">{title}</h1>
-        {subtitle && <p className="truncate text-xs text-ink-400">{subtitle}</p>}
+        <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
+        {subtitle && <p className="mt-0.5 truncate text-[13px] text-ink-500">{subtitle}</p>}
       </div>
       {actions}
     </div>
   )
 }
 
-/** هدر گرادیانی با موج (مانند صفحه‌ی بیت‌کوین) که محتوای بعدی رویش بالا می‌آید */
-export function HeroHeader({ children, className, tone = 'violet', gradient }: { children: ReactNode; className?: string; tone?: 'violet' | 'navy' | 'coral'; gradient?: string }) {
-  const bg = {
-    violet: 'from-brand-500 via-brand-600 to-violet-800 dark:from-ink-850 dark:via-ink-900 dark:to-ink-950',
-    navy: 'from-ink-800 via-ink-900 to-ink-950',
-    coral: 'from-coral-400 via-coral-500 to-fuchsia-600',
-  }[tone]
+/** بلوک تیره‌ی شاخص صفحه با هایلایت شامپاینی ملایم */
+export function HeroHeader({ children, className }: { children: ReactNode; className?: string; tone?: string; gradient?: string }) {
   return (
-    <div className={clsx('relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br text-white shadow-soft dark:border dark:border-white/[.06]', gradient ?? bg, className)}>
-      <svg className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 w-full opacity-30" viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden>
-        <path d="M0 110 C 60 60, 110 140, 180 95 S 300 30, 400 70 L400 160 L0 160Z" fill="white" fillOpacity=".18" />
-        <path d="M0 135 C 80 100, 150 160, 230 120 S 340 90, 400 110 L400 160 L0 160Z" fill="white" fillOpacity=".12" />
-      </svg>
-      <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl dark:bg-brand-500/20" />
-      <div className="pointer-events-none absolute -bottom-20 right-10 h-48 w-48 rounded-full bg-fuchsia-400/20 blur-3xl dark:bg-gold-400/10" />
+    <div className={clsx('relative overflow-hidden rounded-3xl bg-ink-950 text-white ring-1 ring-white/[.06]', className)}>
+      <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-brand-400/[.18] blur-3xl" />
       <div className="relative">{children}</div>
     </div>
   )
 }
 
-/** ورقه‌ی سفید با دستگیره که روی هدر رنگی سوار می‌شود */
-export function RaisedSheet({ children, className }: { children: ReactNode; className?: string }) {
+/** مبلغ با عدد درشت و واحد کوچک */
+export function Money({ value, className, unitClass }: { value: number; className?: string; unitClass?: string }) {
   return (
-    <div className={clsx('relative -mt-8 rounded-[2.25rem] bg-white px-4 pb-5 pt-3 shadow-card dark:border dark:border-white/[.08] dark:bg-ink-900 dark:shadow-[0_-20px_40px_-20px_rgb(0_0_0/.6)]', className)}>
-      <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-ink-200 dark:bg-white/20" />
-      {children}
-    </div>
+    <span className={clsx('tabular-nums', className)}>
+      {num(value)}
+      <span className={clsx('mr-1.5 text-[.4em] font-light opacity-50', unitClass)}>تومان</span>
+    </span>
   )
+}
+
+export function RaisedSheet({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={clsx('relative -mt-6 rounded-3xl border hairline bg-white p-5 dark:bg-ink-900', className)}>{children}</div>
 }
 
 export function SectionTitle({ title, action }: { title: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-3 mt-6 flex items-center justify-between">
-      <h2 className="text-base font-extrabold">{title}</h2>
+    <div className="mb-3 mt-8 flex items-end justify-between">
+      <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
       {action}
     </div>
   )
 }
 
-export function Progress({ value, className, tone = 'from-brand-400 to-violet-600' }: { value: number; className?: string; tone?: string }) {
+export function Progress({ value, className }: { value: number; className?: string; tone?: string }) {
   return (
-    <div className={clsx('h-2 overflow-hidden rounded-full bg-ink-200/70 dark:bg-white/10', className)}>
-      <div className={clsx('h-full rounded-full bg-gradient-to-l transition-all duration-700', tone)} style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }} />
+    <div className={clsx('h-1 overflow-hidden rounded-full bg-ink-900/[.07] dark:bg-white/10', className)}>
+      <div className="h-full rounded-full bg-ink-900 transition-all duration-700 dark:bg-brand-300" style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }} />
     </div>
   )
 }
 
-export function Ring({ value, size = 64, stroke = 7, children, color = '#7c4dff' }: { value: number; size?: number; stroke?: number; children?: ReactNode; color?: string }) {
+export function Ring({ value, size = 64, stroke = 3, children }: { value: number; size?: number; stroke?: number; children?: ReactNode; color?: string }) {
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-ink-100 dark:stroke-white/10" />
+        <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-ink-900/10 dark:stroke-white/10" />
         <circle
-          cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} fill="none" stroke={color} strokeLinecap="round"
+          cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} fill="none" strokeLinecap="round" className="stroke-brand-400"
           strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(1, value))} style={{ transition: 'stroke-dashoffset .8s' }}
         />
       </svg>
@@ -373,10 +359,10 @@ export function Ring({ value, size = 64, stroke = 7, children, color = '#7c4dff'
 
 export function Stars({ value, count }: { value: number; count?: number }) {
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500">
-      <Star size={13} className="fill-amber-400 stroke-amber-400" />
+    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-ink-600 dark:text-ink-300">
+      <Star size={12} className="fill-brand-400 stroke-brand-400" />
       {value ? value.toLocaleString('fa-IR', { maximumFractionDigits: 1 }) : 'جدید'}
-      {count !== undefined && <span className="font-normal text-ink-400">({num(count)})</span>}
+      {count !== undefined && <span className="text-ink-400">({num(count)})</span>}
     </span>
   )
 }
@@ -400,7 +386,7 @@ export function ImagePicker({ value, onChange, label = 'افزودن تصویر'
       {value ? (
         <div className="relative overflow-hidden rounded-2xl">
           <img src={value} alt="" className="max-h-64 w-full object-cover" />
-          <button onClick={() => onChange(undefined)} className="absolute left-2 top-2 rounded-full bg-black/60 p-1.5 text-white" aria-label="حذف">
+          <button onClick={() => onChange(undefined)} className="absolute left-2 top-2 rounded-full bg-ink-950/70 p-1.5 text-white backdrop-blur" aria-label="حذف">
             <X size={14} />
           </button>
         </div>
@@ -408,9 +394,9 @@ export function ImagePicker({ value, onChange, label = 'افزودن تصویر'
         <button
           type="button"
           onClick={() => ref.current?.click()}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink-200 py-6 text-sm text-ink-500 hover:border-brand-400 hover:text-brand-600 dark:border-white/10"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed hairline py-7 text-sm text-ink-500 transition hover:border-ink-400 hover:text-ink-900 dark:hover:text-white"
         >
-          {busy ? 'در حال پردازش…' : `📷 ${label}`}
+          {busy ? 'در حال پردازش…' : `${label}`}
         </button>
       )}
     </div>

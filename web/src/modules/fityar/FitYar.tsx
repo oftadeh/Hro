@@ -22,9 +22,9 @@ export default function FitYar() {
         value={tab}
         onChange={(t) => setParams({ tab: t })}
         items={[
-          { value: 'ai', label: '🤖 دستیار هوشمند' },
-          { value: 'coaches', label: '🧑‍🏫 مربیان' },
-          { value: 'plans', label: '📋 برنامه‌های من' },
+          { value: 'ai', label: 'دستیار هوشمند' },
+          { value: 'coaches', label: 'مربیان' },
+          { value: 'plans', label: 'برنامه‌های من' },
         ]}
       />
       {tab === 'ai' && <AIChat initial={params.get('q') ?? ''} />}
@@ -65,15 +65,15 @@ function AIChat({ initial }: { initial: string }) {
   return (
     <Card className="flex h-[calc(100dvh-15rem)] min-h-[28rem] flex-col p-0">
       <div className="flex items-center gap-3 border-b border-ink-100 p-4 dark:border-white/5">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 text-white shadow-soft">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink-950 text-brand-300">
           <Bot size={22} />
         </div>
         <div className="flex-1">
-          <div className="font-bold">فیت‌یار هوشمند</div>
-          <div className="text-[11px] text-brand-500">● آنلاین · متخصص تغذیه و تمرین</div>
+          <div className="font-semibold">فیت‌یار هوشمند</div>
+          <div className="text-[11px] text-brand-500">آنلاین · متخصص تغذیه و تمرین</div>
         </div>
         {chat.length > 0 && (
-          <button onClick={clearAIChat} className="rounded-xl p-2 text-ink-400 hover:text-rose-500" aria-label="پاک کردن">
+          <button onClick={clearAIChat} className="rounded-xl p-2 text-ink-400 hover:text-coral-500" aria-label="پاک کردن">
             <Trash2 size={16} />
           </button>
         )}
@@ -82,24 +82,24 @@ function AIChat({ initial }: { initial: string }) {
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {chat.length === 0 && (
           <div className="py-6 text-center">
-            <div className="text-5xl">🤖</div>
-            <div className="mt-2 font-bold">سلام {me.name.split(' ')[0]}! چطور کمکت کنم؟</div>
+            <div className="text-5xl"></div>
+            <div className="mt-2 font-semibold">سلام {me.name.split(' ')[0]}! چطور کمکت کنم؟</div>
             <p className="mx-auto mt-1 max-w-sm text-xs text-ink-500">بر اساس قد، وزن و هدفت در پروفایل، برنامه‌ی تغذیه و تمرین شخصی‌سازی‌شده می‌دم.</p>
             {!me.weightKg && (
-              <Link to="/profile" className="mt-2 inline-block text-xs font-bold text-indigo-500">
-                ← ابتدا قد و وزنت رو در پروفایل وارد کن
+              <Link to="/profile" className="mt-2 inline-block text-xs font-semibold text-aqua-500">
+                ابتدا قد و وزنت رو در پروفایل وارد کن
               </Link>
             )}
           </div>
         )}
         {chat.map((m, i) => (
           <div key={i} className={clsx('flex', m.role === 'user' ? 'justify-start' : 'justify-end')}>
-            <div className={clsx('max-w-[85%] rounded-[1.75rem] px-4 py-3 text-sm leading-7', m.role === 'user' ? 'rounded-tr-md bg-gradient-to-l from-brand-500 to-violet-500 text-white' : 'rounded-tl-md bg-ink-100 dark:bg-white/5')}>
+            <div className={clsx('max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7', m.role === 'user' ? 'rounded-tr-sm bg-ink-950 text-white dark:bg-brand-300 dark:text-ink-950' : 'rounded-tl-sm border hairline bg-white dark:bg-ink-900')}>
               <div className="whitespace-pre-line">{renderBold(m.text)}</div>
               {m.suggestions && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {m.suggestions.map((s) => (
-                    <button key={s.link + s.label} onClick={() => nav(s.link)} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 shadow-sm dark:bg-ink-800 dark:text-indigo-300">
+                    <button key={s.link + s.label} onClick={() => nav(s.link)} className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-aqua-600 shadow-sm dark:bg-ink-800 dark:text-aqua-300">
                       {s.label}
                     </button>
                   ))}
@@ -110,7 +110,7 @@ function AIChat({ initial }: { initial: string }) {
         ))}
         {busy && (
           <div className="flex justify-end">
-            <div className="flex gap-1 rounded-[1.75rem] bg-ink-100 px-4 py-4 dark:bg-white/5">
+            <div className="flex gap-1 rounded-2xl bg-ink-100 px-4 py-4 dark:bg-white/5">
               {[0, 1, 2].map((i) => <span key={i} className="h-2 w-2 animate-bounce rounded-full bg-ink-400" style={{ animationDelay: `${i * 0.15}s` }} />)}
             </div>
           </div>
@@ -168,7 +168,7 @@ function Coaches() {
                     {c.online && <span className="absolute bottom-0.5 left-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-brand-500 dark:border-ink-900" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-bold">{u.name}</div>
+                    <div className="font-semibold">{u.name}</div>
                     <div className="text-xs text-ink-500">{c.title}</div>
                     <div className="mt-1 flex items-center gap-2">
                       <Stars value={c.rating} />
@@ -194,7 +194,7 @@ function MyPlans() {
   const orders = useDB((s) => s.planOrders)
   const users = useUserMap()
   const mine = orders.filter((o) => o.userId === me.id)
-  if (!mine.length) return <Empty icon="📋" title="هنوز برنامه‌ای نخریدی" desc="از مربیان فیت‌یار برنامه‌ی اختصاصی تمرین و تغذیه بگیر." />
+  if (!mine.length) return <Empty icon="" title="هنوز برنامه‌ای نخریدی" desc="از مربیان فیت‌یار برنامه‌ی اختصاصی تمرین و تغذیه بگیر." />
   return (
     <div className="space-y-3">
       {mine.map((o) => (
@@ -202,7 +202,7 @@ function MyPlans() {
           <div className="flex items-center gap-3">
             <Avatar name={users[o.coachId]?.name ?? ''} size={42} />
             <div className="min-w-0 flex-1">
-              <div className="font-bold">{o.title}</div>
+              <div className="font-semibold">{o.title}</div>
               <div className="text-xs text-ink-500">{users[o.coachId]?.name} · {faDate(o.createdAt)}</div>
             </div>
             <Badge color={o.status === 'delivered' ? 'emerald' : 'amber'}>{o.status === 'delivered' ? 'تحویل شده' : 'در حال آماده‌سازی'}</Badge>

@@ -57,7 +57,7 @@ export const useDB = create<DBState>()(
     {
       name: 'keyfit-db',
       // نسخه‌ی داده‌های نمایشی؛ با تغییر ساختار، داده‌ها به حالت اولیه برمی‌گردند
-      version: 2,
+      version: 3,
       migrate: () => createSeed(),
       storage: createJSONStorage(() => localStorage),
     },

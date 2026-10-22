@@ -18,7 +18,7 @@ export function addXP(d: DBState, userId: ID, amount: number) {
   const before = levelOf(u.xp).level
   u.xp += amount
   const after = levelOf(u.xp)
-  if (after.level > before) notify(d, userId, `سطح جدید: ${after.title} 🎖️`, `تبریک! به سطح ${after.level} رسیدی.`, '🎖️', '/profile')
+  if (after.level > before) notify(d, userId, `سطح جدید: ${after.title}`, `تبریک! به سطح ${after.level} رسیدی.`, '', '/profile')
 }
 
 function ensureLog(d: DBState, userId: ID): DailyLog {
@@ -53,7 +53,7 @@ export function touchDaily(userId: ID) {
     user.lastActiveDay = today
     addXP(d, userId, STREAK_BONUS_XP)
     ensureLog(d, userId)
-    notify(d, userId, `🔥 استریک ${user.streak} روزه!`, `برای ورود امروز ${STREAK_BONUS_XP} امتیاز گرفتی. مأموریت‌های امروز منتظرتن.`, '🔥', '/')
+    notify(d, userId, `استریک ${user.streak} روزه!`, `برای ورود امروز ${STREAK_BONUS_XP} امتیاز گرفتی. مأموریت‌های امروز منتظرتن.`, '', '/')
   })
 }
 
@@ -84,7 +84,7 @@ export function claimDailyReward() {
     if (log.rewardClaimed || log.missionsDone.length < DAILY_MISSIONS.length) return
     log.rewardClaimed = true
     addXP(d, userId, 100)
-    notify(d, userId, 'جعبه‌ی جایزه‌ی روزانه باز شد 🎁', '۱۰۰ امتیاز تجربه گرفتی. فردا هم بیا!', '🎁')
+    notify(d, userId, 'جعبه‌ی جایزه‌ی روزانه باز شد', '۱۰۰ امتیاز تجربه گرفتی. فردا هم بیا!', '')
   })
 }
 

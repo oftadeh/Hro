@@ -10,6 +10,7 @@ export function createPost(input: { text: string; image?: string; challengeId?: 
   const me = currentUserId()
   if (!input.text.trim() && !input.image) throw new AppError('متن یا تصویر پست را وارد کنید')
   mutate((d) => {
+    if (input.gymId && !d.gyms.some((g) => g.id === input.gymId && g.approved)) throw new AppError('باشگاه انتخاب‌شده فعال نیست')
     d.posts.unshift({ id: uid('post-'), authorId: me, text: input.text.trim(), image: input.image, gradient: pick(), likes: [], saves: [], comments: [], challengeId: input.challengeId, gymId: input.gymId, createdAt: now() })
     addXP(d, me, 15)
   })
@@ -35,7 +36,7 @@ export function toggleLike(postId: string) {
       completeMission(d, me, 'social')
       if (p.authorId !== me) {
         const u = d.users.find((x) => x.id === me)!
-        notify(d, p.authorId, 'لایک جدید ❤️', `${u.name} پست شما را پسندید.`, '❤️', '/fitzone')
+        notify(d, p.authorId, 'لایک جدید', `${u.name} پست شما را پسندید.`, '', '/fitzone')
       }
     }
   })
@@ -57,7 +58,7 @@ export function addComment(postId: string, text: string) {
     const p = d.posts.find((x) => x.id === postId)
     if (!p) return
     p.comments.push({ id: uid('c-'), authorId: me, text: text.trim(), at: now() })
-    if (p.authorId !== me) notify(d, p.authorId, 'نظر جدید 💬', text.slice(0, 60), '💬', '/fitzone')
+    if (p.authorId !== me) notify(d, p.authorId, 'نظر جدید', text.slice(0, 60), '', '/fitzone')
   })
 }
 

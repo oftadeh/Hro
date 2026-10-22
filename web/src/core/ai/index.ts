@@ -4,7 +4,7 @@ import { localExpert } from './localExpert'
 /**
  * اگر VITE_AI_API_URL تنظیم شده باشد، گفتگو به سرور (که به یک مدل زبانی
  * متصل است) فرستاده می‌شود؛ در غیر این صورت یا هنگام خطا، مشاور آفلاین پاسخ می‌دهد.
- * قرارداد سرور: POST { messages, profile } → { text, suggestions? }
+ * قرارداد سرور: POST { messages, profile } { text, suggestions? }
  */
 const API_URL = import.meta.env.VITE_AI_API_URL as string | undefined
 

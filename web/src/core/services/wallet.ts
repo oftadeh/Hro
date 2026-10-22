@@ -12,7 +12,7 @@ export async function topUp(amount: number) {
   mutate((d) => {
     d.wallets[userId] = (d.wallets[userId] ?? 0) + amount
     d.transactions.unshift({ id: uid('tx-'), type: 'topup', from: 'gateway', to: userId, payerId: userId, amount, commission: 0, description: 'شارژ کیف پول', createdAt: now() })
-    notify(d, userId, 'کیف پول شارژ شد 💳', `${toman(amount)} به کیف پولت اضافه شد.`, '💳', '/wallet')
+    notify(d, userId, 'کیف پول شارژ شد', `${toman(amount)} به کیف پولت اضافه شد.`, '', '/wallet')
   })
 }
 
@@ -30,10 +30,13 @@ export function buySubscription(planId: string) {
       existing.planId = plan.id
       existing.credit += plan.credit
       existing.expiresAt = expires
+      existing.startedAt = now()
+      existing.freeChallengeUsed = 0
+      existing.freeDoctorUsed = 0
     } else {
-      d.subscriptions.push({ userId, planId: plan.id, credit: plan.credit, startedAt: now(), expiresAt: expires })
+      d.subscriptions.push({ userId, planId: plan.id, credit: plan.credit, startedAt: now(), expiresAt: expires, freeChallengeUsed: 0, freeDoctorUsed: 0 })
     }
-    notify(d, userId, `اشتراک ${plan.name} فعال شد ✨`, `${toman(plan.credit)} اعتبار ورود به باشگاه‌ها گرفتی.`, '✨', '/fityab')
+    notify(d, userId, `اشتراک ${plan.name} فعال شد`, `${toman(plan.credit)} اعتبار ورود به باشگاه‌ها گرفتی.`, '', '/fityab')
   })
 }
 

@@ -78,12 +78,12 @@ export default function FitYab() {
           {sel && (
             <div className="absolute inset-x-3 bottom-3 z-[500] animate-sheet-up">
               {/* پنل به سبک ناوبری: سه شاخص + دکمه‌ی طلایی */}
-              <div className="rounded-[2rem] border border-white/60 bg-white/90 p-4 pt-2.5 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/85">
+              <div className="rounded-2xl border hairline bg-white/95 p-4 pt-2.5 shadow-soft backdrop-blur-xl dark:bg-ink-900/95">
                 <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-ink-200 dark:bg-white/25" />
                 <div className="flex items-center gap-3">
-                  <Cover gradient={sel.g.cover} image={sel.g.media.find((m) => m.type === 'image')?.url} emoji="🏋️" className="h-14 w-14 shrink-0 rounded-[1rem] text-sm" />
+                  <Cover gradient={sel.g.id} image={sel.g.media.find((m) => m.type === 'image')?.url} className="h-14 w-14 shrink-0 rounded-xl" />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-black">{sel.g.name}</div>
+                    <div className="truncate font-semibold">{sel.g.name}</div>
                     <div className="truncate text-xs text-ink-400">{sel.g.address}</div>
                   </div>
                   <button onClick={() => setSelected(undefined)} className="rounded-full bg-ink-100 p-2 text-ink-500 dark:bg-white/10 dark:text-ink-300" aria-label="بستن">
@@ -96,9 +96,9 @@ export default function FitYab() {
                     ['زمان رسیدن', `${num(Math.max(3, (sel.d / 22) * 60))} دقیقه`],
                     ['هر سانس', `${num(sel.g.sessionPrice / 1000)} هزار`],
                   ].map(([k, v], i) => (
-                    <div key={k} className={i === 1 ? 'border-x border-ink-100 dark:border-white/10' : ''}>
+                    <div key={k} className={i === 1 ? 'border-x hairline' : ''}>
                       <div className="text-[11px] text-ink-400">{k}</div>
-                      <div className="mt-0.5 text-sm font-black">{v}</div>
+                      <div className="mt-0.5 text-sm font-light tabular-nums">{v}</div>
                     </div>
                   ))}
                 </div>

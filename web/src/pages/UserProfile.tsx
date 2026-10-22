@@ -10,6 +10,7 @@ import { Avatar, Badge, Button, Card, Empty, PageHeader, SectionTitle } from '@/
 import { useMe } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 import { PostCard } from '@/modules/fitzone/PostCard'
+import { RoleIcon } from '@/ui/icons'
 
 export default function UserProfile() {
   const { id } = useParams()
@@ -18,7 +19,7 @@ export default function UserProfile() {
   const user = useDB((s) => s.users.find((u) => u.id === id))
   const posts = useDB((s) => s.posts)
   const users = useDB((s) => s.users)
-  if (!user) return <Empty icon="🔍" title="کاربر یافت نشد" />
+  if (!user) return <Empty icon="" title="کاربر یافت نشد" />
   if (user.id === me.id) return <Navigate to="/profile" replace />
   const lvl = levelOf(user.xp)
   const following = me.following.includes(user.id)
@@ -31,12 +32,12 @@ export default function UserProfile() {
       <PageHeader back title={user.name} />
       <Card className="text-center">
         <Avatar name={user.name} src={user.avatar} size={88} ring className="mx-auto" />
-        <div className="mt-2 text-lg font-extrabold">{user.name}</div>
+        <div className="mt-2 text-lg font-semibold">{user.name}</div>
         {user.bio && <p className="text-sm text-ink-500">{user.bio}</p>}
         <div className="mt-2 flex flex-wrap justify-center gap-1">
-          <Badge color="amber">🏅 {lvl.title}</Badge>
-          <Badge color="rose">🔥 {num(user.streak)} روز</Badge>
-          {user.roles.filter((r) => r !== 'user' && r !== 'admin').map((r) => <Badge key={r} color="sky">{ROLE_META[r].icon} {ROLE_META[r].label}</Badge>)}
+          <Badge color="amber">{lvl.title}</Badge>
+          <Badge color="rose">{num(user.streak)} روز</Badge>
+          {user.roles.filter((r) => r !== 'user' && r !== 'admin').map((r) => <Badge key={r}><RoleIcon role={r} size={12} /> {ROLE_META[r].label}</Badge>)}
         </div>
         <div className="mt-3 flex justify-center gap-6 text-sm">
           <div><b>{num(theirPosts.length)}</b> پست</div>
@@ -52,7 +53,7 @@ export default function UserProfile() {
       </Card>
       <SectionTitle title="پست‌ها" />
       <div className="space-y-4">
-        {theirPosts.length ? theirPosts.map((p) => <PostCard key={p.id} post={p} />) : <Empty icon="📭" title="هنوز پستی ندارد" />}
+        {theirPosts.length ? theirPosts.map((p) => <PostCard key={p.id} post={p} />) : <Empty icon="" title="هنوز پستی ندارد" />}
       </div>
     </div>
   )

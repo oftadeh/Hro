@@ -33,7 +33,7 @@ export default function DoctorPanel() {
         <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="violet" />
       </div>
       <Tabs className="my-4 max-w-sm" value={tab} onChange={setTab} items={[{ value: 'booked', label: 'پیش‌رو' }, { value: 'done', label: 'انجام‌شده' }]} />
-      {list.length === 0 && <Empty icon="📅" title="نوبتی در این بخش نیست" desc={tab === 'booked' ? 'از بخش پروفایل نوبت‌های آزاد اضافه کنید.' : undefined} />}
+      {list.length === 0 && <Empty icon="" title="نوبتی در این بخش نیست" desc={tab === 'booked' ? 'از بخش پروفایل نوبت‌های آزاد اضافه کنید.' : undefined} />}
       <div className="grid gap-3 lg:grid-cols-2">
         {list.map((a) => {
           const t = findThread(me.id, a.userId)
@@ -42,13 +42,13 @@ export default function DoctorPanel() {
               <div className="flex items-center gap-3">
                 <Avatar name={users[a.userId]?.name ?? ''} size={44} />
                 <div className="flex-1">
-                  <div className="font-bold">{users[a.userId]?.name}</div>
+                  <div className="font-semibold">{users[a.userId]?.name}</div>
                   <div className="text-xs text-ink-500">{faDateTime(a.at)}</div>
                 </div>
                 <Badge color={a.status === 'done' ? 'emerald' : 'sky'}>{a.status === 'done' ? 'انجام شد' : 'رزرو'}</Badge>
               </div>
-              <div className="mt-3 rounded-2xl bg-ink-50 p-3 text-xs leading-6 dark:bg-white/5">🩺 {a.reason}</div>
-              {a.prescription && <div className="mt-2 whitespace-pre-line rounded-2xl bg-cyan-50 p-3 text-xs leading-6 dark:bg-cyan-500/10">📋 {a.prescription}</div>}
+              <div className="mt-3 rounded-2xl bg-ink-50 p-3 text-xs leading-6 dark:bg-white/5">{a.reason}</div>
+              {a.prescription && <div className="mt-2 whitespace-pre-line rounded-2xl bg-aqua-50 p-3 text-xs leading-6 dark:bg-aqua-500/10">{a.prescription}</div>}
               <div className="mt-3 flex gap-2">
                 {t && <Link to={`/messages/${t.id}`} className="flex-1"><Button variant="secondary" size="sm" className="w-full" icon={<MessageCircle size={14} />}>گفتگو</Button></Link>}
                 {a.status === 'booked' && <Button size="sm" className="flex-1" onClick={() => { setOpen(a); setRx('') }}>ثبت نتیجه‌ی ویزیت</Button>}

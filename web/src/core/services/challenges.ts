@@ -3,6 +3,7 @@ import { uid, now } from '../id'
 import type { Challenge } from '../types'
 import { applyPayment, notify } from './ledger'
 import { addXP } from './engagement'
+import { consumeFree } from './perks'
 import { toman } from '../format'
 
 export type NewChallenge = Pick<
@@ -45,13 +46,14 @@ export function joinChallenge(challengeId: string) {
   mutate((d) => {
     const c = d.challenges.find((x) => x.id === challengeId)!
     if (c.entryFee > 0) {
-      const tx = applyPayment(d, { type: 'challenge_entry', from: me, to: 'escrow', amount: c.entryFee, module: 'challenge', refId: c.id, description: `ورودی چالش «${c.title}»` })
+      const free = consumeFree(d, me, 'challenge')
+      const tx = applyPayment(d, { type: 'challenge_entry', from: me, to: 'escrow', amount: c.entryFee, module: 'challenge', refId: c.id, discountPct: free ? 100 : 0, description: free ? `ورود رایگان (اشتراک) به چالش «${c.title}»` : `ورودی چالش «${c.title}»` })
       c.pool += c.entryFee - tx.commission
     }
     c.participants.push({ userId: me, score: 0, joinedAt: now(), logs: [] })
     addXP(d, me, 20)
     const u = d.users.find((x) => x.id === me)!
-    notify(d, c.creatorId, 'شرکت‌کننده‌ی جدید 🏁', `${u.name} به «${c.title}» پیوست.`, '🏁', `/challenges/${c.id}`)
+    notify(d, c.creatorId, 'شرکت‌کننده‌ی جدید', `${u.name} به «${c.title}» پیوست.`, '', `/challenges/${c.id}`)
   })
 }
 
@@ -69,7 +71,7 @@ export function logChallengeProgress(challengeId: string, value: number, note?: 
     addXP(d, me, 5)
     if (before < c.goal && p.score >= c.goal) {
       addXP(d, me, c.xpReward)
-      notify(d, me, 'هدف چالش رو زدی! 🏆', `${c.xpReward} امتیاز تجربه گرفتی.`, '🏆', `/challenges/${c.id}`)
+      notify(d, me, 'هدف چالش رو زدی!', `${c.xpReward} امتیاز تجربه گرفتی.`, '', `/challenges/${c.id}`)
     }
   })
 }
@@ -102,7 +104,7 @@ export function settleChallenge(challengeId: string, force = false) {
       distributed += amount
       c.winners.push({ userId: w.userId, rank: prize.rank, amount })
       addXP(d, w.userId, 100 * (4 - Math.min(prize.rank, 3)))
-      notify(d, w.userId, `تبریک! ${prize.title} شدی 🥇`, `${toman(amount)} جایزه به کیف پولت واریز شد.${c.extraReward && prize.rank === 1 ? ` + ${c.extraReward}` : ''}`, '🥇', `/challenges/${c.id}`)
+      notify(d, w.userId, `تبریک! ${prize.title} شدی`, `${toman(amount)} جایزه به کیف پولت واریز شد.${c.extraReward && prize.rank === 1 ? ` + ${c.extraReward}` : ''}`, '', `/challenges/${c.id}`)
     }
     // باقی‌مانده‌ی صندوق (اگر برنده‌ای برای رتبه‌ای نبود) به سازنده برمی‌گردد
     const rest = c.pool - distributed

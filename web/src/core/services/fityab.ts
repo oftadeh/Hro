@@ -33,7 +33,7 @@ export function checkIn(gymId: string, prefer: 'subscription' | 'wallet' = 'subs
     d.checkins.unshift(created)
     addXP(d, userId, 30)
     completeMission(d, userId, 'workout')
-    notify(d, gym.ownerId, 'ورزشکار جدید در راه است 🏃', `${user.name} برای ${gym.name} کد ورود ${created.code} گرفت (${toman(gym.sessionPrice)}).`, '🏃', '/panel/gym/checkins')
+    notify(d, gym.ownerId, 'ورزشکار جدید در راه است', `${user.name} برای ${gym.name} کد ورود ${created.code} گرفت (${toman(gym.sessionPrice)}).`, '', '/panel/gym/checkins')
   })
   return created
 }
@@ -69,7 +69,7 @@ export function saveGym(input: Partial<Gym> & { id?: string }) {
         ...input,
       } as Gym)
       d.users.filter((u) => u.roles.includes('admin')).forEach((a) =>
-        notify(d, a.id, 'باشگاه جدید در انتظار تایید', `«${input.name}» برای فیت‌یاب ثبت شد.`, '🏋️', '/panel/admin/gyms'),
+        notify(d, a.id, 'باشگاه جدید در انتظار تایید', `«${input.name}» برای فیت‌یاب ثبت شد.`, '', '/panel/admin/gyms'),
       )
     }
   })

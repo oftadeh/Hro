@@ -15,12 +15,12 @@ export default function RestaurantPage() {
   const r = useDB((s) => s.restaurants.find((x) => x.id === id))
   const foods = useDB((s) => s.foods)
   const [cart, setCart] = useState(false)
-  if (!r) return <Empty icon="🔍" title="رستوران یافت نشد" />
+  if (!r) return <Empty icon="" title="رستوران یافت نشد" />
   const menu = foods.filter((f) => f.restaurantId === r.id && f.available)
   return (
     <div className="animate-fade-up">
       <PageHeader back="/buffet" title={r.name} subtitle={r.description} actions={<CartButton kind="food" onClick={() => setCart(true)} />} />
-      <Cover gradient={r.cover} emoji="🥗" className="h-40 rounded-[2rem]" />
+      <Cover gradient={r.cover} emoji="" className="h-40 rounded-3xl" />
       <Card className="-mt-8 mx-4 relative flex flex-wrap items-center justify-between gap-2 text-xs">
         <Stars value={r.rating} />
         <span className="flex items-center gap-1"><Clock size={14} /> ارسال {num(r.deliveryMinutes)} دقیقه</span>

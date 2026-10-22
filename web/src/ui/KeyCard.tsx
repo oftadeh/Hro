@@ -1,41 +1,42 @@
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
+import { Money } from './kit'
 
-/** کارت به سبک کارت بانکی (الهام از کارت VISA طرح مرجع) */
-export function KeyCard({ title, subtitle, amount, footer, tone = 'coral', className, chip, tilt }: {
+/** کارت عضویت به سبک کارت فلزی مشکی با جزئیات شامپاینی */
+export function KeyCard({ title, subtitle, amount, footer, tone = 'black', className }: {
   title: ReactNode
   subtitle?: ReactNode
   amount: ReactNode
   footer?: ReactNode
-  tone?: 'coral' | 'violet' | 'navy' | 'gold'
+  tone?: 'black' | 'graphite' | 'champagne' | string
   className?: string
-  chip?: ReactNode
   tilt?: boolean
+  chip?: ReactNode
 }) {
   const bg = {
-    coral: 'from-coral-400 via-coral-500 to-fuchsia-600 shadow-[0_24px_50px_-20px_rgb(244_80_110/.75)]',
-    violet: 'from-brand-400 via-brand-600 to-violet-900 shadow-glow',
-    navy: 'from-indigo-500 via-blue-700 to-ink-900 shadow-[0_24px_50px_-20px_rgb(40_60_160/.7)]',
-    gold: 'from-gold-300 via-gold-400 to-gold-600 text-ink-950 shadow-gold',
-  }[tone]
+    black: 'bg-[linear-gradient(135deg,#1e1e1c_0%,#0e0e0d_55%,#262624_100%)] text-white',
+    graphite: 'bg-[linear-gradient(135deg,#3e3d39_0%,#1e1e1c_60%,#3e3d39_100%)] text-white',
+    champagne: 'bg-[linear-gradient(135deg,#e7dcc3_0%,#c6ab78_55%,#e7dcc3_100%)] text-ink-950',
+  }[tone as 'black'] ?? 'bg-[linear-gradient(135deg,#1e1e1c_0%,#0e0e0d_55%,#262624_100%)] text-white'
+  const light = tone === 'champagne'
   return (
-    <div className={clsx('relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br p-5 text-white transition', bg, tilt && 'hover:-rotate-1 hover:scale-[1.01]', className)}>
-      <div className="pointer-events-none absolute -left-10 -top-16 h-44 w-44 rounded-full bg-white/15" />
-      <div className="pointer-events-none absolute -bottom-20 right-6 h-44 w-44 rounded-full bg-black/10" />
-      <div className="relative flex items-start justify-between">
-        <div>
-          <div className="text-sm font-black tracking-wide">{title}</div>
-          {subtitle && <div className="text-[10px] font-semibold uppercase tracking-widest opacity-75">{subtitle}</div>}
+    <div className={clsx('relative aspect-[1.586] w-full overflow-hidden rounded-2xl p-5 ring-1 ring-white/10', bg, className)}>
+      {/* درخشش مورب ملایم */}
+      <div className="pointer-events-none absolute -inset-1/2 rotate-12 bg-[linear-gradient(100deg,transparent_40%,rgba(255,255,255,.07)_50%,transparent_60%)]" />
+      <div className="relative flex h-full flex-col">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className={clsx('text-[11px] font-medium tracking-[.3em]', light ? 'text-ink-800' : 'text-brand-300')}>{title}</div>
+            {subtitle && <div className={clsx('mt-1 text-[11px]', light ? 'text-ink-700' : 'text-white/50')}>{subtitle}</div>}
+          </div>
+          {/* تراشه */}
+          <div className={clsx('h-7 w-9 rounded-md ring-1', light ? 'bg-ink-950/10 ring-ink-950/20' : 'bg-[linear-gradient(135deg,#dcc59a,#95784a)] ring-white/20')} />
         </div>
-        {chip ?? <span className="h-7 w-7 rounded-full border-2 border-white/60 bg-white/20" />}
+        <div className="mt-auto">
+          <div className="text-[1.65rem] font-light tracking-tight">{typeof amount === 'number' ? <Money value={amount} /> : amount}</div>
+          {footer && <div className={clsx('mt-2 flex items-center justify-between text-[11px]', light ? 'text-ink-800' : 'text-white/55')}>{footer}</div>}
+        </div>
       </div>
-      <div className="relative mt-5 flex items-center gap-3 text-lg tracking-[.35em] opacity-90" dir="ltr">
-        <span>••••</span>
-        <span>••••</span>
-        <span>••••</span>
-      </div>
-      <div className="relative mt-2 text-2xl font-black tracking-tight">{amount}</div>
-      {footer && <div className="relative mt-3 flex items-center justify-between text-[11px] font-semibold opacity-85">{footer}</div>}
     </div>
   )
 }

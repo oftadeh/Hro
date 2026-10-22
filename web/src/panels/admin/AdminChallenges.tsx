@@ -5,6 +5,7 @@ import { settleChallenge } from '@/core/services/challenges'
 import { Badge, Button, Card, PageHeader } from '@/ui/kit'
 import { useUserMap } from '@/ui/hooks'
 import { run } from '@/ui/toast'
+import { MetricIcon } from '@/ui/icons'
 
 export default function AdminChallenges() {
   const challenges = useDB((s) => s.challenges)
@@ -15,9 +16,9 @@ export default function AdminChallenges() {
       <div className="grid gap-3 md:grid-cols-2">
         {challenges.map((c) => (
           <Card key={c.id} className="flex gap-3">
-            <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-3xl ${c.gradient}`}>{c.emoji}</div>
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-ink-950 text-brand-300"><MetricIcon metric={c.metric} size={22} /></div>
             <div className="min-w-0 flex-1">
-              <Link to={`/challenges/${c.id}`} className="font-bold">{c.title}</Link>
+              <Link to={`/challenges/${c.id}`} className="font-semibold">{c.title}</Link>
               <div className="text-xs text-ink-500">سازنده: {users[c.creatorId]?.name} · تا {faDate(c.endAt)}</div>
               <div className="mt-1 flex flex-wrap gap-1">
                 <Badge color="amber">صندوق {toman(c.pool)}</Badge>

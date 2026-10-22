@@ -14,27 +14,26 @@ export const ORDER_STATUS = {
 export default function Orders() {
   const me = useMe()!
   const orders = useDB((s) => s.orders)
-  const products = useDB((s) => s.products)
   const restaurants = useDB((s) => s.restaurants)
   const users = useDB((s) => s.users)
   const mine = orders.filter((o) => o.userId === me.id)
   return (
     <div className="animate-fade-up">
       <PageHeader back title="سفارش‌های من" />
-      {mine.length === 0 && <Empty icon="📦" title="سفارشی ثبت نکرده‌ای" />}
+      {mine.length === 0 && <Empty icon="" title="سفارشی ثبت نکرده‌ای" />}
       <div className="space-y-3">
         {mine.map((o) => {
           const vendor = o.kind === 'food' ? restaurants.find((r) => r.id === o.vendorId)?.name : users.find((u) => u.id === o.vendorId)?.name
           return (
             <Card key={o.id}>
               <div className="flex items-center justify-between">
-                <div className="text-sm font-bold">{o.kind === 'food' ? '🥗' : '🛍️'} {vendor}</div>
+                <div className="text-sm font-semibold">{o.kind === 'food' ? '' : ''} {vendor}</div>
                 <Badge color={ORDER_STATUS[o.status].color}>{ORDER_STATUS[o.status].label}</Badge>
               </div>
               <div className="mt-2 space-y-1 text-xs text-ink-500">
                 {o.items.map((i) => (
                   <div key={i.refId} className="flex justify-between">
-                    <span>{products.find((p) => p.id === i.refId)?.emoji ?? '•'} {i.name} × {num(i.qty)}</span>
+                    <span>{i.name} × {num(i.qty)}</span>
                     <span>{toman(i.price * i.qty)}</span>
                   </div>
                 ))}

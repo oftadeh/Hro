@@ -52,11 +52,9 @@ export function Toaster() {
       {items.map((t) => (
         <div
           key={t.id}
-          className={`pointer-events-auto animate-pop rounded-2xl px-4 py-3 text-sm font-medium text-white shadow-soft backdrop-blur ${
-            t.kind === 'success' ? 'bg-emerald-600/95' : t.kind === 'error' ? 'bg-rose-600/95' : 'bg-ink-800/95'
-          }`}
+          className="pointer-events-auto flex animate-pop items-center gap-2.5 rounded-full bg-ink-950 py-2.5 pl-5 pr-4 text-[13px] text-white shadow-soft ring-1 ring-white/10 dark:bg-white dark:text-ink-950"
         >
-          {t.kind === 'success' ? '✓ ' : t.kind === 'error' ? '⚠ ' : ''}
+          <span className={`h-1.5 w-1.5 rounded-full ${t.kind === 'success' ? 'bg-emerald-400' : t.kind === 'error' ? 'bg-coral-400' : 'bg-brand-300'}`} />
           {t.text}
         </div>
       ))}

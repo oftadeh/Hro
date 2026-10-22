@@ -3,6 +3,7 @@ import { uid, now } from '../id'
 import type { CoachProfile, ID, Thread } from '../types'
 import { applyPayment, notify } from './ledger'
 import { addXP } from './engagement'
+import { discountPct } from './perks'
 import { toman } from '../format'
 
 export function findThread(a: ID, b: ID) {
@@ -36,7 +37,7 @@ export function sendMessage(threadId: ID, text: string) {
     t.updatedAt = now()
     const other = t.members.find((m) => m !== me)!
     const sender = d.users.find((u) => u.id === me)!
-    notify(d, other, `پیام جدید از ${sender.name}`, text.slice(0, 80), '💬', `/messages/${t.id}`)
+    notify(d, other, `پیام جدید از ${sender.name}`, text.slice(0, 80), '', `/messages/${t.id}`)
   })
 }
 
@@ -47,12 +48,12 @@ export function bookCall(coachId: ID) {
   if (!coach) throw new AppError('مربی یافت نشد')
   let threadId = ''
   mutate((d) => {
-    applyPayment(d, { type: 'coach_plan', from: me, to: coachId, amount: coach.callPrice, module: 'fityar', refId: coachId, description: 'رزرو تماس مشاوره با مربی' })
+    applyPayment(d, { type: 'coach_plan', from: me, to: coachId, amount: coach.callPrice, module: 'fityar', refId: coachId, discountPct: discountPct(me, 'fityar', d), description: 'رزرو تماس مشاوره با مربی' })
     const t = ensureThread(d, me, coachId, 'coach')
-    t.messages.push({ id: uid('m-'), from: me, text: `📞 یک تماس مشاوره ۳۰ دقیقه‌ای رزرو شد (${toman(coach.callPrice)})`, at: now(), kind: 'call' })
+    t.messages.push({ id: uid('m-'), from: me, text: `یک تماس مشاوره ۳۰ دقیقه‌ای رزرو شد (${toman(coach.callPrice)})`, at: now(), kind: 'call' })
     t.updatedAt = now()
     threadId = t.id
-    notify(d, coachId, 'رزرو تماس جدید 📞', 'یک ورزشکار تماس مشاوره رزرو کرد.', '📞', `/messages/${t.id}`)
+    notify(d, coachId, 'رزرو تماس جدید', 'یک ورزشکار تماس مشاوره رزرو کرد.', '', `/messages/${t.id}`)
   })
   return threadId
 }
@@ -65,15 +66,15 @@ export function buyCoachPlan(coachId: ID, planId: ID, answers: string) {
   if (answers.trim().length < 10) throw new AppError('لطفاً اطلاعات بدنی و هدف‌تان را کامل بنویسید')
   mutate((d) => {
     const orderId = uid('po-')
-    applyPayment(d, { type: 'coach_plan', from: me, to: coachId, amount: plan.price, module: 'fityar', refId: orderId, description: `خرید «${plan.title}»` })
+    applyPayment(d, { type: 'coach_plan', from: me, to: coachId, amount: plan.price, module: 'fityar', refId: orderId, discountPct: discountPct(me, 'fityar', d), description: `خرید «${plan.title}»` })
     d.planOrders.unshift({ id: orderId, userId: me, coachId, planId, title: plan.title, price: plan.price, status: 'pending', answers, createdAt: now() })
     const c = d.coaches.find((x) => x.userId === coachId)!
     c.students += 1
     const t = ensureThread(d, me, coachId, 'coach')
-    t.messages.push({ id: uid('m-'), from: me, text: `🧾 برنامه‌ی «${plan.title}» خریداری شد.\n${answers}`, at: now(), kind: 'system' })
+    t.messages.push({ id: uid('m-'), from: me, text: `برنامه‌ی «${plan.title}» خریداری شد.\n${answers}`, at: now(), kind: 'system' })
     t.updatedAt = now()
     addXP(d, me, 50)
-    notify(d, coachId, 'سفارش برنامه‌ی جدید 🧾', `«${plan.title}» خریداری شد.`, '🧾', '/panel/coach/orders')
+    notify(d, coachId, 'سفارش برنامه‌ی جدید', `«${plan.title}» خریداری شد.`, '', '/panel/coach/orders')
   })
 }
 
@@ -85,7 +86,7 @@ export function deliverPlan(orderId: ID, content: string) {
     if (!o) throw new AppError('سفارش یافت نشد')
     o.status = 'delivered'
     o.content = content
-    notify(d, o.userId, 'برنامه‌ات آماده شد! 🎯', `مربی برنامه‌ی «${o.title}» را تحویل داد.`, '🎯', '/fityar?tab=plans')
+    notify(d, o.userId, 'برنامه‌ات آماده شد!', `مربی برنامه‌ی «${o.title}» را تحویل داد.`, '', '/fityar?tab=plans')
   })
 }
 

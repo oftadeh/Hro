@@ -4,6 +4,7 @@ import { ROLE_META } from '@/core/config'
 import { faDate, num, toman } from '@/core/format'
 import { toggleBlockUser } from '@/core/services/admin'
 import { Avatar, Badge, Button, Card, Input, PageHeader } from '@/ui/kit'
+import { RoleIcon } from '@/ui/icons'
 
 export default function AdminUsers() {
   const users = useDB((s) => s.users)
@@ -33,18 +34,18 @@ export default function AdminUsers() {
                   <div className="flex items-center gap-2">
                     <Avatar name={u.name} src={u.avatar} size={32} />
                     <div>
-                      <div className="font-bold">{u.name}</div>
+                      <div className="font-semibold">{u.name}</div>
                       <div className="text-[11px] text-ink-400" dir="ltr">{u.phone}</div>
                     </div>
                   </div>
                 </td>
-                <td className="p-3"><div className="flex flex-wrap gap-1">{u.roles.map((r) => <Badge key={r} color="sky">{ROLE_META[r].icon} {ROLE_META[r].label}</Badge>)}</div></td>
+                <td className="p-3"><div className="flex flex-wrap gap-1">{u.roles.map((r) => <Badge key={r}><RoleIcon role={r} size={12} /> {ROLE_META[r].label}</Badge>)}</div></td>
                 <td className="p-3">{toman(wallets[u.id] ?? 0)}</td>
                 <td className="p-3">{num(u.xp)}</td>
                 <td className="p-3 text-xs">{faDate(u.createdAt)}</td>
                 <td className="p-3">
                   {!u.roles.includes('admin') && (
-                    <Button size="sm" variant={u.blocked ? 'secondary' : 'ghost'} className={u.blocked ? '' : 'text-rose-500'} onClick={() => toggleBlockUser(u.id)}>
+                    <Button size="sm" variant={u.blocked ? 'secondary' : 'ghost'} className={u.blocked ? '' : 'text-coral-500'} onClick={() => toggleBlockUser(u.id)}>
                       {u.blocked ? 'رفع مسدودی' : 'مسدود'}
                     </Button>
                   )}

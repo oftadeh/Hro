@@ -8,8 +8,9 @@ import { Badge, Button, Card, Empty, Field, ImagePicker, Input, NumberInput, Pag
 import { useMe } from '@/ui/hooks'
 import { runOk } from '@/ui/toast'
 import { CATEGORIES } from '@/modules/shop/Shop'
+import { CategoryIcon } from '@/ui/icons'
 
-const EMPTY: Partial<Product> = { name: '', brand: '', category: 'supplement', price: 0, discount: 0, stock: 10, description: '', emoji: '📦' }
+const EMPTY: Partial<Product> = { name: '', brand: '', category: 'supplement', price: 0, discount: 0, stock: 10, description: '', emoji: '' }
 
 export default function SellerDashboard() {
   const me = useMe()!
@@ -31,14 +32,14 @@ export default function SellerDashboard() {
         <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="violet" />
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {mine.length === 0 && <Empty icon="📦" title="هنوز محصولی ثبت نکرده‌اید" />}
+        {mine.length === 0 && <Empty icon="" title="هنوز محصولی ثبت نکرده‌اید" />}
         {mine.map((p) => (
           <Card key={p.id} className="flex gap-3">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-violet-50 text-4xl dark:bg-violet-500/10">
-              {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : p.emoji}
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-ink-50 text-4xl dark:bg-ink-500/10">
+              {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="line-clamp-2 text-sm font-bold">{p.name}</div>
+              <div className="line-clamp-2 text-sm font-semibold">{p.name}</div>
               <div className="mt-1 flex flex-wrap gap-1">
                 <Badge color={p.stock > 0 ? 'emerald' : 'rose'}>موجودی {num(p.stock)}</Badge>
                 {p.discount > 0 && <Badge color="rose">٪{num(p.discount)}</Badge>}
@@ -46,7 +47,7 @@ export default function SellerDashboard() {
               <div className="mt-1 text-xs">{toman(p.price)} · {num(p.sold)} فروش</div>
               <div className="mt-2 flex gap-1">
                 <Button size="sm" variant="outline" icon={<Pencil size={13} />} onClick={() => setEdit(p)}>ویرایش</Button>
-                <Button size="sm" variant="ghost" className="text-rose-500" icon={<Trash2 size={13} />} onClick={() => confirm('حذف شود؟') && deleteProduct(p.id)} />
+                <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={13} />} onClick={() => confirm('حذف شود؟') && deleteProduct(p.id)} />
               </div>
             </div>
           </Card>
@@ -64,7 +65,6 @@ export default function SellerDashboard() {
                 {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
             </Field>
-            <Field label="ایموجی (بدون تصویر)"><Input value={edit.emoji} onChange={(e) => setEdit({ ...edit, emoji: e.target.value })} maxLength={4} /></Field>
             <Field label="قیمت (تومان)"><NumberInput value={edit.price ?? 0} onChange={(v) => setEdit({ ...edit, price: v })} /></Field>
             <Field label="تخفیف (درصد)"><NumberInput value={edit.discount ?? 0} onChange={(v) => setEdit({ ...edit, discount: Math.min(90, v) })} /></Field>
             <Field label="موجودی انبار"><NumberInput value={edit.stock ?? 0} onChange={(v) => setEdit({ ...edit, stock: v })} /></Field>

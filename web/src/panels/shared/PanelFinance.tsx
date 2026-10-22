@@ -33,12 +33,12 @@ export default function PanelFinance() {
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_340px]">
         <Card>
-          <div className="mb-2 font-extrabold">تراکنش‌های درآمدی</div>
+          <div className="mb-2 font-semibold">تراکنش‌های درآمدی</div>
           <TxList txs={incoming.slice(0, 60)} userId={me.id} showCommission />
         </Card>
         <div className="space-y-4">
           <Card className="space-y-3">
-            <div className="font-extrabold">درخواست تسویه</div>
+            <div className="font-semibold">درخواست تسویه</div>
             <Field label="مبلغ (تومان)" hint={`حداقل ${toman(min)}`}>
               <NumberInput value={amount} onChange={setAmount} />
             </Field>
@@ -51,7 +51,7 @@ export default function PanelFinance() {
           {mine.map((p) => (
             <Card key={p.id} className="flex items-center justify-between py-3">
               <div>
-                <div className="text-sm font-bold">{toman(p.amount)}</div>
+                <div className="text-sm font-semibold">{toman(p.amount)}</div>
                 <div className="text-[11px] text-ink-400">{faDate(p.createdAt)}</div>
               </div>
               <Badge color={p.status === 'paid' ? 'emerald' : p.status === 'rejected' ? 'rose' : 'amber'}>{p.status === 'paid' ? 'پرداخت شد' : p.status === 'rejected' ? 'رد شد' : 'در انتظار'}</Badge>

@@ -8,6 +8,7 @@ import type { RevenueModule, Role } from '@/core/types'
 import { Card, PageHeader, SectionTitle, Stat } from '@/ui/kit'
 import { TxList } from '@/pages/TxList'
 import { MiniBars } from '../shared/MiniBars'
+import { RoleIcon } from '@/ui/icons'
 
 export default function AdminOverview() {
   const users = useDB((s) => s.users)
@@ -37,22 +38,22 @@ export default function AdminOverview() {
 
       {(pendingGyms > 0 || pendingPayouts > 0) && (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {pendingGyms > 0 && <Link to="gyms"><Card className="border-amber-200 bg-amber-50 text-sm font-bold dark:border-amber-500/20 dark:bg-amber-500/10">🏋️ {num(pendingGyms)} باشگاه در انتظار تایید ←</Card></Link>}
-          {pendingPayouts > 0 && <Link to="finance"><Card className="border-sky-200 bg-sky-50 text-sm font-bold dark:border-sky-500/20 dark:bg-sky-500/10">🏦 {num(pendingPayouts)} درخواست تسویه در انتظار ←</Card></Link>}
+          {pendingGyms > 0 && <Link to="gyms"><Card className="border-brand-200 bg-brand-50 text-sm font-semibold dark:border-brand-500/20 dark:bg-brand-500/10">{num(pendingGyms)} باشگاه در انتظار تایید</Card></Link>}
+          {pendingPayouts > 0 && <Link to="finance"><Card className="border-aqua-200 bg-aqua-50 text-sm font-semibold dark:border-aqua-500/20 dark:bg-aqua-500/10">{num(pendingPayouts)} درخواست تسویه در انتظار</Card></Link>}
         </div>
       )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_320px]">
         <Card>
-          <div className="mb-2 font-extrabold">درآمد به تفکیک ماژول</div>
-          <MiniBars data={bars} color="from-violet-500 to-fuchsia-400" format={(n) => `${num(n / 1000)}k`} />
+          <div className="mb-2 font-semibold">درآمد به تفکیک ماژول</div>
+          <MiniBars data={bars} color="from-ink-800 to-ink-700" format={(n) => `${num(n / 1000)}k`} />
         </Card>
         <Card>
-          <div className="mb-3 flex items-center gap-2 font-extrabold"><Users size={18} /> کاربران ({num(users.length)})</div>
+          <div className="mb-3 flex items-center gap-2 font-semibold"><Users size={18} /> کاربران ({num(users.length)})</div>
           <div className="space-y-2">
             {roleCounts.map(({ r, n }) => (
               <div key={r} className="flex items-center justify-between text-sm">
-                <span>{ROLE_META[r].icon} {ROLE_META[r].label}</span>
+                <span className="flex items-center gap-2 text-ink-600 dark:text-ink-300"><RoleIcon role={r} size={15} /> {ROLE_META[r].label}</span>
                 <b>{num(n)}</b>
               </div>
             ))}

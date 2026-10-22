@@ -8,8 +8,9 @@ import type { Product } from '@/core/types'
 import { Badge, Button, Chips, Input, PageHeader, Stars } from '@/ui/kit'
 import { toast } from '@/ui/toast'
 import { CartSheet, useCartCount } from './CartSheet'
+import { CategoryIcon } from '@/ui/icons'
 
-export const CATEGORIES: Record<Product['category'], string> = { supplement: '💊 مکمل', equipment: '🏋️ تجهیزات', apparel: '👕 پوشاک', accessory: '⌚ لوازم جانبی' }
+export const CATEGORIES: Record<Product['category'], string> = { supplement: 'مکمل', equipment: 'تجهیزات', apparel: 'پوشاک', accessory: 'لوازم جانبی' }
 
 export function CartButton({ kind, onClick }: { kind: 'product' | 'food'; onClick: () => void }) {
   const count = useCartCount(kind)
@@ -30,11 +31,13 @@ export default function Shop() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="فروشگاه" subtitle="مکمل اصل و لوازم ورزشی با ضمانت" actions={<CartButton kind="product" onClick={() => setCart(true)} />} />
-      <div className="relative mb-3 overflow-hidden rounded-[2rem] bg-gradient-to-l from-violet-600 to-fuchsia-500 p-5 text-white">
-        <div className="text-xs opacity-80">جشنواره‌ی پاییزه</div>
-        <div className="text-xl font-black">تا ۲۰٪ تخفیف مکمل‌ها 🔥</div>
-        <div className="text-xs opacity-80">ارسال رایگان برای خریدهای بالای ۲ میلیون</div>
-        <div className="absolute -left-4 -top-2 text-8xl opacity-30">💊</div>
+      <div className="relative mb-6 overflow-hidden rounded-3xl bg-ink-950 p-6 text-white ring-1 ring-white/[.06]">
+        <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-brand-400/[.15] blur-3xl" />
+        <div className="relative">
+          <div className="text-[11px] tracking-wide text-brand-300">مجموعه‌ی پاییز</div>
+          <div className="mt-2 text-xl font-light">تا ۲۰٪ تخفیف مکمل‌های منتخب</div>
+          <div className="mt-1 text-[13px] text-white/55">ارسال رایگان برای خریدهای بالای ۲ میلیون تومان</div>
+        </div>
       </div>
       <div className="relative mb-3">
         <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-400" />
@@ -51,19 +54,19 @@ export default function Shop() {
 
 function ProductCard({ p }: { p: Product }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
-      <Link to={`/shop/${p.id}`} className="relative flex h-36 items-center justify-center bg-gradient-to-br from-ink-50 to-violet-50 text-6xl dark:from-white/5 dark:to-violet-500/10">
-        {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : p.emoji}
+    <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
+      <Link to={`/shop/${p.id}`} className="relative flex aspect-[4/3] items-center justify-center bg-ink-900/[.035] dark:bg-white/[.04]">
+        {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
         {p.discount > 0 && <Badge color="rose" className="absolute right-2 top-2">٪{num(p.discount)}</Badge>}
       </Link>
       <div className="flex flex-1 flex-col p-3">
         <div className="text-[11px] text-ink-400">{p.brand}</div>
-        <Link to={`/shop/${p.id}`} className="line-clamp-2 text-sm font-bold leading-6">{p.name}</Link>
+        <Link to={`/shop/${p.id}`} className="line-clamp-2 text-sm font-semibold leading-6">{p.name}</Link>
         <div className="mt-1"><Stars value={p.rating} /></div>
         <div className="mt-auto flex items-end justify-between pt-2">
           <div>
             {p.discount > 0 && <div className="text-[11px] text-ink-400 line-through">{num(p.price)}</div>}
-            <div className="text-sm font-black">{toman(finalPrice(p))}</div>
+            <div className="text-sm font-semibold">{toman(finalPrice(p))}</div>
           </div>
           <button
             disabled={p.stock < 1}
@@ -71,10 +74,10 @@ function ProductCard({ p }: { p: Product }) {
               addToCart('product', p.id)
               toast.success('به سبد اضافه شد')
             }}
-            className="rounded-xl bg-violet-600 p-2 text-white disabled:opacity-40"
+            className="rounded-full border hairline p-2 text-ink-800 transition hover:bg-ink-950 hover:text-white disabled:opacity-40 dark:text-ink-100 dark:hover:bg-brand-300 dark:hover:text-ink-950"
             aria-label="افزودن به سبد"
           >
-            <ShoppingCart size={16} />
+            <ShoppingCart size={16} strokeWidth={1.5} />
           </button>
         </div>
       </div>

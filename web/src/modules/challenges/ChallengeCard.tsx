@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
-import { Users } from 'lucide-react'
 import type { Challenge } from '@/core/types'
 import { daysLeft, num, toman } from '@/core/format'
-import { Badge, Cover } from '@/ui/kit'
+import { MetricIcon } from '@/ui/icons'
+import { Money } from '@/ui/kit'
 
 export function ChallengeCard({ c, me, compact }: { c: Challenge; me?: string; compact?: boolean }) {
   const joined = me && c.participants.some((p) => p.userId === me)
@@ -10,29 +10,21 @@ export function ChallengeCard({ c, me, compact }: { c: Challenge; me?: string; c
   return (
     <Link
       to={`/challenges/${c.id}`}
-      className={`group block overflow-hidden rounded-[1.75rem] bg-white shadow-card transition hover:-translate-y-0.5 dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none ${compact ? 'w-72 shrink-0' : ''}`}
+      className={`group flex flex-col rounded-2xl bg-ink-950 p-5 text-white ring-1 ring-white/[.06] transition hover:ring-brand-300/40 ${compact ? 'w-72 shrink-0' : ''}`}
     >
-      <Cover gradient={c.gradient} className="m-2 h-28 rounded-[1.4rem]">
-        <div className="absolute inset-0 flex items-center justify-between p-4 text-white">
-          <div className="text-5xl drop-shadow-lg transition group-hover:scale-110">{c.emoji}</div>
-          <div className="text-left">
-            <div className="text-[11px] opacity-80">صندوق جایزه</div>
-            <div className="text-xl font-black tracking-tight">{toman(c.pool)}</div>
-          </div>
-        </div>
-        <div className="absolute right-3 top-3 flex gap-1">
-          {c.status === 'finished' ? <Badge color="slate">پایان‌یافته</Badge> : <Badge color="slate" className="!bg-black/40 !text-white">{left > 0 ? `${num(left)} روز مانده` : 'در انتظار اعلام نتایج'}</Badge>}
-          {joined && <Badge color="emerald">شرکت کرده‌ای</Badge>}
-        </div>
-      </Cover>
-      <div className="px-4 pb-4 pt-1.5">
-        <h3 className="truncate font-bold">{c.title}</h3>
-        <div className="mt-2 flex items-center justify-between text-xs text-ink-500">
-          <span className="flex items-center gap-1">
-            <Users size={13} /> {num(c.participants.length)} نفر
-          </span>
-          <span className="font-bold text-brand-600 dark:text-gold-300">{c.entryFee ? `ورودی ${toman(c.entryFee)}` : 'ورود رایگان'}</span>
-        </div>
+      <div className="flex items-center justify-between text-[11px] text-white/50">
+        <span className="flex items-center gap-1.5 text-brand-300">
+          <MetricIcon metric={c.metric} size={15} />
+          {c.unit}
+        </span>
+        <span>{c.status === 'finished' ? 'پایان‌یافته' : left > 0 ? `${num(left)} روز مانده` : 'اعلام نتایج'}</span>
+      </div>
+      <h3 className="mt-4 line-clamp-2 min-h-[2.75rem] text-[15px] font-medium leading-6">{c.title}</h3>
+      <div className="mt-4 text-[11px] text-white/45">صندوق جایزه</div>
+      <div className="text-2xl font-extralight tracking-tight"><Money value={c.pool} /></div>
+      <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-[11px] text-white/55">
+        <span>{num(c.participants.length)} شرکت‌کننده</span>
+        <span className={joined ? 'text-brand-300' : ''}>{joined ? 'عضو هستید' : c.entryFee ? `ورودی ${toman(c.entryFee)}` : 'ورود رایگان'}</span>
       </div>
     </Link>
   )

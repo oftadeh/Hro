@@ -40,6 +40,17 @@ export interface Subscription {
   credit: number
   startedAt: ISODate
   expiresAt: ISODate
+  /** مزایای مصرف‌شده در دوره‌ی فعلی اشتراک */
+  freeChallengeUsed: number
+  freeDoctorUsed: number
+}
+
+/** مزایای قابل اجرای هر پلن؛ تخفیف‌ها از سهم کی‌فیت پرداخت می‌شود نه از سهم ارائه‌دهنده */
+export interface PlanBenefits {
+  discounts: Partial<Record<RevenueModule, number>> // درصد
+  freeChallengeEntries: number
+  freeDoctorVisits: number
+  badge: boolean
 }
 
 export interface SubscriptionPlan {
@@ -50,6 +61,7 @@ export interface SubscriptionPlan {
   durationDays: number
   color: string
   perks: string[]
+  benefits: PlanBenefits
   popular?: boolean
 }
 
@@ -77,6 +89,8 @@ export interface Transaction {
   payerId?: ID
   amount: number
   commission: number
+  /** تخفیف اشتراک که کی‌فیت به جای کاربر پرداخت کرده */
+  discount?: number
   module?: RevenueModule
   refId?: ID
   description: string

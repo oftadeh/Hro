@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { GRADIENTS } from '@/core/config'
 import { toman } from '@/core/format'
@@ -9,14 +8,15 @@ import type { ChallengeMetric, Prize } from '@/core/types'
 import { Button, Card, Cover, Field, Input, NumberInput, PageHeader, Select, Textarea } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run } from '@/ui/toast'
+import { MetricIcon } from '@/ui/icons'
 
 const METRICS: Record<ChallengeMetric, { label: string; unit: string; emoji: string }> = {
-  steps: { label: 'تعداد قدم', unit: 'قدم', emoji: '👟' },
-  workouts: { label: 'تعداد جلسات تمرین', unit: 'جلسه', emoji: '🔥' },
-  minutes: { label: 'دقیقه‌ی تمرین', unit: 'دقیقه', emoji: '⏱️' },
-  km: { label: 'مسافت (دویدن/دوچرخه)', unit: 'کیلومتر', emoji: '🏅' },
-  weight_loss: { label: 'کاهش وزن', unit: 'کیلوگرم', emoji: '⚖️' },
-  custom: { label: 'سفارشی', unit: 'امتیاز', emoji: '⭐' },
+  steps: { label: 'تعداد قدم', unit: 'قدم', emoji: '' },
+  workouts: { label: 'تعداد جلسات تمرین', unit: 'جلسه', emoji: '' },
+  minutes: { label: 'دقیقه‌ی تمرین', unit: 'دقیقه', emoji: '' },
+  km: { label: 'مسافت (دویدن/دوچرخه)', unit: 'کیلومتر', emoji: '' },
+  weight_loss: { label: 'کاهش وزن', unit: 'کیلوگرم', emoji: '' },
+  custom: { label: 'سفارشی', unit: 'امتیاز', emoji: '' },
 }
 
 const PRIZE_PRESETS: Record<string, Prize[]> = {
@@ -33,7 +33,7 @@ export default function CreateChallenge() {
   const bal = useBalance(me.id)
   const [f, setF] = useState<NewChallenge & { preset: string }>({
     title: '', description: '', metric: 'steps', unit: 'قدم', goal: 100_000, entryFee: 50_000, sponsorPrize: 0, extraReward: '',
-    prizes: PRIZE_PRESETS.top3, xpReward: 200, gradient: GRADIENTS[0], emoji: '👟', maxParticipants: 200, days: 30, preset: 'top3',
+    prizes: PRIZE_PRESETS.top3, xpReward: 200, gradient: GRADIENTS[0], emoji: '', maxParticipants: 200, days: 30, preset: 'top3',
   })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((s) => ({ ...s, [k]: v }))
   const total = fee + f.sponsorPrize
@@ -58,7 +58,7 @@ export default function CreateChallenge() {
                   setF((s) => ({ ...s, metric: m, unit: METRICS[m].unit, emoji: METRICS[m].emoji }))
                 }}
               >
-                {Object.entries(METRICS).map(([k, v]) => <option key={k} value={k}>{v.emoji} {v.label}</option>)}
+                {Object.entries(METRICS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
               </Select>
             </Field>
             <Field label={`هدف (${f.unit})`}>
@@ -90,20 +90,13 @@ export default function CreateChallenge() {
           <Field label="جایزه‌ی غیرنقدی (اختیاری)">
             <Input value={f.extraReward} onChange={(e) => set('extraReward', e.target.value)} placeholder="مثلاً: یک ماه برنامه‌ی رایگان" />
           </Field>
-          <Field label="رنگ کاور">
-            <div className="flex flex-wrap gap-2">
-              {GRADIENTS.map((g) => (
-                <button key={g} onClick={() => set('gradient', g)} className={clsx('h-10 w-10 rounded-xl bg-gradient-to-br', g, f.gradient === g && 'ring-4 ring-brand-400 ring-offset-2 dark:ring-offset-ink-900')} aria-label="رنگ" />
-              ))}
-            </div>
-          </Field>
         </Card>
 
         <div className="space-y-4">
-          <Cover gradient={f.gradient} className="rounded-[1.75rem]">
+          <Cover gradient={f.gradient} className="rounded-2xl">
             <div className="flex flex-col items-center p-6 text-center text-white">
-              <div className="text-6xl">{f.emoji}</div>
-              <div className="mt-2 font-black">{f.title || 'عنوان چالش'}</div>
+              <MetricIcon metric={f.metric} size={40} className="text-brand-300" />
+              <div className="mt-2 font-semibold">{f.title || 'عنوان چالش'}</div>
               <div className="text-xs opacity-80">{f.days} روز · هدف {f.goal.toLocaleString('fa-IR')} {f.unit}</div>
             </div>
           </Cover>
@@ -117,7 +110,7 @@ export default function CreateChallenge() {
               className="!mt-4 w-full"
               onClick={async () => {
                 const { preset: _preset, ...data } = f
-                const id = await run(() => createChallenge(data), 'چالش ساخته شد! 🎉')
+                const id = await run(() => createChallenge(data), 'چالش ساخته شد!')
                 if (id) nav(`/challenges/${id}`)
               }}
             >
