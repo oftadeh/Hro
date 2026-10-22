@@ -1,12 +1,13 @@
 /**
- * کیت طراحی کی‌فیت — زبان بصری مینیمال و خنثی:
- * سیاه/سفید گرم، یک رنگ تأکیدی شامپاینی، خطوط باریک، آیکون خطی و تایپوگرافی سبک.
+ * کیت طراحی کی‌فیت — زبان بصری «آرام و شاعرانه»:
+ * پس‌زمینه‌ی زغالی-بنفش، گرادیان‌های پاستلی (یاسی، صورتی، نعنایی، هلویی)،
+ * گوی‌های رنگی محو، تیترهای سریف (مرکزی) و کارت‌های لایه‌ای با گوشه‌های گرد.
  */
 import clsx from 'clsx'
-import { ArrowRight, Inbox, Star, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Inbox, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { num } from '@/core/format'
 
 type BtnVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'dark'
@@ -19,16 +20,16 @@ export function Button({
       {...rest}
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-xl font-medium tracking-tight transition duration-200 active:scale-[.98] disabled:opacity-40 disabled:active:scale-100',
-        size === 'sm' && 'h-9 px-3.5 text-xs',
+        'inline-flex items-center justify-center gap-2 rounded-full font-medium transition duration-200 active:scale-[.98] disabled:opacity-40 disabled:active:scale-100',
+        size === 'sm' && 'h-9 px-4 text-xs',
         size === 'md' && 'h-11 px-5 text-sm',
         size === 'lg' && 'h-12 px-6 text-[15px]',
-        variant === 'primary' && 'bg-ink-950 text-white hover:bg-ink-800 dark:bg-brand-300 dark:text-ink-950 dark:hover:bg-brand-200',
-        variant === 'dark' && 'bg-ink-950 text-white hover:bg-ink-800 dark:bg-white dark:text-ink-950',
-        variant === 'secondary' && 'bg-ink-100 text-ink-900 hover:bg-ink-200 dark:bg-white/[.07] dark:text-ink-100 dark:hover:bg-white/10',
-        variant === 'ghost' && 'text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-white/5',
-        variant === 'outline' && 'border hairline bg-transparent text-ink-800 hover:bg-white dark:text-ink-100 dark:hover:bg-white/[.04]',
-        variant === 'danger' && 'bg-coral-600 text-white hover:bg-coral-700',
+        variant === 'primary' && 'grad-lavender text-ink-950 shadow-glow hover:brightness-105',
+        variant === 'dark' && 'bg-ink-950 text-white hover:bg-ink-800 dark:bg-white dark:text-ink-950 dark:hover:bg-ink-100',
+        variant === 'secondary' && 'bg-ink-900/[.06] text-ink-900 hover:bg-ink-900/10 dark:bg-white/[.08] dark:text-ink-100 dark:hover:bg-white/[.12]',
+        variant === 'ghost' && 'text-ink-600 hover:bg-ink-900/[.05] dark:text-ink-300 dark:hover:bg-white/[.06]',
+        variant === 'outline' && 'border border-ink-200 text-ink-800 hover:bg-white dark:border-white/15 dark:text-ink-100 dark:hover:bg-white/[.05]',
+        variant === 'danger' && 'bg-coral-500 text-white hover:bg-coral-600',
         className,
       )}
     >
@@ -43,8 +44,8 @@ export function Card({ className, children, onClick }: { className?: string; chi
     <div
       onClick={onClick}
       className={clsx(
-        'rounded-2xl border hairline bg-white p-4 dark:bg-ink-900',
-        onClick && 'cursor-pointer transition hover:border-ink-300 dark:hover:border-white/15',
+        'rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none',
+        onClick && 'cursor-pointer transition hover:-translate-y-0.5',
         className,
       )}
     >
@@ -55,23 +56,23 @@ export function Card({ className, children, onClick }: { className?: string; chi
 
 export function Badge({ children, color = 'slate', className }: { children: ReactNode; color?: 'emerald' | 'amber' | 'rose' | 'sky' | 'violet' | 'slate'; className?: string }) {
   const map = {
-    emerald: 'text-emerald-700 bg-emerald-500/[.08] dark:text-emerald-300',
-    amber: 'text-brand-700 bg-brand-500/10 dark:text-brand-300',
-    rose: 'text-coral-700 bg-coral-500/10 dark:text-coral-300',
-    sky: 'text-aqua-700 bg-aqua-500/10 dark:text-aqua-300',
-    violet: 'text-ink-800 bg-ink-900/[.06] dark:text-ink-200 dark:bg-white/[.07]',
-    slate: 'text-ink-600 bg-ink-900/[.05] dark:text-ink-300 dark:bg-white/[.06]',
+    emerald: 'text-aqua-700 bg-aqua-400/15 dark:text-aqua-300',
+    amber: 'text-gold-600 bg-gold-400/20 dark:text-gold-300',
+    rose: 'text-coral-600 bg-coral-400/15 dark:text-coral-300',
+    sky: 'text-brand-700 bg-brand-400/15 dark:text-brand-300',
+    violet: 'text-brand-700 bg-brand-400/15 dark:text-brand-300',
+    slate: 'text-ink-600 bg-ink-900/[.06] dark:text-ink-200 dark:bg-white/[.1]',
   }
-  return <span className={clsx('inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium', map[color], className)}>{children}</span>
+  return <span className={clsx('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-medium', map[color], className)}>{children}</span>
 }
 
 const fieldCls =
-  'w-full rounded-xl border hairline bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink-400 focus:border-ink-900 dark:bg-white/[.03] dark:focus:border-brand-300/60'
+  'w-full rounded-2xl border border-transparent bg-ink-900/[.05] px-4 py-3 text-sm outline-none transition placeholder:text-ink-400 focus:border-brand-300 focus:bg-white dark:bg-white/[.06] dark:focus:border-brand-300/50 dark:focus:bg-white/[.08]'
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs font-medium text-ink-500 dark:text-ink-400">{label}</span>
+      <span className="text-xs text-ink-500 dark:text-ink-400">{label}</span>
       {children}
       {hint && <span className="block text-[11px] text-ink-400">{hint}</span>}
     </label>
@@ -114,16 +115,16 @@ export function Sheet({ open, onClose, title, children, wide }: { open: boolean;
   if (!open) return null
   return createPortal(
     <div className="fixed inset-0 z-[900] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-ink-950/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-ink-950/60 backdrop-blur-sm" onClick={onClose} />
       <div
         className={clsx(
-          'relative max-h-[92dvh] w-full animate-sheet-up overflow-y-auto rounded-t-3xl border-t hairline bg-white p-6 pt-3 shadow-soft dark:bg-ink-900 sm:rounded-3xl sm:border',
+          'relative max-h-[92dvh] w-full animate-sheet-up overflow-y-auto rounded-t-[2rem] bg-white p-6 pt-3 shadow-soft dark:bg-ink-850 sm:rounded-[2rem]',
           wide ? 'sm:max-w-2xl' : 'sm:max-w-md',
         )}
       >
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-ink-200 dark:bg-white/15 sm:hidden" />
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-ink-200 dark:bg-white/15" />
         <div className="mb-5 flex items-center justify-between gap-3">
-          <h3 className="text-base font-semibold tracking-tight">{title}</h3>
+          <h3 className="font-display text-2xl leading-none">{title}</h3>
           <button onClick={onClose} className="rounded-full p-1.5 text-ink-400 transition hover:bg-ink-100 hover:text-ink-900 dark:hover:bg-white/5 dark:hover:text-white" aria-label="بستن">
             <X size={18} strokeWidth={1.5} />
           </button>
@@ -135,17 +136,16 @@ export function Sheet({ open, onClose, title, children, wide }: { open: boolean;
   )
 }
 
-/** کنترل تکه‌ای (Segmented control) */
 export function Tabs<T extends string>({ value, onChange, items, className }: { value: T; onChange: (v: T) => void; items: { value: T; label: ReactNode }[]; className?: string }) {
   return (
-    <div className={clsx('flex gap-0.5 overflow-x-auto rounded-xl bg-ink-900/[.05] p-0.5 no-scrollbar dark:bg-white/[.06]', className)}>
+    <div className={clsx('flex gap-1 overflow-x-auto rounded-full bg-ink-900/[.05] p-1 no-scrollbar dark:bg-white/[.06]', className)}>
       {items.map((it) => (
         <button
           key={it.value}
           onClick={() => onChange(it.value)}
           className={clsx(
-            'flex flex-1 items-center justify-center whitespace-nowrap rounded-[10px] px-3 py-1.5 text-[13px] font-medium transition',
-            value === it.value ? 'bg-white text-ink-950 shadow-card dark:bg-ink-700 dark:text-white' : 'text-ink-500 hover:text-ink-900 dark:hover:text-ink-100',
+            'flex flex-1 items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] transition',
+            value === it.value ? 'bg-white font-medium text-ink-950 shadow-card dark:bg-ink-700 dark:text-white dark:shadow-none' : 'text-ink-500 hover:text-ink-900 dark:hover:text-ink-100',
           )}
         >
           {it.label}
@@ -163,10 +163,8 @@ export function Chips<T extends string>({ value, onChange, items }: { value: T; 
           key={it.value}
           onClick={() => onChange(it.value)}
           className={clsx(
-            'whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium transition',
-            value === it.value
-              ? 'border-ink-950 bg-ink-950 text-white dark:border-brand-300 dark:bg-brand-300 dark:text-ink-950'
-              : 'hairline text-ink-600 hover:border-ink-400 dark:text-ink-300',
+            'whitespace-nowrap rounded-full px-4 py-1.5 text-xs transition',
+            value === it.value ? 'grad-lavender font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 hover:text-ink-900 dark:bg-white/[.06] dark:text-ink-300',
           )}
         >
           {it.label}
@@ -176,42 +174,52 @@ export function Chips<T extends string>({ value, onChange, items }: { value: T; 
   )
 }
 
+const AVATAR_BG = ['grad-lavender', 'grad-mint', 'grad-peach', 'grad-pink']
+
 export function Avatar({ name, src, size = 40, ring, className }: { name: string; src?: string; size?: number; ring?: boolean; className?: string }) {
   const initial = name.replace('دکتر ', '').trim()[0] ?? ''
+  const bg = AVATAR_BG[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_BG.length]
   return (
-    <div className={clsx('shrink-0 rounded-full', ring && 'p-[2px] ring-1 ring-brand-400 ring-offset-0', className)} style={{ width: size, height: size }}>
-      {src ? (
-        <img src={src} alt={name} className="h-full w-full rounded-full object-cover" />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center rounded-full bg-ink-200 font-medium text-ink-700 dark:bg-ink-700 dark:text-ink-100" style={{ fontSize: size * 0.4 }}>
-          {initial}
-        </div>
-      )}
+    <div className={clsx('shrink-0 rounded-full', ring && 'bg-[conic-gradient(from_200deg,#6ee7c8,#a78bfa,#f2a3e2,#fcd679,#6ee7c8)] p-[2px]', className)} style={{ width: size, height: size }}>
+      <div className={clsx('h-full w-full overflow-hidden rounded-full', ring && 'border-2 border-ink-50 dark:border-ink-950')}>
+        {src ? (
+          <img src={src} alt={name} className="h-full w-full object-cover" />
+        ) : (
+          <div className={clsx('flex h-full w-full items-center justify-center font-display text-ink-950', bg)} style={{ fontSize: size * 0.48 }}>
+            {initial}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-// پالت کاورهای خنثی؛ هر گرادیان قدیمی به یکی از این‌ها نگاشت می‌شود
-const COVERS = [
-  'bg-[radial-gradient(120%_120%_at_100%_0%,#3e3d39_0%,#171716_60%)]',
-  'bg-[radial-gradient(120%_120%_at_0%_0%,#5a4830_0%,#1e1e1c_65%)]',
-  'bg-[radial-gradient(120%_120%_at_100%_100%,#435258_0%,#171716_65%)]',
-  'bg-[radial-gradient(120%_120%_at_0%_100%,#523431_0%,#171716_65%)]',
-  'bg-[radial-gradient(120%_120%_at_50%_0%,#57554f_0%,#0e0e0d_70%)]',
+/** گوی‌های رنگی محو (مِش) — امضای بصری طرح */
+const ORBS: [string, string, string][] = [
+  ['#a78bfa', '#6ee7c8', '#fcd679'],
+  ['#f2a3e2', '#a78bfa', '#6ee7c8'],
+  ['#6ee7c8', '#a78bfa', '#f2a3e2'],
+  ['#fcd679', '#f2a3e2', '#a78bfa'],
+  ['#a78bfa', '#f2a3e2', '#fcd679'],
 ]
-export const coverFor = (seed: string) => COVERS[[...seed].reduce((a, c) => a + c.charCodeAt(0), 0) % COVERS.length]
+export const orbsFor = (seed: string) => ORBS[[...seed].reduce((a, c) => a + c.charCodeAt(0), 0) % ORBS.length]
+
+export function Orbs({ seed = 'keyfit', className, intensity = 1 }: { seed?: string; className?: string; intensity?: number }) {
+  const [a, b, c] = orbsFor(seed)
+  return (
+    <div className={clsx('pointer-events-none absolute inset-0 overflow-hidden', className)} aria-hidden>
+      <div className="absolute -bottom-1/4 -left-[10%] h-[85%] w-[70%] rounded-full blur-3xl" style={{ background: a, opacity: 0.75 * intensity }} />
+      <div className="absolute -bottom-[30%] left-[35%] h-[75%] w-[55%] rounded-full blur-3xl" style={{ background: b, opacity: 0.7 * intensity }} />
+      <div className="absolute bottom-[5%] left-[55%] h-[45%] w-[35%] rounded-full blur-3xl" style={{ background: c, opacity: 0.55 * intensity }} />
+    </div>
+  )
+}
 
 export function Cover({ gradient, image, className, children, label }: { gradient: string; emoji?: string; image?: string; className?: string; children?: ReactNode; label?: string }) {
   return (
-    <div className={clsx('relative overflow-hidden', coverFor(gradient), className)}>
-      {image ? (
-        <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      ) : (
-        <>
-          <div className="absolute inset-0 opacity-[.07] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:28px_28px]" />
-          {label && <div className="absolute bottom-3 left-4 text-[11px] font-medium uppercase tracking-[.25em] text-white/40">{label}</div>}
-        </>
-      )}
+    <div className={clsx('relative overflow-hidden bg-ink-850', className)}>
+      {image ? <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <Orbs seed={gradient} />}
+      {label && !image && <div className="absolute right-4 top-3 font-display text-xl text-white/85">{label}</div>}
       {children}
     </div>
   )
@@ -219,11 +227,11 @@ export function Cover({ gradient, image, className, children, label }: { gradien
 
 export function Empty({ title, desc, action }: { icon?: string; title: string; desc?: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed hairline px-6 py-14 text-center">
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full border hairline text-ink-400">
-        <Inbox size={18} strokeWidth={1.5} />
+    <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-3xl bg-white px-6 py-14 text-center dark:bg-ink-850">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-400/15 text-brand-500 dark:text-brand-300">
+        <Inbox size={20} strokeWidth={1.5} />
       </div>
-      <div className="text-sm font-medium">{title}</div>
+      <div className="font-display text-xl">{title}</div>
       {desc && <p className="mt-1 max-w-xs text-xs leading-6 text-ink-500">{desc}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
@@ -231,47 +239,57 @@ export function Empty({ title, desc, action }: { icon?: string; title: string; d
 }
 
 const TILE = {
-  emerald: 'bg-ink-900/[.05] text-ink-900 dark:bg-white/[.06] dark:text-white',
-  violet: 'bg-ink-900/[.05] text-ink-900 dark:bg-white/[.06] dark:text-white',
-  amber: 'bg-brand-500/10 text-brand-700 dark:text-brand-300',
-  sky: 'bg-aqua-500/10 text-aqua-700 dark:text-aqua-300',
-  rose: 'bg-coral-500/10 text-coral-700 dark:text-coral-300',
+  emerald: 'bg-aqua-400/15 text-aqua-600 dark:text-aqua-300',
+  violet: 'bg-brand-400/15 text-brand-600 dark:text-brand-300',
+  amber: 'bg-gold-400/20 text-gold-600 dark:text-gold-300',
+  sky: 'bg-brand-400/15 text-brand-600 dark:text-brand-300',
+  rose: 'bg-coral-400/15 text-coral-600 dark:text-coral-300',
 } as const
 
 export type Tone = keyof typeof TILE
 
-export function IconTile({ tone = 'emerald', size = 40, children, className }: { tone?: Tone; size?: number; children: ReactNode; className?: string }) {
+export function IconTile({ tone = 'violet', size = 40, children, className }: { tone?: Tone; size?: number; children: ReactNode; className?: string }) {
   return (
-    <span className={clsx('flex shrink-0 items-center justify-center rounded-xl [&_svg]:stroke-[1.5]', TILE[tone], className)} style={{ width: size, height: size }}>
+    <span className={clsx('flex shrink-0 items-center justify-center rounded-2xl [&_svg]:stroke-[1.5]', TILE[tone], className)} style={{ width: size, height: size }}>
       {children}
     </span>
   )
 }
 
-export function Stat({ label, value, icon, hint, tone = 'emerald' }: { label: string; value: ReactNode; icon?: ReactNode; hint?: ReactNode; tone?: Tone }) {
+// کاشی آمار با درخشش رنگی پایین (مانند «۲۳ جلسه مدیتیشن»)
+const STAT_GLOW: Record<Tone, string> = {
+  emerald: 'from-transparent to-aqua-400/30',
+  violet: 'from-transparent to-brand-400/35',
+  amber: 'from-transparent to-gold-400/30',
+  sky: 'from-transparent to-brand-400/35',
+  rose: 'from-transparent to-coral-400/30',
+}
+
+export function Stat({ label, value, icon, hint, tone = 'violet' }: { label: string; value: ReactNode; icon?: ReactNode; hint?: ReactNode; tone?: Tone }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="text-xs text-ink-500">{label}</div>
-        {icon && <IconTile tone={tone} size={30}>{icon}</IconTile>}
+    <div className={clsx('relative overflow-hidden rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none')}>
+      <div className={clsx('pointer-events-none absolute inset-0 bg-gradient-to-b', STAT_GLOW[tone])} />
+      <div className="relative">
+        {icon && <div className={clsx('mb-3 [&_svg]:stroke-[1.4]', TILE[tone].split(' ').filter((c) => c.startsWith('text') || c.startsWith('dark:text')).join(' '))}>{icon}</div>}
+        <div className="truncate text-lg font-medium tabular-nums text-ink-950 dark:text-white">{value}</div>
+        <div className="text-[11px] text-ink-500 dark:text-ink-400">{label}</div>
+        {hint && <div className="mt-0.5 text-[10px] text-ink-400">{hint}</div>}
       </div>
-      <div className="mt-3 truncate text-xl font-medium tabular-nums tracking-tight text-ink-950 dark:text-white">{value}</div>
-      {hint && <div className="mt-0.5 text-[11px] text-ink-400">{hint}</div>}
-    </Card>
+    </div>
   )
 }
 
-/** سطر شاخص با آیکون، عنوان، مقدار و نوار پیشرفت باریک */
-export function MetricRow({ icon, tone = 'emerald', title, value, progress, onClick, done }: { icon: ReactNode; tone?: Tone; title: ReactNode; value?: ReactNode; progress?: number; onClick?: () => void; done?: boolean }) {
+/** سطر شاخص: آیکون، عنوان، مقدار و نوار پیشرفت */
+export function MetricRow({ icon, tone = 'violet', title, value, progress, onClick, done }: { icon: ReactNode; tone?: Tone; title: ReactNode; value?: ReactNode; progress?: number; onClick?: () => void; done?: boolean }) {
   return (
     <div onClick={onClick} className={clsx('flex items-center gap-3 py-3', onClick && 'cursor-pointer', done && 'opacity-50')}>
       <IconTile tone={tone}>{icon}</IconTile>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <span className={clsx('truncate text-sm', done && 'line-through')}>{title}</span>
-          {value !== undefined && <span className="shrink-0 text-xs tabular-nums text-ink-500">{value}</span>}
+          {value !== undefined && <span className="shrink-0 text-xs tabular-nums text-ink-500 dark:text-ink-400">{value}</span>}
         </div>
-        {progress !== undefined && <Progress value={progress} className="mt-2" />}
+        {progress !== undefined && <Progress value={progress} tone={tone} className="mt-2" />}
       </div>
     </div>
   )
@@ -284,26 +302,26 @@ export function PageHeader({ title, subtitle, back, actions }: { title: ReactNod
       {back && (
         <button
           onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border hairline text-ink-700 transition hover:bg-white dark:text-ink-200 dark:hover:bg-white/5"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink-900/[.05] text-ink-700 transition hover:bg-ink-900/10 dark:bg-white/[.06] dark:text-ink-200"
           aria-label="بازگشت"
         >
           <ArrowRight size={18} strokeWidth={1.5} />
         </button>
       )}
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
-        {subtitle && <p className="mt-0.5 truncate text-[13px] text-ink-500">{subtitle}</p>}
+        <h1 className="truncate font-display text-[2.1rem] leading-[1.15]">{title}</h1>
+        {subtitle && <p className="mt-0.5 truncate text-[13px] text-ink-500 dark:text-ink-400">{subtitle}</p>}
       </div>
       {actions}
     </div>
   )
 }
 
-/** بلوک تیره‌ی شاخص صفحه با هایلایت شامپاینی ملایم */
-export function HeroHeader({ children, className }: { children: ReactNode; className?: string; tone?: string; gradient?: string }) {
+/** کارت تیره با گوی‌های رنگی (مانند «Guided Meditation») */
+export function HeroHeader({ children, className, seed = 'hero' }: { children: ReactNode; className?: string; tone?: string; gradient?: string; seed?: string }) {
   return (
-    <div className={clsx('relative overflow-hidden rounded-3xl bg-ink-950 text-white ring-1 ring-white/[.06]', className)}>
-      <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-brand-400/[.18] blur-3xl" />
+    <div className={clsx('relative overflow-hidden rounded-[2rem] bg-ink-850 text-white', className)}>
+      <Orbs seed={seed} intensity={0.9} />
       <div className="relative">{children}</div>
     </div>
   )
@@ -314,53 +332,103 @@ export function Money({ value, className, unitClass }: { value: number; classNam
   return (
     <span className={clsx('tabular-nums', className)}>
       {num(value)}
-      <span className={clsx('mr-1.5 text-[.4em] font-light opacity-50', unitClass)}>تومان</span>
+      <span className={clsx('mr-1.5 text-[.4em] font-light opacity-60', unitClass)}>تومان</span>
     </span>
   )
 }
 
 export function RaisedSheet({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={clsx('relative -mt-6 rounded-3xl border hairline bg-white p-5 dark:bg-ink-900', className)}>{children}</div>
+  return <div className={clsx('relative -mt-8 rounded-[2rem] bg-white p-5 shadow-card dark:bg-ink-850 dark:shadow-none', className)}>{children}</div>
+}
+
+/** بخش‌های لایه‌ای رنگی با گوشه‌ی گرد بزرگ (مانند Morning / Evening / Journeys) */
+export function StackSections({ items }: { items: { to: string; title: string; subtitle?: string; grad: string; dark?: boolean }[] }) {
+  return (
+    <div className="overflow-hidden rounded-[2rem]">
+      {items.map((it, i) => (
+        <Link
+          key={it.to}
+          to={it.to}
+          className={clsx(
+            'group relative flex min-h-[7.5rem] items-start justify-between rounded-tl-[3rem] px-6 pb-12 pt-6 transition',
+            i > 0 && '-mt-8',
+            it.dark ? 'bg-ink-850 text-white' : clsx(it.grad, 'text-ink-950'),
+          )}
+          style={{ zIndex: i + 1 }}
+        >
+          <div>
+            <div className="font-display text-[2rem] leading-[1.1]">{it.title}</div>
+            {it.subtitle && <div className={clsx('mt-1 text-xs', it.dark ? 'text-white/55' : 'text-ink-950/60')}>{it.subtitle}</div>}
+          </div>
+          <ArrowLeft size={20} strokeWidth={1.4} className="mt-2 opacity-60 transition group-hover:-translate-x-1 group-hover:opacity-100" />
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+/** نمودار حلقه‌ای چندرنگ با فاصله بین بخش‌ها */
+export function Donut({ segments, size = 200, stroke = 12, center }: { segments: { value: number; color: string }[]; size?: number; stroke?: number; center?: ReactNode }) {
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const total = Math.max(1, segments.reduce((a, s) => a + s.value, 0))
+  const gap = segments.filter((s) => s.value > 0 && s.color !== 'transparent').length > 1 ? 14 : 0
+  let offset = 0
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-ink-900/[.06] dark:stroke-white/[.06]" />
+        {segments.map((s, i) => {
+          const len = Math.max(0, (s.value / total) * c - gap)
+          const el = (
+            <circle
+              key={i}
+              cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeLinecap="round"
+              strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-offset} style={{ filter: `drop-shadow(0 0 6px ${s.color}66)`, transition: 'all .8s' }}
+            />
+          )
+          offset += (s.value / total) * c
+          return s.value > 0 && s.color !== 'transparent' ? el : null
+        })}
+      </svg>
+      {center && <div className="absolute inset-0 flex items-center justify-center text-center">{center}</div>}
+    </div>
+  )
 }
 
 export function SectionTitle({ title, action }: { title: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-3 mt-8 flex items-end justify-between">
-      <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
+    <div className="mb-3 mt-9 flex items-end justify-between">
+      <h2 className="font-display text-[1.65rem] leading-none">{title}</h2>
       {action}
     </div>
   )
 }
 
-export function Progress({ value, className }: { value: number; className?: string; tone?: string }) {
+const BAR: Record<string, string> = {
+  emerald: 'from-aqua-300 to-aqua-400',
+  violet: 'from-brand-300 to-coral-300',
+  amber: 'from-gold-300 to-coral-300',
+  sky: 'from-brand-300 to-coral-300',
+  rose: 'from-coral-300 to-brand-300',
+}
+
+export function Progress({ value, className, tone = 'violet' }: { value: number; className?: string; tone?: string }) {
   return (
-    <div className={clsx('h-1 overflow-hidden rounded-full bg-ink-900/[.07] dark:bg-white/10', className)}>
-      <div className="h-full rounded-full bg-ink-900 transition-all duration-700 dark:bg-brand-300" style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }} />
+    <div className={clsx('h-1.5 overflow-hidden rounded-full bg-ink-900/[.07] dark:bg-white/10', className)}>
+      <div className={clsx('h-full rounded-full bg-gradient-to-l transition-all duration-700', BAR[tone] ?? BAR.violet)} style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }} />
     </div>
   )
 }
 
-export function Ring({ value, size = 64, stroke = 3, children }: { value: number; size?: number; stroke?: number; children?: ReactNode; color?: string }) {
-  const r = (size - stroke) / 2
-  const c = 2 * Math.PI * r
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-ink-900/10 dark:stroke-white/10" />
-        <circle
-          cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} fill="none" strokeLinecap="round" className="stroke-brand-400"
-          strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(1, value))} style={{ transition: 'stroke-dashoffset .8s' }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-center">{children}</div>
-    </div>
-  )
+export function Ring({ value, size = 64, stroke = 4, children, color = '#a78bfa' }: { value: number; size?: number; stroke?: number; children?: ReactNode; color?: string }) {
+  return <Donut size={size} stroke={stroke} segments={[{ value: Math.min(1, value), color }, { value: Math.max(0, 1 - value), color: 'transparent' }]} center={children} />
 }
 
 export function Stars({ value, count }: { value: number; count?: number }) {
   return (
     <span className="inline-flex items-center gap-1 text-xs tabular-nums text-ink-600 dark:text-ink-300">
-      <Star size={12} className="fill-brand-400 stroke-brand-400" />
+      <Star size={12} className="fill-gold-400 stroke-gold-400" />
       {value ? value.toLocaleString('fa-IR', { maximumFractionDigits: 1 }) : 'جدید'}
       {count !== undefined && <span className="text-ink-400">({num(count)})</span>}
     </span>

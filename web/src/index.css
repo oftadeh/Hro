@@ -5,6 +5,8 @@
 @import '@fontsource/vazirmatn/600.css';
 @import '@fontsource/vazirmatn/700.css';
 @import '@fontsource/vazirmatn/800.css';
+@import '@fontsource/markazi-text/400.css';
+@import '@fontsource/markazi-text/500.css';
 @import 'leaflet/dist/leaflet.css';
 
 @tailwind base;
@@ -17,7 +19,14 @@
   }
   body {
     @apply min-h-dvh bg-ink-50 font-sans text-ink-900 antialiased dark:bg-ink-950 dark:text-ink-100;
-    font-feature-settings: 'ss01', 'tnum';
+    font-feature-settings: 'ss01';
+    background-image: radial-gradient(70rem 40rem at 50% 120%, rgb(167 139 250 / 0.12), transparent 60%);
+    background-attachment: fixed;
+  }
+  .dark body {
+    background-image:
+      radial-gradient(60rem 40rem at 50% 110%, rgb(124 58 237 / 0.22), transparent 60%),
+      radial-gradient(40rem 30rem at 100% 0%, rgb(124 58 237 / 0.10), transparent 60%);
   }
   ::selection {
     @apply bg-brand-300/50;
@@ -26,8 +35,18 @@
 
 @layer utilities {
   .hairline {
-    @apply border-ink-200/80 dark:border-white/[.07];
+    @apply border-ink-200/70 dark:border-white/[.06];
   }
+  .font-display {
+    font-feature-settings: normal;
+    letter-spacing: 0;
+  }
+  /* گرادیان‌های پاستلی مرجع */
+  .grad-lavender { background-image: linear-gradient(120deg, #a78bfa 0%, #d8b4fe 45%, #f5c2f0 100%); }
+  .grad-mint { background-image: linear-gradient(120deg, #6ee7c8 0%, #a7f3e0 50%, #86efac 100%); }
+  .grad-peach { background-image: linear-gradient(120deg, #fcd679 0%, #fbb6ce 55%, #e9a8f5 100%); }
+  .grad-pink { background-image: linear-gradient(120deg, #f2a3e2 0%, #e879d0 50%, #c4b5fd 100%); }
+  .grad-violet { background-image: linear-gradient(120deg, #8b5cf6 0%, #a78bfa 50%, #e879d0 100%); }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -38,7 +57,7 @@
     padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
   }
   .glass {
-    @apply bg-ink-50/80 backdrop-blur-xl dark:bg-ink-950/80;
+    @apply bg-ink-50/75 backdrop-blur-xl dark:bg-ink-950/70;
   }
 }
 
@@ -56,5 +75,5 @@
 
 /* نقشه در حالت تیره کمی تیره‌تر و آبی‌تر دیده شود */
 .dark .leaflet-container {
-  background: #121211;
+  background: #17141d;
 }

@@ -13,8 +13,8 @@ const TILES = {
 }
 
 const icon = (active: boolean, price: number, dark: boolean) => {
-  const bg = active ? (dark ? '#d8c49c' : '#b0915c') : dark ? '#f1f0ed' : '#0e0e0d'
-  const fg = active ? '#0e0e0d' : dark ? '#0e0e0d' : '#fff'
+  const bg = active ? '#c4b5fd' : dark ? '#ffffff' : '#17141d'
+  const fg = active || dark ? '#17141d' : '#fff'
   return L.divIcon({
     className: 'keyfit-marker',
     iconSize: [80, 34],
@@ -39,14 +39,14 @@ export function GymMap({ gyms, center, user, selected, onSelect, className = 'h-
   const dark = useSession((s) => s.theme) === 'dark'
   const sel = gyms.find((g) => g.id === selected)
   return (
-    <MapContainer center={center} zoom={12} className={`w-full overflow-hidden rounded-3xl ${className}`} scrollWheelZoom attributionControl={false} zoomControl={false}>
+    <MapContainer center={center} zoom={12} className={`w-full overflow-hidden rounded-[2rem] ${className}`} scrollWheelZoom attributionControl={false} zoomControl={false}>
       <TileLayer key={dark ? 'd' : 'l'} url={dark ? TILES.dark : TILES.light} subdomains="abcd" />
       <Fly center={center} />
-      {user && sel && <Polyline positions={[user, [sel.lat, sel.lng]]} pathOptions={{ color: dark ? '#d8c49c' : '#0e0e0d', weight: 2, dashArray: '4 8', lineCap: 'round' }} />}
+      {user && sel && <Polyline positions={[user, [sel.lat, sel.lng]]} pathOptions={{ color: '#a78bfa', weight: 3, dashArray: '2 9', lineCap: 'round' }} />}
       {user && (
         <>
-          <CircleMarker center={user} radius={18} pathOptions={{ stroke: false, fillColor: '#6a8189', fillOpacity: 0.18 }} />
-          <CircleMarker center={user} radius={8} pathOptions={{ color: '#fff', weight: 3, fillColor: '#6a8189', fillOpacity: 1 }} />
+          <CircleMarker center={user} radius={18} pathOptions={{ stroke: false, fillColor: '#6ee7c8', fillOpacity: 0.2 }} />
+          <CircleMarker center={user} radius={8} pathOptions={{ color: '#fff', weight: 3, fillColor: '#3fd6b0', fillOpacity: 1 }} />
         </>
       )}
       {gyms.map((g) => (

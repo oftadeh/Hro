@@ -4,7 +4,7 @@ import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
 import { deleteFood, saveFood, saveRestaurant } from '@/core/services/commerce'
 import type { Food, Restaurant } from '@/core/types'
-import { Badge, Button, Card, coverFor, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, Select, Sheet, Textarea } from '@/ui/kit'
+import { Badge, Button, Card, Cover, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, Select, Sheet, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { LocationPicker } from '../shared/LocationPicker'
@@ -35,7 +35,7 @@ export default function RestaurantPanel() {
           )}
           {current && (
             <Card className="flex flex-wrap items-center gap-3">
-              <div className={`h-14 w-14 rounded-xl ${coverFor(current.id)}`} />
+              <Cover gradient={current.id} className="h-14 w-14 rounded-2xl" />
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{current.name}</div>
                 <div className="text-xs text-ink-500">{current.description}</div>

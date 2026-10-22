@@ -5,7 +5,7 @@ import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
 import { addToCart, finalPrice } from '@/core/services/commerce'
 import type { Product } from '@/core/types'
-import { Badge, Button, Chips, Input, PageHeader, Stars } from '@/ui/kit'
+import { Badge, Button, Chips, Input, Orbs, PageHeader, Stars } from '@/ui/kit'
 import { toast } from '@/ui/toast'
 import { CartSheet, useCartCount } from './CartSheet'
 import { CategoryIcon } from '@/ui/icons'
@@ -31,12 +31,12 @@ export default function Shop() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="فروشگاه" subtitle="مکمل اصل و لوازم ورزشی با ضمانت" actions={<CartButton kind="product" onClick={() => setCart(true)} />} />
-      <div className="relative mb-6 overflow-hidden rounded-3xl bg-ink-950 p-6 text-white ring-1 ring-white/[.06]">
-        <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-brand-400/[.15] blur-3xl" />
+      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white">
+        <Orbs seed="shop" intensity={0.8} />
         <div className="relative">
-          <div className="text-[11px] tracking-wide text-brand-300">مجموعه‌ی پاییز</div>
-          <div className="mt-2 text-xl font-light">تا ۲۰٪ تخفیف مکمل‌های منتخب</div>
-          <div className="mt-1 text-[13px] text-white/55">ارسال رایگان برای خریدهای بالای ۲ میلیون تومان</div>
+          <div className="text-[11px] text-white/70">مجموعه‌ی پاییز</div>
+          <div className="mt-2 font-display text-[2rem] leading-[1.1]">تا ۲۰٪ تخفیف مکمل‌های منتخب</div>
+          <div className="mt-1 text-[13px] text-white/75">ارسال رایگان برای خریدهای بالای ۲ میلیون تومان</div>
         </div>
       </div>
       <div className="relative mb-3">

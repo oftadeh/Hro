@@ -44,13 +44,13 @@ export default function ChallengeDetail() {
   return (
     <div className="animate-fade-up">
       <PageHeader back="/challenges" title={c.title} actions={<Button variant="outline" size="sm" icon={<Share2 size={15} />} onClick={() => setShare(true)}>فیت‌زون</Button>} />
-      <HeroHeader className="px-6 pb-14 pt-8 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-brand-300/30 text-brand-300">
+      <HeroHeader seed={c.id} className="px-6 pb-14 pt-8 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur">
           <MetricIcon metric={c.metric} size={20} />
         </div>
-        <div className="mt-5 text-[11px] tracking-wide text-white/50">صندوق جایزه</div>
-        <div className="mt-1 text-[2.6rem] font-extralight leading-tight tracking-tightest sm:text-5xl"><Money value={c.pool} /></div>
-        {c.extraReward && <div className="mx-auto mt-4 w-fit rounded-full border border-white/15 px-3 py-1 text-xs text-white/70">+ {c.extraReward}</div>}
+        <div className="mt-5 text-xs text-white/75">صندوق جایزه</div>
+        <div className="mt-1 font-display text-[3.2rem] leading-none"><Money value={c.pool} unitClass="font-sans" /></div>
+        {c.extraReward && <div className="mx-auto mt-4 w-fit rounded-full bg-white/20 px-3 py-1 text-xs text-white backdrop-blur">+ {c.extraReward}</div>}
       </HeroHeader>
       <RaisedSheet className="mx-3 sm:mx-auto sm:max-w-3xl">
         <div className="grid grid-cols-3 text-center">

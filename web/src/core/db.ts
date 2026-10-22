@@ -57,7 +57,7 @@ export const useDB = create<DBState>()(
     {
       name: 'keyfit-db',
       // نسخه‌ی داده‌های نمایشی؛ با تغییر ساختار، داده‌ها به حالت اولیه برمی‌گردند
-      version: 3,
+      version: 4,
       migrate: () => createSeed(),
       storage: createJSONStorage(() => localStorage),
     },
@@ -87,7 +87,7 @@ export const useSession = create<SessionState>()(
     (set) => ({
       userId: null,
       activeRole: 'user',
-      theme: window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+      theme: 'dark',
       login: (userId, role = 'user') => set({ userId, activeRole: role }),
       logout: () => set({ userId: null, activeRole: 'user' }),
       setRole: (activeRole) => set({ activeRole }),

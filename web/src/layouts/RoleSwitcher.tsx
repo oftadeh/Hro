@@ -25,7 +25,7 @@ export function RoleSwitcher({ compact }: { compact?: boolean }) {
           key={r}
           onClick={() => go(r)}
           className={clsx(
-            'flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2 text-[13px] transition',
+            'flex items-center gap-2.5 whitespace-nowrap rounded-full px-3 py-2 text-[13px] transition',
             !compact && 'w-full',
             compact && 'border hairline py-1.5 text-xs',
             active === r ? 'font-medium text-ink-950 dark:text-white' : 'text-ink-500 hover:text-ink-950 dark:hover:text-white',
@@ -34,7 +34,7 @@ export function RoleSwitcher({ compact }: { compact?: boolean }) {
         >
           <RoleIcon role={r} size={15} />
           {r === 'user' ? 'اپ ورزشکار' : `پنل ${ROLE_META[r].label}`}
-          {!compact && active === r && <span className="mr-auto h-1.5 w-1.5 rounded-full bg-brand-400" />}
+          {!compact && active === r && <span className="mr-auto h-1.5 w-1.5 rounded-full bg-aqua-300" />}
         </button>
       ))}
     </div>

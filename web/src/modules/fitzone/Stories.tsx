@@ -5,7 +5,7 @@ import { useDB } from '@/core/db'
 import { timeAgo } from '@/core/format'
 import { createStory, markStorySeen } from '@/core/services/fitzone'
 import type { Story } from '@/core/types'
-import { Avatar, Button, coverFor, ImagePicker, Sheet, Textarea } from '@/ui/kit'
+import { Avatar, Button, Orbs, ImagePicker, Sheet, Textarea } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 import { runOk } from '@/ui/toast'
 
@@ -87,7 +87,8 @@ function StoryViewer({ groups, startAuthor, onClose }: { groups: { authorId: str
   const u = users[group.authorId]
   return createPortal(
     <div className="fixed inset-0 z-[950] flex items-center justify-center bg-black">
-      <div className={`relative h-full w-full max-w-md overflow-hidden ${coverFor(story.id)} sm:h-[90dvh] sm:rounded-2xl`}>
+      <div className={`relative h-full w-full max-w-md overflow-hidden bg-ink-850 sm:h-[90dvh] sm:rounded-2xl`}>
+        <Orbs seed={story.id} />
         {story.image && <img src={story.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         <div className="absolute inset-x-0 top-0 z-10 space-y-3 bg-gradient-to-b from-black/50 to-transparent p-4">
           <div className="flex gap-1">
@@ -109,7 +110,7 @@ function StoryViewer({ groups, startAuthor, onClose }: { groups: { authorId: str
           </div>
         </div>
         <div className="absolute inset-0 flex items-center justify-center p-8">
-          {story.text && <p className={`text-center text-2xl font-light leading-[1.9] text-white ${story.image ? 'rounded-2xl bg-black/40 p-4 text-lg' : ''}`}>{story.text}</p>}
+          {story.text && <p className={`text-center font-display text-[2.3rem] leading-[1.3] text-white ${story.image ? 'rounded-2xl bg-black/40 p-4 text-lg' : ''}`}>{story.text}</p>}
         </div>
         <button className="absolute inset-y-0 right-0 w-1/3" onClick={prev} aria-label="قبلی" />
         <button className="absolute inset-y-0 left-0 w-2/3" onClick={next} aria-label="بعدی" />

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useDB } from '@/core/db'
 import { faDateTime, num, toman } from '@/core/format'
-import { Avatar, Badge, Card, PageHeader, SectionTitle, Stars } from '@/ui/kit'
+import { Avatar, Badge, Card, Orbs, PageHeader, SectionTitle, Stars } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 
 export default function Doctors() {
@@ -13,12 +13,12 @@ export default function Doctors() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="پزشک" subtitle="ویزیت آنلاین با پزشکان ورزشی و متخصصان" />
-      <div className="relative mb-6 overflow-hidden rounded-3xl bg-ink-950 p-6 text-white ring-1 ring-white/[.06]">
-        <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-aqua-400/[.18] blur-3xl" />
+      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white">
+        <Orbs seed="doctor" intensity={0.8} />
         <div className="relative">
-          <div className="text-[11px] tracking-wide text-aqua-300">ویزیت آنلاین</div>
-          <div className="mt-2 text-xl font-light">مشاوره با پزشک، بدون صف</div>
-          <div className="mt-1 text-[13px] text-white/55">آسیب‌های ورزشی، چکاپ پیش از شروع ورزش، مکمل و تغذیه‌ی درمانی</div>
+          <div className="text-[11px] text-white/70">ویزیت آنلاین</div>
+          <div className="mt-2 font-display text-[2rem] leading-[1.1]">مشاوره با پزشک، بدون صف</div>
+          <div className="mt-1 text-[13px] text-white/75">آسیب‌های ورزشی، چکاپ پیش از شروع ورزش، مکمل و تغذیه‌ی درمانی</div>
         </div>
       </div>
       {mine.length > 0 && (

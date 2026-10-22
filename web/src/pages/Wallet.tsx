@@ -33,43 +33,43 @@ export default function WalletPage() {
     <div className="animate-fade-up">
       <PageHeader title="کیف پول و عضویت" />
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-        <HeroHeader className="flex flex-col justify-between p-6">
+        <HeroHeader seed="wallet" className="flex flex-col justify-between p-6">
           <div>
-            <div className="text-[11px] tracking-wide text-white/50">موجودی کیف پول</div>
-            <div className="mt-2 text-[2.6rem] font-extralight leading-tight tracking-tightest sm:text-5xl">
-              <Money value={bal} />
+            <div className="font-display text-[1.9rem] leading-none">کیف پول</div>
+            <div className="mt-3 font-display text-[3rem] leading-none">
+              <Money value={bal} unitClass="font-sans" />
             </div>
           </div>
           <div className="mt-8 flex gap-2">
-            <button onClick={() => setCharge(true)} className="flex h-10 items-center gap-1.5 rounded-xl bg-brand-300 px-5 text-sm font-medium text-ink-950 transition hover:bg-brand-200">
+            <button onClick={() => setCharge(true)} className="flex h-11 items-center gap-1.5 rounded-full bg-white px-5 text-sm font-medium text-ink-950 transition hover:scale-[1.02]">
               <Plus size={16} strokeWidth={1.5} /> افزایش موجودی
             </button>
-            <a href="#plans" className="flex h-10 items-center gap-1.5 rounded-xl border border-white/15 px-5 text-sm text-white/80 transition hover:border-white/30">
+            <a href="#plans" className="flex h-11 items-center gap-1.5 rounded-full bg-white/15 px-5 text-sm text-white backdrop-blur transition hover:bg-white/25">
               <CreditCard size={16} strokeWidth={1.5} /> عضویت
             </a>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/10 pt-5 text-xs">
+          <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/15 pt-5 text-xs">
             <div>
-              <div className="flex items-center gap-1.5 text-white/45"><ArrowDownLeft size={13} strokeWidth={1.5} /> ورودی ۳۰ روز</div>
-              <div className="mt-1 text-base font-light tabular-nums">{toman(inSum)}</div>
+              <div className="flex items-center gap-1.5 text-white/65"><ArrowDownLeft size={13} strokeWidth={1.5} /> ورودی ۳۰ روز</div>
+              <div className="mt-1 text-base tabular-nums">{toman(inSum)}</div>
             </div>
             <div>
-              <div className="flex items-center gap-1.5 text-white/45"><ArrowUpRight size={13} strokeWidth={1.5} /> هزینه‌ی ۳۰ روز</div>
-              <div className="mt-1 text-base font-light tabular-nums">{toman(outSum)}</div>
+              <div className="flex items-center gap-1.5 text-white/65"><ArrowUpRight size={13} strokeWidth={1.5} /> هزینه‌ی ۳۰ روز</div>
+              <div className="mt-1 text-base tabular-nums">{toman(outSum)}</div>
             </div>
           </div>
         </HeroHeader>
         <div className="space-y-3">
           {sub ? (
             <KeyCard
-              tone={sub.plan.id === 'plan-diamond' ? 'champagne' : sub.plan.id === 'plan-gold' ? 'black' : 'graphite'}
+              tone={sub.plan.id === 'plan-diamond' ? 'mint' : sub.plan.id === 'plan-gold' ? 'lavender' : 'peach'}
               title={`KEYFIT · ${sub.plan.name}`}
               subtitle="اعتبار ورود به باشگاه‌ها"
               amount={sub.credit}
               footer={<><span>{me.name}</span><span>{num(daysLeft(sub.expiresAt))} روز باقی‌مانده</span></>}
             />
           ) : (
-            <KeyCard tone="graphite" title="KEYFIT" subtitle="عضویت فعال ندارید" amount="۰ تومان" footer={<span>با عضویت، بیش از مبلغ پرداختی اعتبار بگیرید</span>} />
+            <KeyCard tone="lavender" title="KEYFIT" subtitle="عضویت فعال ندارید" amount="۰ تومان" footer={<span>با عضویت، بیش از مبلغ پرداختی اعتبار بگیرید</span>} />
           )}
           {sub && (
             <Card className="px-4 py-1">
@@ -85,8 +85,8 @@ export default function WalletPage() {
           <Card key={p.id} className={clsx('relative flex flex-col p-6', p.popular && 'border-ink-950 dark:border-brand-300/50')}>
             {p.popular && <Badge color="amber" className="absolute left-5 top-5">پیشنهاد ما</Badge>}
             <div className="text-[11px] tracking-[.25em] text-ink-400">KEYFIT</div>
-            <div className="mt-3 text-lg font-medium">{p.name}</div>
-            <div className="mt-4 text-3xl font-extralight tabular-nums tracking-tight">{toman(p.price)}</div>
+            <div className="mt-3 font-display text-[2rem] leading-none">{p.name}</div>
+            <div className="mt-4 font-display text-[2.2rem] leading-none"><Money value={p.price} unitClass="font-sans" /></div>
             <div className="text-xs text-ink-400">{num(p.durationDays)} روزه · {num(Math.round(((p.credit - p.price) / p.price) * 100))}٪ اعتبار هدیه</div>
             <ul className="mt-6 flex-1 space-y-3 border-t hairline pt-5 text-[13px] text-ink-600 dark:text-ink-300">
               {p.perks.map((perk) => (

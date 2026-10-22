@@ -25,7 +25,7 @@ const FEATURES = [
   ['فیت‌زون', 'جامعه‌ی ورزشکاران'],
 ]
 
-const field = 'w-full rounded-xl border border-white/10 bg-white/[.03] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-brand-300/60'
+const field = 'w-full rounded-2xl border border-transparent bg-white/[.07] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-brand-300/50'
 
 export default function Login() {
   const users = useDB((s) => s.users)
@@ -54,35 +54,36 @@ export default function Login() {
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-ink-950 text-white">
-      <div className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-brand-400/[.12] blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 opacity-[.04] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px)] [background-size:72px_100%]" />
+      <div className="pointer-events-none absolute bottom-[-20%] right-[-10%] h-[32rem] w-[32rem] rounded-full bg-brand-500/40 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-[-10%] right-[25%] h-[22rem] w-[22rem] rounded-full bg-aqua-400/25 blur-[110px]" />
+      <div className="pointer-events-none absolute right-[10%] top-[20%] h-[14rem] w-[14rem] rounded-full bg-gold-300/20 blur-[100px]" />
 
       <div className="relative mx-auto grid min-h-dvh max-w-6xl items-center gap-14 px-6 py-12 lg:grid-cols-[1.1fr_1fr]">
         <div className="animate-fade-up">
           <div className="flex items-center gap-3">
-            <img src="/favicon.svg" width={40} height={40} alt="" className="rounded-xl ring-1 ring-white/10" />
-            <div className="text-[11px] tracking-[.35em] text-white/40">KEYFIT</div>
+            <img src="/favicon.svg" width={44} height={44} alt="" className="rounded-2xl" />
+            <div className="font-display text-3xl">کی‌فیت</div>
           </div>
-          <h1 className="mt-12 text-[2.6rem] font-extralight leading-[1.35] tracking-tight lg:text-[3.4rem]">
+          <h1 className="mt-12 font-display text-[3.4rem] leading-[1.05] lg:text-[4.6rem]">
             یک عضویت،
             <br />
-            <span className="text-brand-300">تمام سلامتی شما.</span>
+            <span className="bg-gradient-to-l from-brand-300 via-coral-300 to-gold-300 bg-clip-text text-transparent">تمام سلامتی تو</span>
           </h1>
-          <p className="mt-6 max-w-md text-[15px] leading-8 text-white/55">
+          <p className="mt-6 max-w-md text-[15px] leading-8 text-white/65">
             ورود به باشگاه‌های منتخب بدون ثبت‌نام، برنامه از مربیان حرفه‌ای و دستیار هوشمند، ویزیت آنلاین، تغذیه‌ی سالم و چالش‌های جایزه‌دار — در یک اپلیکیشن.
           </p>
-          <div className="mt-10 grid max-w-lg grid-cols-2 gap-x-8 gap-y-5 border-t border-white/10 pt-8">
+          <div className="mt-10 grid max-w-lg grid-cols-2 gap-3">
             {FEATURES.map(([t, d]) => (
-              <div key={t}>
-                <div className="text-sm font-medium">{t}</div>
-                <div className="mt-1 text-xs leading-6 text-white/45">{d}</div>
+              <div key={t} className="rounded-3xl bg-white/[.05] p-4 backdrop-blur">
+                <div className="font-display text-2xl leading-none">{t}</div>
+                <div className="mt-2 text-xs leading-6 text-white/55">{d}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="animate-sheet-up rounded-3xl border border-white/10 bg-white/[.03] p-7 backdrop-blur-xl lg:p-9">
-          <h2 className="text-xl font-light">ورود یا ثبت‌نام</h2>
+        <div className="animate-sheet-up rounded-[2.25rem] bg-ink-850/80 p-7 backdrop-blur-2xl lg:p-9">
+          <h2 className="font-display text-[2.2rem] leading-none">ورود یا ثبت‌نام</h2>
           <p className="mt-1 text-[13px] text-white/45">با شماره‌ی موبایل خود ادامه دهید</p>
           <form
             className="mt-8 space-y-4"
@@ -109,7 +110,7 @@ export default function Login() {
                 <span className="block text-[11px] text-white/35">در نسخه‌ی آزمایشی، کد {DEMO_OTP} است.</span>
               </label>
             )}
-            <button type="submit" disabled={loading} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-300 text-[15px] font-medium text-ink-950 transition hover:bg-brand-200 disabled:opacity-50">
+            <button type="submit" disabled={loading} className="grad-lavender flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-medium text-ink-950 shadow-glow transition hover:brightness-105 disabled:opacity-50">
               {step === 'phone' ? 'دریافت کد تأیید' : 'ورود'}
               <ArrowLeft size={17} strokeWidth={1.5} />
             </button>
@@ -130,9 +131,9 @@ export default function Login() {
                   <button
                     key={d.userId}
                     onClick={() => demo(d.userId, d.role)}
-                    className="group rounded-xl border border-white/[.08] p-3 text-right transition hover:border-brand-300/40 hover:bg-white/[.03]"
+                    className="group rounded-2xl bg-white/[.05] p-3 text-right transition hover:bg-white/[.1]"
                   >
-                    <RoleIcon role={d.role} size={16} className="text-brand-300" />
+                    <RoleIcon role={d.role} size={16} className="text-aqua-300" />
                     <div className="mt-2 text-xs font-medium">{ROLE_META[d.role].label}</div>
                     <div className="truncate text-[11px] text-white/40">{u.name}</div>
                   </button>

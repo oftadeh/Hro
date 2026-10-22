@@ -135,7 +135,14 @@ export function createSeed(): DBState {
   ]
 
   const today = dayKey()
+  // یک هفته سابقه‌ی فعالیت برای نمودار هفتگی
+  const week = [[6, 7400, 35], [8, 9100, 50], [5, 4300, 20], [7, 6800, 40], [8, 11200, 60], [4, 3900, 15]]
   const dailyLogs: DailyLog[] = [
+    ...week.map(([water, steps, workoutMinutes], i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - (6 - i))
+      return { userId: 'u-sara', day: dayKey(d), water, steps, workoutMinutes, calories: 1800, sleepHours: 7, missionsDone: [], rewardClaimed: true }
+    }),
     { userId: 'u-sara', day: today, water: 3, steps: 3200, workoutMinutes: 0, calories: 900, sleepHours: 7, missionsDone: [], rewardClaimed: false },
   ]
 
