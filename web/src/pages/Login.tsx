@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useDB } from '@/core/db'
@@ -7,6 +7,7 @@ import { loginAs, loginWithOtp, DEMO_OTP } from '@/core/services/auth'
 import type { Role } from '@/core/types'
 import { run } from '@/ui/toast'
 import { RoleIcon } from '@/ui/icons'
+import { Runner, Lifter, Yoga, Trophy } from '@/ui/art'
 
 const DEMOS: { userId: string; role: Role }[] = [
   { userId: 'u-sara', role: 'user' },
@@ -24,6 +25,13 @@ const FEATURES = [
   ['چالش‌ها', 'رقابت، امتیاز و جوایز نقدی'],
   ['فیت‌زون', 'جامعه‌ی ورزشکاران'],
 ]
+
+const ART: Record<string, ReactNode> = {
+  'فیت‌یاب': <Lifter size={80} />,
+  'فیت‌یار': <Yoga size={74} />,
+  'چالش‌ها': <Trophy size={76} />,
+  'فیت‌زون': <Runner size={78} />,
+}
 
 const field = 'w-full rounded-2xl border border-transparent bg-white/[.07] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-brand-300/50'
 
@@ -59,7 +67,13 @@ export default function Login() {
       <div className="pointer-events-none absolute right-[10%] top-[20%] h-[14rem] w-[14rem] rounded-full bg-gold-300/20 blur-[100px]" />
 
       <div className="relative mx-auto grid min-h-dvh max-w-6xl items-center gap-14 px-6 py-12 lg:grid-cols-[1.1fr_1fr]">
-        <div className="animate-fade-up">
+        <div className="relative animate-fade-up">
+          <div className="pointer-events-none absolute -left-4 top-0 hidden sm:block">
+            <Runner size={210} />
+          </div>
+          <div className="pointer-events-none absolute -left-2 top-2 sm:hidden">
+            <Runner size={120} />
+          </div>
           <div className="flex items-center gap-3">
             <img src="/favicon.svg" width={44} height={44} alt="" className="rounded-2xl" />
             <div className="font-display text-3xl">کی‌فیت</div>
@@ -74,9 +88,10 @@ export default function Login() {
           </p>
           <div className="mt-10 grid max-w-lg grid-cols-2 gap-3">
             {FEATURES.map(([t, d]) => (
-              <div key={t} className="rounded-3xl bg-white/[.05] p-4 backdrop-blur">
-                <div className="font-display text-2xl leading-none">{t}</div>
-                <div className="mt-2 text-xs leading-6 text-white/55">{d}</div>
+              <div key={t} className="lift-hover relative min-h-[8.5rem] overflow-hidden rounded-3xl bg-white/[.05] p-4 backdrop-blur">
+                <div className="relative z-10 max-w-[70%] font-display text-2xl leading-none">{t}</div>
+                <div className="relative z-10 mt-2 max-w-[70%] text-xs leading-6 text-white/55">{d}</div>
+                <div className="absolute -bottom-2 -left-2">{ART[t]}</div>
               </div>
             ))}
           </div>

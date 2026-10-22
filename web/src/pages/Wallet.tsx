@@ -10,6 +10,7 @@ import { KeyCard } from '@/ui/KeyCard'
 import { useMe, useBalance } from '@/ui/hooks'
 import { runOk } from '@/ui/toast'
 import { TxList } from './TxList'
+import { WalletCoins } from '@/ui/art'
 
 const AMOUNTS = [200_000, 500_000, 1_000_000, 2_000_000]
 
@@ -34,6 +35,7 @@ export default function WalletPage() {
       <PageHeader title="کیف پول و عضویت" />
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <HeroHeader seed="wallet" className="flex flex-col justify-between p-6">
+          <WalletCoins size={130} className="pointer-events-none absolute left-3 top-3 max-sm:opacity-70" />
           <div>
             <div className="font-display text-[1.9rem] leading-none">کیف پول</div>
             <div className="mt-3 font-display text-[3rem] leading-none">

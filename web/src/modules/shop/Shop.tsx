@@ -9,6 +9,7 @@ import { Badge, Button, Chips, Input, Orbs, PageHeader, Stars } from '@/ui/kit'
 import { toast } from '@/ui/toast'
 import { CartSheet, useCartCount } from './CartSheet'
 import { CategoryIcon } from '@/ui/icons'
+import { Shaker } from '@/ui/art'
 
 export const CATEGORIES: Record<Product['category'], string> = { supplement: 'مکمل', equipment: 'تجهیزات', apparel: 'پوشاک', accessory: 'لوازم جانبی' }
 
@@ -31,9 +32,10 @@ export default function Shop() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="فروشگاه" subtitle="مکمل اصل و لوازم ورزشی با ضمانت" actions={<CartButton kind="product" onClick={() => setCart(true)} />} />
-      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white">
+      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white min-h-[10rem]">
         <Orbs seed="shop" intensity={0.8} />
-        <div className="relative">
+        <Shaker size={120} className="pointer-events-none absolute -bottom-2 left-4" />
+        <div className="relative max-w-[62%]">
           <div className="text-[11px] text-white/70">مجموعه‌ی پاییز</div>
           <div className="mt-2 font-display text-[2rem] leading-[1.1]">تا ۲۰٪ تخفیف مکمل‌های منتخب</div>
           <div className="mt-1 text-[13px] text-white/75">ارسال رایگان برای خریدهای بالای ۲ میلیون تومان</div>

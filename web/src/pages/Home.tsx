@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronLeft, Flame, Gift, Plus, Sparkles, Ticket } from 'lucide-react'
+import { ArrowLeft, Check, ChevronLeft, Gift, Plus } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { DAILY_MISSIONS, DEFAULT_CENTER } from '@/core/config'
 import { dayKey, distanceKm, num, toman, daysLeft } from '@/core/format'
 import { claimDailyReward, levelOf, logActivity } from '@/core/services/engagement'
 import { activeSubscription } from '@/core/services/wallet'
 import { rankings } from '@/core/services/challenges'
-import { Card, Donut, HeroHeader, MetricRow, Orbs, Progress, SectionTitle, StackSections, Stat } from '@/ui/kit'
+import { Card, Donut, HeroHeader, MetricRow, Orbs, Progress, Ring, SectionTitle, StackSections, Stat } from '@/ui/kit'
+import { Bot, ChatBubbles, Coach, Doctor as DoctorArt, Flame as FlameArt, HeartPulse, Lifter, MapPin, Runner, SaladBowl, Shaker, Trophy, WaterGlass, WalletCoins, Yoga } from '@/ui/art'
+import { CountUp } from '@/ui/motion'
 import { KeyCard } from '@/ui/KeyCard'
-import { FoodIcon, MetricIcon, MissionIcon } from '@/ui/icons'
+import { MetricIcon, MissionIcon } from '@/ui/icons'
 import { useMe } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 import { GymCard } from '@/modules/fityab/GymCard'
@@ -32,6 +34,18 @@ const TIPS = [
   'اضافه‌بار پیش‌رونده رمز پیشرفت است؛ هر هفته کمی سنگین‌تر یا بیشتر.',
 ]
 const COLORS = { water: '#6ee7c8', steps: '#f2a3e2', workoutMinutes: '#fcd679' }
+
+function AddBtn({ onClick, label, light }: { onClick: () => void; label: string; light?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`absolute bottom-3 right-3 z-10 flex h-8 items-center gap-1 rounded-full px-3 text-[11px] font-medium backdrop-blur transition active:scale-90 ${light ? 'bg-white/25 text-white hover:bg-white/35' : 'bg-white/60 text-ink-950 hover:bg-white/80'}`}
+      aria-label={`ثبت ${label}`}
+    >
+      <Plus size={12} strokeWidth={2} /> {label}
+    </button>
+  )
+}
 
 const More = ({ to, label = 'همه' }: { to: string; label?: string }) => (
   <Link to={to} className="flex items-center gap-0.5 text-xs text-ink-500 transition hover:text-ink-950 dark:text-ink-400 dark:hover:text-white">
@@ -97,7 +111,8 @@ export default function Home() {
       <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
         {/* کارت شاخص امروز */}
         <HeroHeader seed="today" className="min-h-[15rem] p-6">
-          <div className="flex h-full min-h-[12rem] flex-col justify-between">
+          <Runner size={190} className="pointer-events-none absolute -bottom-6 left-2 drop-shadow-2xl" />
+          <div className="relative flex h-full min-h-[12rem] flex-col justify-between">
             <div>
               <div className="font-display text-[2.4rem] leading-[1.05]">تمرین امروز</div>
               <div className="mt-2 text-sm text-white/70">
@@ -105,21 +120,25 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-end justify-between">
-              <Link to="/fityab" className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-ink-950 shadow-soft transition hover:scale-105" aria-label="رفتن به باشگاه">
-                <ArrowLeft size={22} strokeWidth={1.75} />
-              </Link>
-              <div className="text-left text-xs text-white/70">
+              <div className="text-xs text-white/70">
                 سطح {num(lvl.level)} · {lvl.title}
               </div>
+              <Link to="/fityab" className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white text-ink-950 shadow-soft transition hover:scale-105 max-sm:hidden" aria-label="رفتن به باشگاه">
+                <span className="absolute inset-0 rounded-full bg-white kf-ripple" />
+                <ArrowLeft size={22} strokeWidth={1.75} className="relative" />
+              </Link>
             </div>
+            <Link to="/fityab" className="mt-4 flex w-fit items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-ink-950 shadow-soft sm:hidden">
+              شروع تمرین <ArrowLeft size={16} strokeWidth={1.75} />
+            </Link>
           </div>
         </HeroHeader>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Stat tone="violet" icon={<Sparkles size={26} />} value={num(me.xp)} label="امتیاز تجربه" />
-          <Stat tone="emerald" icon={<Flame size={26} />} value={`${num(me.streak)} روز`} label="پیاپی فعال" />
+        <div className="stagger grid grid-cols-2 gap-3">
+          <Stat tone="violet" art={<Trophy size={78} />} value={<CountUp value={me.xp} />} label="امتیاز تجربه" />
+          <Stat tone="emerald" art={<FlameArt size={70} />} value={<><CountUp value={me.streak} /> روز</>} label="پیاپی فعال" />
           <Link to={sub ? '/fityab' : '/wallet'} className="col-span-2">
-            <Stat tone="rose" icon={<Ticket size={26} />} value={sub ? toman(sub.credit) : 'فعال‌سازی عضویت'} label={sub ? `اعتبار ورود · ${num(daysLeft(sub.expiresAt))} روز باقی‌مانده` : 'ورود به همه‌ی باشگاه‌ها با یک عضویت'} />
+            <Stat tone="rose" art={<WalletCoins size={92} />} value={sub ? <><CountUp value={sub.credit} /> تومان</> : 'فعال‌سازی عضویت'} label={sub ? `اعتبار ورود · ${num(daysLeft(sub.expiresAt))} روز باقی‌مانده` : 'ورود به همه‌ی باشگاه‌ها با یک عضویت'} />
           </Link>
         </div>
       </div>
@@ -141,42 +160,63 @@ export default function Home() {
           </Card>
         </div>
 
-        {/* امروز: نمودار حلقه‌ای */}
+        {/* امروز: کاشی‌های زنده */}
         <div>
-          <SectionTitle title="امروز" />
-          <Card className="p-5">
-            <div className="flex justify-center py-2">
+          <SectionTitle title="امروز" action={<span className="text-xs tabular-nums text-ink-500">{num(todayPct * 100)}٪ از اهداف</span>} />
+          <div className="stagger grid grid-cols-2 gap-3">
+            {/* قدم */}
+            <div className="lift-hover relative min-h-[12.5rem] overflow-hidden rounded-3xl bg-gradient-to-br from-coral-300 to-coral-400 p-4 text-ink-950">
+              <div className="relative z-10">
+                <div className="text-xs font-medium opacity-70">پیاده‌روی</div>
+                <div className="mt-1 font-display text-[2rem] leading-none"><CountUp value={log.steps} /></div>
+                <div className="text-[11px] opacity-70">از {num(6000)} قدم</div>
+              </div>
+              <Runner size={104} shirt="#fff" accent="#fcd679" className="absolute -bottom-3 -left-3" />
+              <div className="absolute left-3 top-3">
+                <Ring value={pct(log.steps, 6000)} size={38} stroke={4} color="#ffffff">
+                  <span className="text-[9px] tabular-nums">{num(pct(log.steps, 6000) * 100)}٪</span>
+                </Ring>
+              </div>
+              <AddBtn onClick={() => logActivity('steps', 1000)} label="+۱۰۰۰" />
+            </div>
+            {/* آب */}
+            <div className="lift-hover relative row-span-2 overflow-hidden rounded-3xl bg-gradient-to-b from-aqua-400 to-[#3b82f6] p-4 text-white">
+              <div className="relative z-10">
+                <div className="text-xs font-medium opacity-80">آب</div>
+                <div className="mt-1 font-display text-[2rem] leading-none"><CountUp value={log.water} /> <span className="font-sans text-xs">لیوان</span></div>
+                <div className="text-[11px] opacity-80">هدف {num(8)} لیوان</div>
+              </div>
+              <WaterGlass level={log.water / 8} size={150} className="mx-auto mb-10 mt-4" />
+              <AddBtn onClick={() => logActivity('water', 1)} label="+۱ لیوان" light />
+            </div>
+            {/* تمرین */}
+            <div className="lift-hover relative min-h-[12.5rem] overflow-hidden rounded-3xl grad-lavender p-4 text-ink-950">
+              <div className="relative z-10">
+                <div className="text-xs font-medium opacity-70">تمرین</div>
+                <div className="mt-1 font-display text-[2rem] leading-none"><CountUp value={log.workoutMinutes} /> <span className="font-sans text-xs">دقیقه</span></div>
+                <div className="text-[11px] opacity-70">هدف {num(20)} دقیقه</div>
+              </div>
+              <Lifter size={100} shirt="#fff" className="absolute -bottom-3 -left-3" />
+              <AddBtn onClick={() => logActivity('workoutMinutes', 10)} label="+۱۰" />
+            </div>
+            {/* خلاصه */}
+            <div className="relative col-span-2 flex items-center gap-4 overflow-hidden rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
               <Donut
-                size={180}
-                stroke={11}
+                size={96}
+                stroke={8}
                 // هر هدف یک‌سوم حلقه است و به اندازه‌ی پیشرفتش پر می‌شود
                 segments={trackers.flatMap((t) => [{ value: Math.max(0.03, pct(t.value, t.goal)), color: COLORS[t.key] }, { value: 1 - Math.max(0.03, pct(t.value, t.goal)), color: 'transparent' }])}
-                center={
-                  <div className="rounded-2xl bg-ink-900/[.06] px-3 py-1.5 text-sm tabular-nums dark:bg-white/[.08]">
-                    {num(todayPct * 100)}٪
-                  </div>
-                }
+                center={<span className="text-sm tabular-nums">{num(todayPct * 100)}٪</span>}
               />
-            </div>
-            <div className="mt-3 space-y-1">
-              {trackers.map((t) => (
-                <div key={t.key} className="flex items-center gap-3 py-1.5 text-sm">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[t.key] }} />
-                  <span className="flex-1">{t.title}</span>
-                  <span className="text-xs tabular-nums text-ink-500 dark:text-ink-400">
-                    {num(t.value)} / {num(t.goal)} {t.unit}
-                  </span>
-                  <button
-                    onClick={() => logActivity(t.key, t.step)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-900/[.06] transition hover:bg-ink-900/10 dark:bg-white/[.08] dark:hover:bg-white/[.14]"
-                    aria-label={`ثبت ${t.title}`}
-                  >
-                    <Plus size={13} strokeWidth={1.75} />
-                  </button>
+              <div className="min-w-0 flex-1">
+                <div className="font-display text-2xl leading-none">ضربان روز</div>
+                <div className="mt-1 text-xs leading-6 text-ink-500 dark:text-ink-400">
+                  {todayPct >= 1 ? 'همه‌ی اهداف امروز کامل شد!' : 'هر ثبت، حلقه را کامل‌تر می‌کند.'}
                 </div>
-              ))}
+              </div>
+              <HeartPulse size={84} className="shrink-0" />
             </div>
-          </Card>
+          </div>
         </div>
       </div>
 
@@ -184,23 +224,24 @@ export default function Home() {
       <SectionTitle title="کاوش" />
       <StackSections
         items={[
-          { to: '/fityab', title: 'باشگاه‌های اطراف', subtitle: 'ورود بدون ثبت‌نام با عضویت کی‌فیت', grad: 'grad-lavender' },
-          { to: '/fityar', title: 'مربی و دستیار هوشمند', subtitle: 'برنامه‌ی تمرین و تغذیه‌ی اختصاصی', grad: 'grad-mint' },
-          { to: '/challenges', title: 'چالش‌ها', subtitle: 'رقابت کن، جایزه ببر', grad: 'grad-peach' },
-          { to: '/fitzone', title: 'فیت‌زون', subtitle: 'جامعه‌ی ورزشکاران', grad: '', dark: true },
+          { to: '/fityab', title: 'باشگاه‌های اطراف', subtitle: 'ورود بدون ثبت‌نام با عضویت کی‌فیت', grad: 'grad-lavender', art: <MapPin size={110} /> },
+          { to: '/fityar', title: 'مربی و دستیار هوشمند', subtitle: 'برنامه‌ی تمرین و تغذیه‌ی اختصاصی', grad: 'grad-mint', art: <Coach size={120} shirt="#a78bfa" /> },
+          { to: '/challenges', title: 'چالش‌ها', subtitle: 'رقابت کن، جایزه ببر', grad: 'grad-peach', art: <Trophy size={112} /> },
+          { to: '/fitzone', title: 'فیت‌زون', subtitle: 'جامعه‌ی ورزشکاران', grad: '', dark: true, art: <ChatBubbles size={118} /> },
         ]}
       />
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="stagger mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { to: '/shop', t: 'فروشگاه', d: 'مکمل و لوازم' },
-          { to: '/buffet', t: 'بوفه', d: 'غذای سالم' },
-          { to: '/doctors', t: 'پزشک', d: 'ویزیت آنلاین' },
-          { to: '/wallet', t: 'کیف پول', d: 'عضویت و اعتبار' },
+          { to: '/shop', t: 'فروشگاه', d: 'مکمل و لوازم', art: <Shaker size={84} /> },
+          { to: '/buffet', t: 'بوفه', d: 'غذای سالم', art: <SaladBowl size={92} /> },
+          { to: '/doctors', t: 'پزشک', d: 'ویزیت آنلاین', art: <DoctorArt size={92} /> },
+          { to: '/wallet', t: 'کیف پول', d: 'عضویت و اعتبار', art: <WalletCoins size={88} /> },
         ].map((m, i) => (
-          <Link key={m.to} to={m.to} className="relative overflow-hidden rounded-3xl bg-white p-4 shadow-card transition hover:-translate-y-0.5 dark:bg-ink-850 dark:shadow-none">
-            <Orbs seed={m.to + i} intensity={0.35} />
+          <Link key={m.to} to={m.to} className="lift-hover relative min-h-[9.5rem] overflow-hidden rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
+            <Orbs seed={m.to + i} intensity={0.3} />
             <div className="relative font-display text-2xl leading-none">{m.t}</div>
             <div className="relative mt-1 text-[11px] text-ink-500 dark:text-ink-400">{m.d}</div>
+            <div className="absolute -bottom-1 left-2">{m.art}</div>
           </Link>
         ))}
       </div>
@@ -241,10 +282,10 @@ export default function Home() {
           <SectionTitle title="جمله‌ی امروز" />
           <div className="relative flex min-h-[22rem] flex-col items-center justify-between overflow-hidden rounded-[2rem] bg-ink-850 px-6 py-10 text-center">
             <p className="relative max-w-xs bg-gradient-to-l from-brand-300 via-coral-300 to-brand-300 bg-clip-text font-display text-[2.2rem] leading-[1.25] text-transparent">{QUOTES[dayIdx % QUOTES.length]}</p>
-            <div className="relative h-36 w-full">
-              <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-[70%] -translate-y-1/2 rounded-full bg-gold-300 opacity-80 blur-2xl" />
-              <div className="absolute left-1/2 top-1/2 h-32 w-36 -translate-x-[20%] -translate-y-[40%] rounded-full bg-brand-400 opacity-80 blur-2xl" />
-              <div className="absolute left-1/2 top-1/2 h-20 w-24 -translate-x-[40%] -translate-y-[10%] rounded-full bg-coral-300 opacity-70 blur-2xl" />
+            <div className="relative flex h-40 w-full items-center justify-center">
+              <div className="kf-drift absolute left-1/2 top-1/2 h-32 w-32 -translate-x-[70%] -translate-y-1/2 rounded-full bg-gold-300 opacity-60 blur-2xl" />
+              <div className="kf-drift absolute left-1/2 top-1/2 h-32 w-36 -translate-x-[20%] -translate-y-[40%] rounded-full bg-brand-400 opacity-60 blur-2xl" style={{ animationDelay: '-6s' }} />
+              <Yoga size={150} className="relative" />
             </div>
             <div className="relative text-sm tabular-nums text-white/70">{num(missionPct * 100)}٪ از برنامه‌ی امروز</div>
           </div>
@@ -296,7 +337,7 @@ export default function Home() {
       )}
 
       <SectionTitle title="چالش‌های تازه" action={<More to="/challenges" />} />
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar">
+      <div className="stagger -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar">
         {hotChallenges.map((c) => <ChallengeCard key={c.id} c={c} me={me.id} compact />)}
         <Link to="/challenges/new" className="flex w-52 shrink-0 flex-col items-center justify-center gap-2 rounded-[2rem] border border-dashed border-ink-300 text-sm text-ink-500 transition hover:text-ink-950 dark:border-white/15 dark:hover:text-white">
           <Plus size={18} strokeWidth={1.5} /> ایجاد چالش
@@ -304,12 +345,13 @@ export default function Home() {
       </div>
 
       <SectionTitle title="باشگاه‌های نزدیک" action={<More to="/fityab" label="نقشه" />} />
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar">
+      <div className="stagger -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar">
         {nearGyms.map(({ g, d }) => <GymCard key={g.id} gym={g} distance={d} compact />)}
       </div>
 
       {/* دستیار */}
       <HeroHeader seed="ai-tip" className="mt-9 p-6">
+        <Bot size={110} className="pointer-events-none absolute -top-2 left-0 sm:left-4" />
         <div className="font-display text-[1.9rem] leading-none">فیت‌یار</div>
         <p className="mt-3 max-w-lg text-[15px] leading-8 text-white/80">{TIPS[dayIdx % TIPS.length]}</p>
         <form
@@ -331,7 +373,7 @@ export default function Home() {
         {foods.slice(0, 6).map((f) => (
           <Link key={f.id} to={`/buffet/${f.restaurantId}`} className="w-44 shrink-0 rounded-3xl bg-white p-3 shadow-card transition hover:-translate-y-0.5 dark:bg-ink-850 dark:shadow-none">
             <div className="relative flex h-24 items-center justify-center overflow-hidden rounded-2xl bg-ink-900/[.04] text-ink-950 dark:bg-ink-800">
-              {f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : <><Orbs seed={f.id} intensity={0.7} /><FoodIcon size={24} className="relative text-white" /></>}
+              {f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : <><Orbs seed={f.id} intensity={0.6} /><SaladBowl size={86} className="relative" /></>}
             </div>
             <div className="mt-3 truncate text-[13px] font-medium">{f.name}</div>
             <div className="mt-0.5 text-[11px] tabular-nums text-ink-400">{num(f.calories)} کالری · {num(f.protein)} گرم پروتئین</div>

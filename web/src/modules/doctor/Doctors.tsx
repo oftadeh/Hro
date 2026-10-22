@@ -3,6 +3,7 @@ import { useDB } from '@/core/db'
 import { faDateTime, num, toman } from '@/core/format'
 import { Avatar, Badge, Card, Orbs, PageHeader, SectionTitle, Stars } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
+import { Doctor } from '@/ui/art'
 
 export default function Doctors() {
   const me = useMe()!
@@ -13,9 +14,10 @@ export default function Doctors() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="پزشک" subtitle="ویزیت آنلاین با پزشکان ورزشی و متخصصان" />
-      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white">
+      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white min-h-[10rem]">
         <Orbs seed="doctor" intensity={0.8} />
-        <div className="relative">
+        <Doctor size={130} className="pointer-events-none absolute -bottom-3 left-2" />
+        <div className="relative max-w-[62%]">
           <div className="text-[11px] text-white/70">ویزیت آنلاین</div>
           <div className="mt-2 font-display text-[2rem] leading-[1.1]">مشاوره با پزشک، بدون صف</div>
           <div className="mt-1 text-[13px] text-white/75">آسیب‌های ورزشی، چکاپ پیش از شروع ورزش، مکمل و تغذیه‌ی درمانی</div>

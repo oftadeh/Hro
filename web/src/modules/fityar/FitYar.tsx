@@ -8,6 +8,7 @@ import { faDate, num, toman } from '@/core/format'
 import { Avatar, Badge, Button, Card, Empty, PageHeader, Stars, Tabs } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 import { run } from '@/ui/toast'
+import { Bot as BotArt } from '@/ui/art'
 
 type Tab = 'ai' | 'coaches' | 'plans'
 
@@ -82,7 +83,7 @@ function AIChat({ initial }: { initial: string }) {
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {chat.length === 0 && (
           <div className="py-6 text-center">
-            <div className="text-5xl"></div>
+            <BotArt size={130} className="mx-auto" />
             <div className="mt-2 font-semibold">سلام {me.name.split(' ')[0]}! چطور کمکت کنم؟</div>
             <p className="mx-auto mt-1 max-w-sm text-xs text-ink-500">بر اساس قد، وزن و هدفت در پروفایل، برنامه‌ی تغذیه و تمرین شخصی‌سازی‌شده می‌دم.</p>
             {!me.weightKg && (

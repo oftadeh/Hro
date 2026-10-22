@@ -6,6 +6,7 @@ import { num } from '@/core/format'
 import { Button, Empty, Money, Orbs, PageHeader, Tabs } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { ChallengeCard } from './ChallengeCard'
+import { Trophy } from '@/ui/art'
 
 export default function Challenges() {
   const me = useMe()!
@@ -22,12 +23,13 @@ export default function Challenges() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="چالش‌ها" subtitle="رقابت کن، امتیاز بگیر، جایزه ببر" actions={<Link to="/challenges/new"><Button size="sm" icon={<Plus size={16} />}>ساخت چالش</Button></Link>} />
-      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white">
+      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white min-h-[13rem]">
         <Orbs seed="challenges" intensity={0.8} />
+        <Trophy size={112} className="pointer-events-none absolute -bottom-2 left-3" />
         <div className="relative">
           <div className="text-xs text-white/75">مجموع جوایز چالش‌های فعال</div>
           <div className="mt-1 font-display text-[3rem] leading-none"><Money value={totalPool} unitClass="font-sans" /></div>
-          <div className="mt-2 text-xs text-white/75">{num(challenges.filter((c) => c.status === 'active').length)} چالش فعال · هر کاربری می‌تواند چالش ایجاد کند</div>
+          <div className="mt-3 max-w-[60%] text-xs leading-6 text-white/75">{num(challenges.filter((c) => c.status === 'active').length)} چالش فعال · هر کاربری می‌تواند چالش ایجاد کند</div>
         </div>
       </div>
       <Tabs

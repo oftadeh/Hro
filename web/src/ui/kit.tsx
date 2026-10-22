@@ -4,11 +4,13 @@
  * گوی‌های رنگی محو، تیترهای سریف (مرکزی) و کارت‌های لایه‌ای با گوشه‌های گرد.
  */
 import clsx from 'clsx'
-import { ArrowLeft, ArrowRight, Inbox, Star, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { num } from '@/core/format'
+import { useMounted } from './motion'
+import { Yoga } from './art'
 
 type BtnVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'dark'
 
@@ -45,7 +47,7 @@ export function Card({ className, children, onClick }: { className?: string; chi
       onClick={onClick}
       className={clsx(
         'rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none',
-        onClick && 'cursor-pointer transition hover:-translate-y-0.5',
+        onClick && 'lift-hover cursor-pointer',
         className,
       )}
     >
@@ -208,9 +210,9 @@ export function Orbs({ seed = 'keyfit', className, intensity = 1 }: { seed?: str
   const [a, b, c] = orbsFor(seed)
   return (
     <div className={clsx('pointer-events-none absolute inset-0 overflow-hidden', className)} aria-hidden>
-      <div className="absolute -bottom-1/4 -left-[10%] h-[85%] w-[70%] rounded-full blur-3xl" style={{ background: a, opacity: 0.75 * intensity }} />
-      <div className="absolute -bottom-[30%] left-[35%] h-[75%] w-[55%] rounded-full blur-3xl" style={{ background: b, opacity: 0.7 * intensity }} />
-      <div className="absolute bottom-[5%] left-[55%] h-[45%] w-[35%] rounded-full blur-3xl" style={{ background: c, opacity: 0.55 * intensity }} />
+      <div className="kf-drift absolute -bottom-1/4 -left-[10%] h-[85%] w-[70%] rounded-full blur-3xl" style={{ background: a, opacity: 0.75 * intensity }} />
+      <div className="kf-drift absolute -bottom-[30%] left-[35%] h-[75%] w-[55%] rounded-full blur-3xl" style={{ background: b, opacity: 0.7 * intensity, animationDelay: '-5s' }} />
+      <div className="kf-drift absolute bottom-[5%] left-[55%] h-[45%] w-[35%] rounded-full blur-3xl" style={{ background: c, opacity: 0.55 * intensity, animationDelay: '-9s' }} />
     </div>
   )
 }
@@ -225,12 +227,10 @@ export function Cover({ gradient, image, className, children, label }: { gradien
   )
 }
 
-export function Empty({ title, desc, action }: { icon?: string; title: string; desc?: string; action?: ReactNode }) {
+export function Empty({ title, desc, action, art }: { icon?: string; title: string; desc?: string; action?: ReactNode; art?: ReactNode }) {
   return (
-    <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-3xl bg-white px-6 py-14 text-center dark:bg-ink-850">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-400/15 text-brand-500 dark:text-brand-300">
-        <Inbox size={20} strokeWidth={1.5} />
-      </div>
+    <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-3xl bg-white px-6 py-12 text-center dark:bg-ink-850">
+      {art ?? <Yoga size={120} className="mb-1" />}
       <div className="font-display text-xl">{title}</div>
       {desc && <p className="mt-1 max-w-xs text-xs leading-6 text-ink-500">{desc}</p>}
       {action && <div className="mt-5">{action}</div>}
@@ -265,9 +265,10 @@ const STAT_GLOW: Record<Tone, string> = {
   rose: 'from-transparent to-coral-400/30',
 }
 
-export function Stat({ label, value, icon, hint, tone = 'violet' }: { label: string; value: ReactNode; icon?: ReactNode; hint?: ReactNode; tone?: Tone }) {
+export function Stat({ label, value, icon, hint, tone = 'violet', art }: { label: string; value: ReactNode; icon?: ReactNode; hint?: ReactNode; tone?: Tone; art?: ReactNode }) {
   return (
-    <div className={clsx('relative overflow-hidden rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none')}>
+    <div className={clsx('lift-hover relative overflow-hidden rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none', art && 'min-h-[8.5rem]')}>
+      {art && <div className="pointer-events-none absolute -bottom-2 left-1">{art}</div>}
       <div className={clsx('pointer-events-none absolute inset-0 bg-gradient-to-b', STAT_GLOW[tone])} />
       <div className="relative">
         {icon && <div className={clsx('mb-3 [&_svg]:stroke-[1.4]', TILE[tone].split(' ').filter((c) => c.startsWith('text') || c.startsWith('dark:text')).join(' '))}>{icon}</div>}
@@ -342,7 +343,7 @@ export function RaisedSheet({ children, className }: { children: ReactNode; clas
 }
 
 /** بخش‌های لایه‌ای رنگی با گوشه‌ی گرد بزرگ (مانند Morning / Evening / Journeys) */
-export function StackSections({ items }: { items: { to: string; title: string; subtitle?: string; grad: string; dark?: boolean }[] }) {
+export function StackSections({ items }: { items: { to: string; title: string; subtitle?: string; grad: string; dark?: boolean; art?: ReactNode }[] }) {
   return (
     <div className="overflow-hidden rounded-[2rem]">
       {items.map((it, i) => (
@@ -350,17 +351,18 @@ export function StackSections({ items }: { items: { to: string; title: string; s
           key={it.to}
           to={it.to}
           className={clsx(
-            'group relative flex min-h-[7.5rem] items-start justify-between rounded-tl-[3rem] px-6 pb-12 pt-6 transition',
+            'group relative flex min-h-[9rem] items-start justify-between overflow-hidden rounded-tl-[3rem] px-6 pb-12 pt-6 transition',
             i > 0 && '-mt-8',
             it.dark ? 'bg-ink-850 text-white' : clsx(it.grad, 'text-ink-950'),
           )}
           style={{ zIndex: i + 1 }}
         >
-          <div>
+          <div className="relative z-10 max-w-[60%]">
             <div className="font-display text-[2rem] leading-[1.1]">{it.title}</div>
             {it.subtitle && <div className={clsx('mt-1 text-xs', it.dark ? 'text-white/55' : 'text-ink-950/60')}>{it.subtitle}</div>}
+            <ArrowLeft size={20} strokeWidth={1.4} className="mt-3 opacity-60 transition group-hover:-translate-x-1 group-hover:opacity-100" />
           </div>
-          <ArrowLeft size={20} strokeWidth={1.4} className="mt-2 opacity-60 transition group-hover:-translate-x-1 group-hover:opacity-100" />
+          {it.art && <div className="pointer-events-none absolute -bottom-1 left-4 transition duration-500 group-hover:-translate-y-1">{it.art}</div>}
         </Link>
       ))}
     </div>
@@ -373,18 +375,19 @@ export function Donut({ segments, size = 200, stroke = 12, center }: { segments:
   const c = 2 * Math.PI * r
   const total = Math.max(1, segments.reduce((a, s) => a + s.value, 0))
   const gap = segments.filter((s) => s.value > 0 && s.color !== 'transparent').length > 1 ? 14 : 0
+  const mounted = useMounted()
   let offset = 0
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-ink-900/[.06] dark:stroke-white/[.06]" />
         {segments.map((s, i) => {
-          const len = Math.max(0, (s.value / total) * c - gap)
+          const len = mounted ? Math.max(0, (s.value / total) * c - gap) : 0
           const el = (
             <circle
               key={i}
               cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeLinecap="round"
-              strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-offset} style={{ filter: `drop-shadow(0 0 6px ${s.color}66)`, transition: 'all .8s' }}
+              strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-offset} style={{ filter: `drop-shadow(0 0 6px ${s.color}66)`, transition: `stroke-dasharray 1.2s cubic-bezier(.2,.8,.2,1) ${i * 0.08}s` }}
             />
           )
           offset += (s.value / total) * c
@@ -414,9 +417,10 @@ const BAR: Record<string, string> = {
 }
 
 export function Progress({ value, className, tone = 'violet' }: { value: number; className?: string; tone?: string }) {
+  const mounted = useMounted()
   return (
     <div className={clsx('h-1.5 overflow-hidden rounded-full bg-ink-900/[.07] dark:bg-white/10', className)}>
-      <div className={clsx('h-full rounded-full bg-gradient-to-l transition-all duration-700', BAR[tone] ?? BAR.violet)} style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }} />
+      <div className={clsx('h-full rounded-full bg-gradient-to-l transition-all duration-700', BAR[tone] ?? BAR.violet)} style={{ width: `${mounted ? Math.min(100, Math.max(0, value * 100)) : 0}%` }} />
     </div>
   )
 }

@@ -126,7 +126,7 @@ export function AppShell() {
                 >
                   {({ isActive }) => (
                     <>
-                      <span className={clsx('flex h-8 w-12 items-center justify-center rounded-full transition', isActive && 'bg-brand-400/15')}>
+                      <span key={String(isActive)} className={clsx('flex h-8 w-12 items-center justify-center rounded-full transition', isActive && 'animate-pop bg-brand-400/15')}>
                         <it.icon size={20} strokeWidth={1.5} />
                       </span>
                       {it.label}

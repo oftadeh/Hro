@@ -4,11 +4,12 @@ import { Clock } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { num } from '@/core/format'
 import { addToCart } from '@/core/services/commerce'
-import { Badge, Chips, Cover, PageHeader, SectionTitle, Stars } from '@/ui/kit'
+import { Badge, Chips, Cover, PageHeader, SectionTitle, Stars, Orbs } from '@/ui/kit'
 import { toast } from '@/ui/toast'
 import { CartSheet } from '@/modules/shop/CartSheet'
 import { CartButton } from '@/modules/shop/Shop'
 import { FoodRow } from './FoodRow'
+import { SaladBowl } from '@/ui/art'
 
 export default function Buffet() {
   const restaurants = useDB((s) => s.restaurants)
@@ -21,6 +22,15 @@ export default function Buffet() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="بوفه" subtitle="غذای رژیمی و سالم از رستوران‌های اطراف" actions={<CartButton kind="food" onClick={() => setCart(true)} />} />
+      <div className="relative mb-6 min-h-[10rem] overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white">
+        <Orbs seed="buffet" intensity={0.8} />
+        <SaladBowl size={140} className="pointer-events-none absolute -bottom-3 left-3" />
+        <div className="relative max-w-[60%]">
+          <div className="text-[11px] text-white/70">تغذیه‌ی هوشمند</div>
+          <div className="mt-2 font-display text-[2rem] leading-[1.1]">غذای سالم، با کالری دقیق</div>
+          <div className="mt-1 text-[13px] text-white/75">با تخفیف ویژه‌ی اعضای کی‌فیت</div>
+        </div>
+      </div>
       <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar">
         {restaurants.filter((r) => r.approved).map((r) => (
           <Link key={r.id} to={`/buffet/${r.id}`} className="w-64 shrink-0 overflow-hidden rounded-2xl bg-white shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
