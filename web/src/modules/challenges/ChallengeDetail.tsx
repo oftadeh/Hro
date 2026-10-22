@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { faDateTime } from '@/core/format'
 import { Link, useParams } from 'react-router-dom'
-import { Gift, Share2, Ticket, Trophy, Zap } from 'lucide-react'
+import { Check, Gift, ShieldCheck, Share2, Ticket, Trophy, X, Zap } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { daysLeft, faDate, num, toman } from '@/core/format'
-import { joinChallenge, logChallengeProgress, rankings, settleChallenge } from '@/core/services/challenges'
+import { DAILY_CAP, VERIFICATION_LABEL, joinChallenge, logChallengeProgress, pendingLogs, rankings, reviewChallengeLog, settleChallenge, verificationOf } from '@/core/services/challenges'
 import { ROLE_META } from '@/core/config'
 import { freeChallengeLeft } from '@/core/services/perks'
-import { Avatar, Badge, Button, Card, Empty, Field, HeroHeader, Money, Input, NumberInput, PageHeader, Progress, RaisedSheet, SectionTitle, Sheet, Stat } from '@/ui/kit'
+import { Avatar, Badge, Button, Card, Empty, Field, HeroHeader, ImagePicker, Money, Input, NumberInput, PageHeader, Progress, RaisedSheet, SectionTitle, Sheet, Stat } from '@/ui/kit'
 import { useMe, useUserMap, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { MetricIcon } from '@/ui/icons'
@@ -28,6 +29,7 @@ export default function ChallengeDetail() {
   const [log, setLog] = useState(false)
   const [value, setValue] = useState(0)
   const [note, setNote] = useState('')
+  const [proof, setProof] = useState<string>()
   const [share, setShare] = useState(false)
   const [join, setJoin] = useState(false)
 
@@ -39,7 +41,11 @@ export default function ChallengeDetail() {
   const creatorRole = creator?.roles.find((r) => r !== 'user')
   const left = daysLeft(c.endAt)
   const canSettle = c.status === 'active' && (c.creatorId === me.id || me.roles.includes('admin'))
-  const related = posts.filter((p) => p.challengeId === c.id)
+  const related = posts.filter((p) => p.challengeId === c.id && !p.hidden)
+  const mode = verificationOf(c)
+  const isJudge = c.creatorId === me.id || me.roles.includes('admin')
+  const pending = pendingLogs(c)
+  const myPending = mine ? mine.logs.filter((l) => l.status === 'pending') : []
 
   return (
     <div className="animate-fade-up">
@@ -78,6 +84,10 @@ export default function ChallengeDetail() {
               {creatorRole && <Badge color="sky">{ROLE_META[creatorRole].label}</Badge>}
               <span>· {faDate(c.startAt)} تا {faDate(c.endAt)}</span>
             </div>
+            <div className="mt-3 flex items-center gap-2 rounded-2xl bg-aqua-400/10 px-3 py-2 text-xs text-ink-600 dark:text-ink-300">
+              <ShieldCheck size={15} className="shrink-0 text-aqua-600 dark:text-aqua-300" />
+              تأیید امتیاز: {VERIFICATION_LABEL[mode]} · سقف روزانه {num(DAILY_CAP[c.metric])} {c.unit}
+            </div>
           </Card>
 
           <div className="grid grid-cols-2 gap-3">
@@ -100,10 +110,17 @@ export default function ChallengeDetail() {
                 </div>
               </div>
               <Progress value={mine.score / c.goal} className="mt-3 h-2.5" tone="from-coral-400 to-ink-900" />
-              {c.status === 'active' && left > 0 && (
+              {myPending.length > 0 && <div className="mt-2 text-[11px] text-gold-700 dark:text-gold-300">{num(myPending.reduce((a, l) => a + l.value, 0))} {c.unit} در انتظار تأیید سازنده</div>}
+              {c.status === 'active' && left > 0 && mode !== 'auto' && (
                 <Button className="mt-4 w-full" onClick={() => setLog(true)}>
                   ثبت پیشرفت امروز
                 </Button>
+              )}
+              {c.status === 'active' && mode === 'auto' && (
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link to="/fityab"><Button variant="secondary" className="w-full">ورود به باشگاه</Button></Link>
+                  <Link to="/workouts"><Button variant="secondary" className="w-full">ثبت تمرین</Button></Link>
+                </div>
               )}
             </Card>
           ) : c.status === 'active' ? (
@@ -111,6 +128,30 @@ export default function ChallengeDetail() {
               شرکت در چالش {c.entryFee ? (freeEntries > 0 ? '(رایگان با اشتراک)' : `(${toman(c.entryFee)})`) : '(رایگان)'}
             </Button>
           ) : null}
+
+          {isJudge && pending.length > 0 && (
+            <Card>
+              <div className="mb-3 flex items-center justify-between font-semibold">
+                بررسی ثبت‌ها <Badge color="amber">{num(pending.length)} مورد</Badge>
+              </div>
+              <div className="space-y-3">
+                {pending.map(({ userId, log: l }) => (
+                  <div key={l.id} className="flex gap-3 rounded-2xl bg-ink-900/[.03] p-3 dark:bg-white/[.04]">
+                    {l.proof ? <a href={l.proof} target="_blank" rel="noreferrer"><img src={l.proof} alt="مدرک" className="h-20 w-20 rounded-xl object-cover" /></a> : <div className="h-20 w-20 rounded-xl bg-ink-900/10" />}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium">{users[userId]?.name}</div>
+                      <div className="text-xs text-ink-500">{num(l.value)} {c.unit} · {faDateTime(l.at)}</div>
+                      {l.note && <div className="mt-1 truncate text-[11px] text-ink-400">{l.note}</div>}
+                      <div className="mt-2 flex gap-2">
+                        <Button size="sm" icon={<Check size={14} />} onClick={() => run(() => reviewChallengeLog(c.id, userId, l.id!, true), 'تأیید شد')}>تأیید</Button>
+                        <Button size="sm" variant="ghost" className="text-coral-500" icon={<X size={14} />} onClick={() => run(() => reviewChallengeLog(c.id, userId, l.id!, false), 'رد شد')}>رد</Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {c.status === 'finished' && c.winners && (
             <Card>
@@ -198,14 +239,21 @@ export default function ChallengeDetail() {
           <Field label="یادداشت (اختیاری)">
             <Input value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
+          {mode === 'proof' && (
+            <div>
+              <div className="mb-2 text-xs text-ink-500">عکس مدرک (اسکرین‌شات قدم‌شمار، ساعت هوشمند، ترازو…) — الزامی</div>
+              <ImagePicker value={proof} onChange={setProof} label="افزودن عکس مدرک" />
+            </div>
+          )}
           <Button
             className="w-full"
             onClick={async () => {
-              const ok = await runOk(() => logChallengeProgress(c.id, value, note), 'ثبت شد')
+              const ok = await runOk(() => logChallengeProgress(c.id, value, note, proof), mode === 'proof' ? 'ثبت شد و پس از تأیید سازنده در امتیاز حساب می‌شود' : 'ثبت شد')
               if (ok) {
                 setLog(false)
                 setValue(0)
                 setNote('')
+                setProof(undefined)
               }
             }}
           >

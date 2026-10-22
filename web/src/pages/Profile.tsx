@@ -2,11 +2,15 @@ import { useState } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
 import { Check, Eye, HeartPulse as HeartIcon, Lock, LogOut, Pencil, RotateCcw, Share2, ShoppingBag } from 'lucide-react'
-import { resetDemo, useDB, useSession } from '@/core/db'
+import { useDB, useSession } from '@/core/db'
 import { LEVELS, ROLE_META } from '@/core/config'
 import { dec, num } from '@/core/format'
 import { ACTIVITY, GOALS, bodyOf, completeness } from '@/core/profile'
 import { activateRole, updateProfile } from '@/core/services/auth'
+import { toggleBlock } from '@/core/services/fitzone'
+import { uid } from '@/core/id'
+import { logout, resetLocalDemo, REMOTE } from '@/core/client/session'
+import type { Address } from '@/core/types'
 import { levelOf } from '@/core/services/engagement'
 import type { Role, User } from '@/core/types'
 import { Button, Card, Field, IconTile, ImagePicker, Input, NumberInput, Progress, SectionTitle, Sheet, Tabs, Textarea } from '@/ui/kit'
@@ -32,7 +36,6 @@ export default function Profile() {
   const me = useMe()!
   const nav = useNavigate()
   const [params, setParams] = useSearchParams()
-  const logout = useSession((s) => s.logout)
   const setRole = useSession((s) => s.setRole)
   const posts = useDB((s) => s.posts.filter((p) => p.authorId === me.id).length)
   const checkins = useDB((s) => s.checkins.filter((c) => c.userId === me.id).length)
@@ -264,6 +267,27 @@ export default function Profile() {
             </div>
           </Card>
 
+          <AddressesCard user={me} />
+          <RemindersCard user={me} />
+          {(me.blockedUsers?.length ?? 0) > 0 && <BlockedCard ids={me.blockedUsers!} />}
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              ['/tickets', 'بلیت‌های باشگاه'],
+              ['/medical', 'پرونده‌ی پزشکی'],
+              ['/invite', 'دعوت و هدیه'],
+              ['/org', 'اشتراک سازمانی'],
+              ['/league', 'لیگ هفتگی'],
+              ['/support', 'پشتیبانی'],
+              ['/orders', 'سفارش‌ها'],
+              ['/wallet', 'کیف پول'],
+            ].map(([to, l]) => (
+              <Link key={to} to={to} className="rounded-2xl bg-white px-4 py-3 text-center text-xs shadow-card transition hover:-translate-y-0.5 dark:bg-ink-850 dark:shadow-none">
+                {l}
+              </Link>
+            ))}
+          </div>
+
           <SectionTitle title="همکاری با کی‌فیت" />
           <p className="-mt-2 mb-3 text-xs text-ink-500">با فعال‌کردن هر نقش، پنل مدیریت اختصاصی آن را دریافت می‌کنید و خدماتتان در ماژول مربوطه به کاربران نمایش داده می‌شود.</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -306,19 +330,18 @@ export default function Profile() {
                 سفارش‌های من
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              icon={<RotateCcw size={16} />}
-              onClick={() => {
-                if (confirm('همه‌ی داده‌ها به حالت نمایشی اولیه برگردد؟')) {
-                  resetDemo()
-                  logout()
-                }
-              }}
-            >
-              بازنشانی داده‌های نمایشی
-            </Button>
-            <Button variant="ghost" className="text-coral-500" icon={<LogOut size={16} />} onClick={logout}>
+            {!REMOTE && (
+              <Button
+                variant="outline"
+                icon={<RotateCcw size={16} />}
+                onClick={() => {
+                  if (confirm('همه‌ی داده‌ها به حالت نمایشی اولیه برگردد؟')) resetLocalDemo()
+                }}
+              >
+                بازنشانی داده‌های نمایشی
+              </Button>
+            )}
+            <Button variant="ghost" className="text-coral-500" icon={<LogOut size={16} />} onClick={() => logout()}>
               خروج از حساب
             </Button>
           </div>
@@ -517,5 +540,83 @@ export function EditProfileSheet({ open, onClose, user }: { open: boolean; onClo
         </Button>
       </div>
     </Sheet>
+  )
+}
+
+function AddressesCard({ user }: { user: User }) {
+  const [f, setF] = useState({ title: '', text: '' })
+  const list = user.addresses ?? []
+  const save = (next: Address[]) => run(() => updateProfile({ addresses: next }))
+  return (
+    <Card className="p-5">
+      <div className="mb-2 text-sm font-medium">آدرس‌های من</div>
+      {list.map((a) => (
+        <div key={a.id} className="flex items-center gap-2 border-b hairline py-2 text-xs last:border-0">
+          <b className="w-16 shrink-0">{a.title}</b>
+          <span className="flex-1 truncate text-ink-500">{a.text}</span>
+          <button className="text-coral-500" onClick={() => save(list.filter((x) => x.id !== a.id))}>حذف</button>
+        </div>
+      ))}
+      <div className="mt-2 flex gap-2">
+        <Input className="w-24" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="خانه" />
+        <Input value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })} placeholder="آدرس کامل" />
+        <Button
+          variant="secondary"
+          onClick={() => {
+            if (f.text.trim().length < 5) return
+            save([...list, { id: uid('ad-'), title: f.title.trim() || 'آدرس', text: f.text.trim() }].slice(0, 6))
+            setF({ title: '', text: '' })
+          }}
+        >
+          افزودن
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+function RemindersCard({ user }: { user: User }) {
+  const r = user.reminders ?? { water: true, workout: true, period: user.gender === 'female', workoutTime: '18:00' }
+  const set = (patch: Partial<typeof r>) => run(() => updateProfile({ reminders: { ...r, ...patch } }))
+  const askPush = async () => {
+    if (!('Notification' in window)) return
+    const p = await Notification.requestPermission()
+    if (p === 'granted' && REMOTE) {
+      const { enablePush } = await import('@/core/client/push')
+      enablePush().catch(() => {})
+    }
+  }
+  return (
+    <Card className="p-5">
+      <div className="mb-1 flex items-center justify-between text-sm font-medium">
+        یادآورها
+        {'Notification' in window && Notification.permission !== 'granted' && (
+          <Button size="sm" variant="secondary" onClick={askPush}>
+            فعال‌سازی اعلان گوشی
+          </Button>
+        )}
+      </div>
+      <Toggle label="یادآور نوشیدن آب" desc="هر چند ساعت یک بار در طول روز" on={r.water} onChange={(v) => set({ water: v })} />
+      <Toggle label="یادآور تمرین" desc={`هر روز ساعت ${r.workoutTime}`} on={r.workout} onChange={(v) => set({ workout: v })} />
+      {r.workout && <Input type="time" dir="ltr" className="my-2 w-32" value={r.workoutTime} onChange={(e) => set({ workoutTime: e.target.value })} />}
+      {user.gender === 'female' && <Toggle label="یادآور پریود" desc="دو روز قبل از شروع پیش‌بینی‌شده" on={r.period} onChange={(v) => set({ period: v })} />}
+    </Card>
+  )
+}
+
+function BlockedCard({ ids }: { ids: string[] }) {
+  const users = useDB((s) => s.users)
+  return (
+    <Card className="p-5">
+      <div className="mb-2 text-sm font-medium">کاربران مسدودشده</div>
+      {ids.map((id) => (
+        <div key={id} className="flex items-center justify-between border-b hairline py-2 text-xs last:border-0">
+          <span>{users.find((u) => u.id === id)?.name ?? 'کاربر'}</span>
+          <button className="text-brand-600 dark:text-brand-300" onClick={() => run(() => toggleBlock(id), 'رفع مسدودی شد')}>
+            رفع مسدودی
+          </button>
+        </div>
+      ))}
+    </Card>
   )
 }

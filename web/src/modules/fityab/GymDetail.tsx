@@ -1,18 +1,19 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { Clock, MapPin, Navigation, Phone, Share2, Ticket } from 'lucide-react'
-import { QRCodeSVG } from 'qrcode.react'
+import { useMemo, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import clsx from 'clsx'
+import { CalendarClock, Clock, Heart, MapPin, Navigation, Phone, Share2, Star, Ticket, Users } from 'lucide-react'
 import { useDB } from '@/core/db'
-import { faDateTime, toman } from '@/core/format'
-import { checkIn, rateGym } from '@/core/services/fityab'
+import { faDate, faTime, num, toman } from '@/core/format'
+import { bookClass, bookedCount, checkIn, classPrice, occupancy, priceAt, reviewGym, ticketStatus, toggleFavoriteGym, upcomingClasses, weekdayLabel, weekdayOf } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
-import type { CheckIn } from '@/core/types'
-import { Badge, Button, Card, Cover, Empty, PageHeader, SectionTitle, Sheet, Stars } from '@/ui/kit'
+import type { GymClass } from '@/core/types'
+import { Avatar, Badge, Button, Card, Cover, Empty, PageHeader, SectionTitle, Sheet, Stars, Textarea } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
-import { run, toast } from '@/ui/toast'
+import { run, runOk, toast } from '@/ui/toast'
 import { GymMap } from './GymMap'
 import { GENDER_LABEL } from './GymCard'
 import { directionsUrl, neshanUrl, wazeUrl } from './nav'
+import { PaySheet, TicketSheet } from './TicketView'
 import { PostCard } from '@/modules/fitzone/PostCard'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
 
@@ -22,25 +23,52 @@ export default function GymDetail() {
   const gym = useDB((s) => s.gyms.find((g) => g.id === id))
   const checkins = useDB((s) => s.checkins)
   const posts = useDB((s) => s.posts)
+  const reviews = useDB((s) => s.reviews)
+  const users = useDB((s) => s.users)
   useDB((s) => s.subscriptions)
   const bal = useBalance(me.id)
   const sub = activeSubscription(me.id)
   const [confirm, setConfirm] = useState(false)
-  const [ticket, setTicket] = useState<CheckIn>()
+  const [book, setBook] = useState<{ cls: GymClass; at: Date }>()
+  const [ticketId, setTicketId] = useState<string>()
   const [media, setMedia] = useState(0)
   const [share, setShare] = useState(false)
+  const [dayIdx, setDayIdx] = useState(0)
+  const [rv, setRv] = useState({ open: false, stars: 5, text: '' })
+  const slots = useMemo(() => (gym ? upcomingClasses(gym, 7) : []), [gym])
 
   if (!gym) return <Empty icon="" title="باشگاه یافت نشد" />
-  const active = checkins.find((c) => c.gymId === gym.id && c.userId === me.id && c.status === 'active')
-  const canSub = !!sub && sub.credit >= gym.sessionPrice
-  const gymPosts = posts.filter((p) => p.gymId === gym.id)
+  const mine = checkins.filter((c) => c.gymId === gym.id && c.userId === me.id)
+  const active = mine.find((c) => !c.classId && ticketStatus(c) === 'active')
+  const myClasses = mine.filter((c) => c.classId && ticketStatus(c) === 'active')
+  const ticket = checkins.find((c) => c.id === ticketId)
+  const now = priceAt(gym)
+  const occ = occupancy(gym, { checkins })
+  const fav = me.favoriteGyms?.includes(gym.id)
+  const canReview = mine.some((c) => c.status === 'used' && !c.reviewed)
+  const gymReviews = reviews.filter((r) => r.kind === 'gym' && r.refId === gym.id)
+  const gymPosts = posts.filter((p) => p.gymId === gym.id && !p.hidden)
   const current = gym.media[media]
+  const days = [...Array(7)].map((_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() + i)
+    return d
+  })
+  const daySlots = slots.filter((x) => x.at.toDateString() === days[dayIdx].toDateString())
 
   const doCheckIn = async (prefer: 'subscription' | 'wallet') => {
-    const ci = await run(() => checkIn(gym.id, prefer))
+    const ci = await run(() => checkIn(gym.id, prefer), 'بلیت صادر شد')
     if (ci) {
       setConfirm(false)
-      setTicket(ci)
+      setTicketId(ci.id)
+    }
+  }
+  const doBook = async (prefer: 'subscription' | 'wallet') => {
+    if (!book) return
+    const ci = await run(() => bookClass(gym.id, book.cls.id, book.at.toISOString(), prefer), 'کلاس رزرو شد')
+    if (ci) {
+      setBook(undefined)
+      setTicketId(ci.id)
     }
   }
 
@@ -51,15 +79,19 @@ export default function GymDetail() {
         title={gym.name}
         subtitle={gym.tagline}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<Share2 size={15} />}
-            onClick={() => {
-              navigator.clipboard?.writeText(location.href)
-              toast.info('لینک باشگاه کپی شد')
-            }}
-          />
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" aria-label="علاقه‌مندی" icon={<Heart size={15} className={fav ? 'fill-coral-400 text-coral-400' : ''} />} onClick={() => run(() => toggleFavoriteGym(gym.id))} />
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="اشتراک‌گذاری"
+              icon={<Share2 size={15} />}
+              onClick={() => {
+                navigator.clipboard?.writeText(location.href)
+                toast.info('لینک باشگاه کپی شد')
+              }}
+            />
+          </div>
         }
       />
 
@@ -91,6 +123,9 @@ export default function GymDetail() {
             <div className="flex flex-wrap items-center gap-2">
               <Stars value={gym.rating} count={gym.reviews} />
               <Badge color="violet">{GENDER_LABEL[gym.gender]}</Badge>
+              <Badge color={occ.tone}>
+                <Users size={12} /> الان {occ.label}
+              </Badge>
             </div>
             <p className="mt-3 text-sm leading-7 text-ink-600 dark:text-ink-300">{gym.description}</p>
             <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
@@ -113,6 +148,81 @@ export default function GymDetail() {
             </div>
           </Card>
 
+          {(gym.classes?.length ?? 0) > 0 && (
+            <div>
+              <SectionTitle title="کلاس‌های گروهی" action={<span className="text-xs text-ink-500">رزرو تا ۷ روز آینده</span>} />
+              <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 no-scrollbar">
+                {days.map((d, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setDayIdx(i)}
+                    className={clsx('flex w-14 shrink-0 flex-col items-center rounded-2xl py-2 text-xs transition', i === dayIdx ? 'grad-lavender text-ink-950' : 'bg-white text-ink-500 shadow-card dark:bg-ink-850 dark:shadow-none')}
+                  >
+                    <span>{i === 0 ? 'امروز' : weekdayLabel(weekdayOf(d)).slice(0, 2)}</span>
+                    <span className="mt-0.5 font-display text-xl leading-none">{d.toLocaleDateString('fa-IR', { day: 'numeric' })}</span>
+                  </button>
+                ))}
+              </div>
+              <Card className="px-4 py-1">
+                {daySlots.length ? (
+                  daySlots.map(({ cls, at }) => {
+                    const key = at.toISOString()
+                    const taken = bookedCount(cls.id, key, { checkins })
+                    const left = cls.capacity - taken
+                    const booked = mine.some((c) => c.classId === cls.id && c.slotAt === key && (c.status === 'active' || c.status === 'used'))
+                    return (
+                      <div key={cls.id + key} className="flex items-center gap-3 border-b hairline py-3 last:border-0">
+                        <div className="w-14 text-center">
+                          <div className="font-display text-2xl leading-none">{faTime(key)}</div>
+                          <div className="text-[10px] text-ink-400">{num(cls.durationMin)} دقیقه</div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">{cls.title}</div>
+                          <div className="truncate text-[11px] text-ink-500">
+                            {cls.coachName} · {left > 0 ? `${num(left)} جای خالی` : 'تکمیل'} · {toman(classPrice(gym, cls))}
+                          </div>
+                        </div>
+                        <Button size="sm" variant={booked ? 'secondary' : 'primary'} disabled={!booked && left <= 0} onClick={() => (booked ? setTicketId(mine.find((c) => c.classId === cls.id && c.slotAt === key)?.id) : setBook({ cls, at }))}>
+                          {booked ? 'بلیت من' : left > 0 ? 'رزرو' : 'تکمیل'}
+                        </Button>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="py-6 text-center text-xs text-ink-400">برای این روز کلاسی ثبت نشده است</div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          <div>
+            <SectionTitle
+              title={`نظرات (${num(gymReviews.length)})`}
+              action={canReview ? <Button size="sm" variant="secondary" onClick={() => setRv({ open: true, stars: 5, text: '' })}>ثبت نظر</Button> : undefined}
+            />
+            {gymReviews.length ? (
+              <Card className="px-4 py-1">
+                {gymReviews.slice(0, 8).map((r) => {
+                  const u = users.find((x) => x.id === r.userId)
+                  return (
+                    <div key={r.id} className="border-b hairline py-3 last:border-0">
+                      <div className="flex items-center gap-2">
+                        <Avatar name={u?.name ?? 'کاربر'} src={u?.avatar} size={28} />
+                        <span className="text-xs font-medium">{u?.name ?? 'کاربر کی‌فیت'}</span>
+                        <Stars value={r.stars} />
+                        <span className="mr-auto text-[10px] text-ink-400">{faDate(r.createdAt)}</span>
+                      </div>
+                      {r.text && <p className="mt-2 text-xs leading-6 text-ink-600 dark:text-ink-300">{r.text}</p>}
+                      {r.reply && <p className="mt-2 rounded-xl bg-ink-900/[.04] p-2.5 text-[11px] leading-5 text-ink-500 dark:bg-white/[.05]">پاسخ باشگاه: {r.reply}</p>}
+                    </div>
+                  )
+                })}
+              </Card>
+            ) : (
+              <p className="text-xs text-ink-400">هنوز نظری ثبت نشده است. پس از ورود می‌توانید اولین نظر را بنویسید.</p>
+            )}
+          </div>
+
           {gymPosts.length > 0 && (
             <>
               <SectionTitle title="از فیت‌زون" />
@@ -124,65 +234,101 @@ export default function GymDetail() {
         {/* کارت ورود */}
         <div>
           <Card className="sticky top-20">
-            <div className="text-xs text-ink-500">هزینه‌ی هر سانس</div>
-            <div className="text-2xl font-semibold">{toman(gym.sessionPrice)}</div>
-            <div className="mt-3 rounded-2xl bg-ink-50 p-3 text-xs leading-6 text-ink-600 dark:bg-white/5 dark:text-ink-300">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-ink-500">سانس آزاد · همین الان</div>
+              {now.offPeak && <Badge color="emerald">ساعت خلوت</Badge>}
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="font-display text-[2.2rem] leading-none">{toman(now.price)}</span>
+              {now.offPeak && <span className="text-xs text-ink-400 line-through">{toman(now.base)}</span>}
+            </div>
+            {gym.offPeak && gym.offPeak.discountPct > 0 && (
+              <div className="mt-2 text-[11px] text-aqua-700 dark:text-aqua-300">
+                {num(gym.offPeak.discountPct)}٪ تخفیف از ساعت {num(gym.offPeak.from)} تا {num(gym.offPeak.to)}
+              </div>
+            )}
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-[11px] text-ink-500">
+                <span>شلوغی لحظه‌ای</span>
+                <span>
+                  {num(occ.count)} نفر از {num(occ.capacity)}
+                </span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink-900/[.07] dark:bg-white/10">
+                <div className={clsx('h-full rounded-full', occ.tone === 'emerald' ? 'bg-aqua-400' : occ.tone === 'amber' ? 'bg-gold-300' : 'bg-coral-400')} style={{ width: `${Math.max(4, Math.min(100, occ.ratio * 100))}%` }} />
+              </div>
+            </div>
+            <div className="mt-3 rounded-2xl bg-ink-900/[.04] p-3 text-xs leading-6 text-ink-600 dark:bg-white/5 dark:text-ink-300">
               بدون ثبت‌نام و پرداخت در باشگاه
-              <br />کد ورود را در پذیرش نشان دهید
-              <br />پرداخت از {sub ? 'اعتبار اشتراک' : 'کیف پول'}
+              <br />
+              بلیت تا پایان امروز معتبر است
+              <br />
+              QR را در پذیرش نشان دهید
             </div>
             {active ? (
-              <Button className="mt-4 w-full" size="lg" variant="dark" icon={<Ticket size={18} />} onClick={() => setTicket(active)}>
-                نمایش کد ورود فعال
+              <Button className="mt-4 w-full" size="lg" variant="dark" icon={<Ticket size={18} />} onClick={() => setTicketId(active.id)}>
+                نمایش بلیت فعال
               </Button>
             ) : (
               <Button className="mt-4 w-full" size="lg" icon={<Ticket size={18} />} onClick={() => setConfirm(true)} disabled={!gym.approved}>
-                ورود به باشگاه
+                خرید بلیت امروز
               </Button>
             )}
-            <div className="mt-4 flex items-center justify-center gap-1">
-              <span className="text-xs text-ink-400">امتیاز شما:</span>
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button key={s} onClick={() => run(() => rateGym(gym.id, s), 'ممنون از امتیازت')} className="text-lg grayscale hover:grayscale-0"></button>
-              ))}
-            </div>
+            {myClasses.length > 0 && (
+              <div className="mt-3 space-y-1.5">
+                {myClasses.map((c) => (
+                  <button key={c.id} onClick={() => setTicketId(c.id)} className="flex w-full items-center gap-2 rounded-xl bg-brand-400/10 px-3 py-2 text-right text-xs">
+                    <CalendarClock size={14} />
+                    <span className="flex-1 truncate">{gym.classes?.find((k) => k.id === c.classId)?.title}</span>
+                    <span className="text-ink-500">{c.slotAt && `${weekdayLabel(weekdayOf(new Date(c.slotAt)))} ${faTime(c.slotAt)}`}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       </div>
 
-      <Sheet open={confirm} onClose={() => setConfirm(false)} title="ورود به باشگاه">
-        <div className="space-y-3">
-          <p className="text-sm text-ink-500">مبلغ {toman(gym.sessionPrice)} برای ورود به «{gym.name}» کسر می‌شود.</p>
-          <Button className="w-full" size="lg" disabled={!canSub} onClick={() => doCheckIn('subscription')}>
-            پرداخت از اشتراک {sub ? `(اعتبار: ${toman(sub.credit)})` : '(اشتراک ندارید)'}
-          </Button>
-          <Button className="w-full" size="lg" variant="outline" disabled={bal < gym.sessionPrice} onClick={() => doCheckIn('wallet')}>
-            پرداخت از کیف پول (موجودی: {toman(bal)})
-          </Button>
-          {!canSub && bal < gym.sessionPrice && (
-            <Link to="/wallet">
-              <Button variant="secondary" className="mt-1 w-full">شارژ کیف پول / خرید اشتراک</Button>
-            </Link>
-          )}
-        </div>
-      </Sheet>
-
-      <Sheet open={!!ticket} onClose={() => setTicket(undefined)} title="بلیت ورود شما">
-        {ticket && (
-          <div className="text-center">
-            <div className="mx-auto w-fit rounded-2xl bg-white p-4 shadow-soft">
-              <QRCodeSVG value={`KEYFIT:${ticket.id}:${ticket.code}`} size={180} />
-            </div>
-            <div className="mt-4 text-xs text-ink-500">کد ورود</div>
-            <div className="text-4xl font-semibold tracking-[.3em]" dir="ltr">{ticket.code}</div>
-            <p className="mt-3 text-sm text-ink-500">این کد یا QR را در پذیرش «{gym.name}» نشان دهید.</p>
-            <p className="text-xs text-ink-400">{faDateTime(ticket.createdAt)}</p>
-            <a href={directionsUrl(gym.lat, gym.lng)} target="_blank" rel="noreferrer">
-              <Button className="mt-4 w-full" icon={<Navigation size={16} />}>مسیریابی تا باشگاه</Button>
-            </a>
-            <Button variant="outline" className="mt-2 w-full" onClick={() => { setTicket(undefined); setShare(true) }}>اشتراک در فیت‌زون</Button>
+      <PaySheet
+        open={confirm}
+        onClose={() => setConfirm(false)}
+        title="بلیت سانس آزاد"
+        desc={`ورود به «${gym.name}» تا پایان امروز${now.offPeak ? ' — با تخفیف ساعت خلوت' : ''}.`}
+        price={now.price}
+        credit={sub?.credit}
+        balance={bal}
+        onPay={doCheckIn}
+      />
+      <PaySheet
+        open={!!book}
+        onClose={() => setBook(undefined)}
+        title={book ? `رزرو کلاس ${book.cls.title}` : ''}
+        desc={book ? `${weekdayLabel(weekdayOf(book.at))} ${faDate(book.at.toISOString())} ساعت ${faTime(book.at.toISOString())} · مربی: ${book.cls.coachName}` : ''}
+        price={book ? classPrice(gym, book.cls) : 0}
+        credit={sub?.credit}
+        balance={bal}
+        onPay={doBook}
+      />
+      <TicketSheet ticket={ticket} gym={gym} onClose={() => setTicketId(undefined)} onShare={() => { setTicketId(undefined); setShare(true) }} />
+      <Sheet open={rv.open} onClose={() => setRv({ ...rv, open: false })} title="نظر شما درباره‌ی باشگاه">
+        <div className="space-y-4">
+          <div className="flex justify-center gap-2" dir="ltr">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <button key={s} onClick={() => setRv({ ...rv, stars: s })} aria-label={`${s} ستاره`}>
+                <Star size={30} strokeWidth={1.5} className={s <= rv.stars ? 'fill-gold-300 text-gold-300' : 'text-ink-300'} />
+              </button>
+            ))}
           </div>
-        )}
+          <Textarea rows={3} value={rv.text} onChange={(e) => setRv({ ...rv, text: e.target.value })} placeholder="تجهیزات، تمیزی، رفتار پرسنل، شلوغی…" />
+          <Button
+            className="w-full"
+            onClick={async () => {
+              if (await runOk(() => reviewGym(gym.id, rv.stars, rv.text), 'ممنون از نظرت!')) setRv({ open: false, stars: 5, text: '' })
+            }}
+          >
+            ثبت نظر
+          </Button>
+        </div>
       </Sheet>
       <CreatePostSheet open={share} onClose={() => setShare(false)} gymId={gym.id} initialText={`امروز در ${gym.name} تمرین کردم.`} />
     </div>

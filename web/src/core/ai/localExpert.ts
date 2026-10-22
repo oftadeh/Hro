@@ -5,7 +5,7 @@
  * دسترس باشد، httpProvider جایگزین آن می‌شود.
  */
 import type { User } from '../types'
-import type { AIProvider, AIReply, AISuggestion } from './types'
+import type { AIProvider, AIReply, AISuggestion, WeekStats } from './types'
 import { dec, faDigitsToEn, num } from '../format'
 
 const has = (t: string, ...words: string[]) => words.some((w) => t.includes(w))
@@ -183,8 +183,48 @@ ${m.complete ? '' : '\n برای دقت بیشتر قد و وزنت رو در پ
   }
 }
 
+const fa = (n: number) => n.toLocaleString('fa-IR')
+
+/** مرور هفتگی قاعده‌محور */
+export function weeklyText(profile: User, w: WeekStats): AIReply {
+  const good: string[] = []
+  const fix: string[] = []
+  if (w.sessions >= 3) good.push(`${fa(w.sessions)} جلسه تمرین در هفته — عالی!`)
+  else fix.push(`این هفته ${fa(w.sessions)} جلسه تمرین داشتی؛ هدف هفته‌ی بعد را ${fa(Math.max(3, w.sessions + 1))} جلسه بگذار. رزرو یک کلاس گروهی در فیت‌یاب کمک می‌کند تعهدت بیشتر شود.`)
+  if (w.avgSteps >= 7000) good.push(`میانگین ${fa(w.avgSteps)} قدم در روز`)
+  else fix.push(`میانگین قدم روزانه ${fa(w.avgSteps)} است؛ ۱۰ دقیقه پیاده‌روی بعد از هر وعده حدود ۳۰۰۰ قدم اضافه می‌کند.`)
+  if (w.avgSleep && w.avgSleep < 6.5) fix.push(`میانگین خواب ${fa(w.avgSleep)} ساعت است؛ کمبود خواب ریکاوری و اشتها را مختل می‌کند. هدف: ۷ تا ۸ ساعت.`)
+  else if (w.avgSleep >= 7) good.push(`خواب منظم (${fa(w.avgSleep)} ساعت)`)
+  if (w.avgWater < 6) fix.push(`آب مصرفی (${fa(w.avgWater)} لیوان) کمتر از نیاز است.`)
+  if (w.avgKcal === 0) fix.push('هنوز وعده‌ای در کالری‌شمار ثبت نکرده‌ای؛ ثبت ۳ روز کافی است تا الگوی تغذیه‌ات را ببینم.')
+  let weight = ''
+  if (w.weightChange !== undefined) {
+    if (profile.goal === 'lose') weight = w.weightChange < 0 ? `وزنت ${fa(Math.abs(w.weightChange))} کیلو کم شده؛ دقیقاً در مسیر درستی.` : 'وزنت کم نشده؛ ۲۰۰ تا ۳۰۰ کالری از شام کم کن و پروتئین را بالا نگه دار.'
+    else if (profile.goal === 'gain') weight = w.weightChange > 0 ? `${fa(w.weightChange)} کیلو افزایش وزن؛ ادامه بده.` : 'برای افزایش حجم، یک میان‌وعده‌ی ۴۰۰ کالری (مثلاً شیر و کره بادام‌زمینی) اضافه کن.'
+  }
+  const trend = w.scores[6] - w.scores[0]
+  return {
+    text: `**مرور هفتگی تو** — میانگین نمره‌ی سلامت: **${fa(w.avgScore)} از ۱۰۰** (${trend >= 0 ? 'رو به بهبود' : 'کمی افت'})
+
+${good.length ? `**نقاط قوت:**
+${good.map((g) => `• ${g}`).join('\n')}
+
+` : ''}${fix.length ? `**برای هفته‌ی بعد:**
+${fix.map((g) => `• ${g}`).join('\n')}
+
+` : ''}${weight}`.trim(),
+    suggestions: [
+      { label: 'ثبت تمرین', link: '/workouts' },
+      { label: 'کالری‌شمار', link: '/nutrition' },
+    ],
+  }
+}
+
 export const localExpert: AIProvider = {
   name: 'local',
+  async weekly(profile, week) {
+    return weeklyText(profile, week)
+  },
   async reply(history, profile, ctx) {
     const last = [...history].reverse().find((m) => m.role === 'user')?.text ?? ''
     await new Promise((r) => setTimeout(r, 500 + Math.random() * 600))
@@ -201,6 +241,7 @@ export const localExpert: AIProvider = {
         suggestions: [{ label: 'مشاوره با پزشک زنان', link: '/doctors' }],
       }
     }
+    if (/هفته|پیشرفت|عملکرد|گزارش/.test(last) && ctx?.week) return weeklyText(profile, ctx.week)
     const r = answer(last, profile)
     // افزودن نکته‌ی فاز به برنامه‌های تمرین و تغذیه
     if (c && /برنامه/.test(r.text)) {

@@ -46,7 +46,10 @@ export default function CoachDetail() {
         <div className="relative flex flex-col items-center pt-8 text-center">
           <Avatar name={user.name} src={user.avatar} size={96} className="border-4 border-white dark:border-ink-900" />
           <div className="mt-2 text-xl font-semibold">{user.name}</div>
-          <div className="text-sm text-ink-500">{coach.title}</div>
+          <div className="flex items-center gap-1 text-sm text-ink-500">
+            {coach.title}
+            {coach.verified && <Badge color="emerald">مدارک تأییدشده</Badge>}
+          </div>
           <div className="mt-2 flex items-center gap-3 text-xs">
             <Stars value={coach.rating} />
             <span>{num(coach.students)} شاگرد</span>
@@ -58,7 +61,7 @@ export default function CoachDetail() {
             {coach.specialties.map((s) => <Badge key={s} color="sky">{s}</Badge>)}
           </div>
           <div className="mt-4 grid w-full max-w-md grid-cols-3 gap-2">
-            <Button variant="secondary" icon={<MessageCircle size={16} />} onClick={() => run(() => nav(`/messages/${openThread(user.id, 'coach')}`))}>
+            <Button variant="secondary" icon={<MessageCircle size={16} />} onClick={() => run(async () => nav(`/messages/${await openThread(user.id, 'coach')}`))}>
               چت
             </Button>
             <Button variant="secondary" icon={<PhoneCall size={16} />} onClick={() => setCall(true)}>

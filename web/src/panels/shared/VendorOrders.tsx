@@ -4,7 +4,8 @@ import { setOrderStatus } from '@/core/services/commerce'
 import type { Order } from '@/core/types'
 import { Badge, Button, Card, Empty, PageHeader } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
-import { ORDER_STATUS } from '@/pages/Orders'
+import { ORDER_STATUS, OrderSteps } from '@/pages/Orders'
+import { run } from '@/ui/toast'
 
 const NEXT: Partial<Record<Order['status'], { to: Order['status']; label: string }>> = {
   paid: { to: 'preparing', label: 'شروع آماده‌سازی' },
@@ -43,12 +44,24 @@ export default function VendorOrders({ kind }: { kind: Order['kind'] }) {
                   </div>
                 ))}
               </div>
+              <OrderSteps o={o} />
               <div className="mt-2 text-xs text-ink-500">{o.address}</div>
+              {o.trackingCode && <div className="mt-1 text-[11px] text-ink-400">کد رهگیری: {o.trackingCode}</div>}
               <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-3 dark:border-white/5">
-                <b>{toman(o.total)}</b>
+                <b>{toman(o.total + (o.shipping ?? 0))}</b>
                 <div className="flex gap-2">
-                  {o.status === 'paid' && <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => setOrderStatus(o.id, 'cancelled')}>لغو</Button>}
-                  {next && <Button size="sm" onClick={() => setOrderStatus(o.id, next.to)}>{next.label}</Button>}
+                  {o.status !== 'delivered' && o.status !== 'cancelled' && <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => confirm('سفارش لغو و وجه به خریدار برگردد؟') && run(() => setOrderStatus(o.id, 'cancelled'), 'سفارش لغو شد')}>لغو</Button>}
+                  {next && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const code = next.to === 'shipped' && kind === 'shop' ? prompt('کد رهگیری مرسوله (اختیاری)') ?? undefined : undefined
+                        run(() => setOrderStatus(o.id, next.to, code || undefined))
+                      }}
+                    >
+                      {next.label}
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>

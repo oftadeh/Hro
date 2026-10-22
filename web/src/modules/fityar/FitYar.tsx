@@ -208,6 +208,12 @@ function MyPlans() {
             </div>
             <Badge color={o.status === 'delivered' ? 'emerald' : 'amber'}>{o.status === 'delivered' ? 'تحویل شده' : 'در حال آماده‌سازی'}</Badge>
           </div>
+          {o.program && (
+            <Link to={`/program/${o.id}`} className="mt-3 flex items-center justify-between rounded-2xl grad-lavender px-4 py-3 text-sm text-ink-950">
+              برنامه‌ی هفتگی ({(o.done?.length ?? 0).toLocaleString('fa-IR')} از {o.program.weeks.reduce((a, w) => a + w.days.length, 0).toLocaleString('fa-IR')} جلسه)
+              <span>مشاهده</span>
+            </Link>
+          )}
           {o.content && <div className="mt-3 whitespace-pre-line rounded-2xl bg-ink-50 p-4 text-sm leading-7 dark:bg-white/5">{o.content}</div>}
         </Card>
       ))}

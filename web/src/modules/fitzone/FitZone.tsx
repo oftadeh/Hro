@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Search } from 'lucide-react'
+import { searchPosts, visiblePosts } from '@/core/services/fitzone'
 import { Link } from 'react-router-dom'
 import { PenSquare } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { num } from '@/core/format'
 import { levelOf } from '@/core/services/engagement'
-import { Avatar, Button, Card, Empty, PageHeader, Tabs } from '@/ui/kit'
+import { Avatar, Button, Card, Empty, PageHeader, Tabs, Input } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { StoriesBar } from './Stories'
 import { PostCard } from './PostCard'
@@ -16,13 +19,21 @@ export default function FitZone() {
   const users = useDB((s) => s.users)
   const [tab, setTab] = useState<'all' | 'following' | 'challenges' | 'saved'>('all')
   const [create, setCreate] = useState(false)
+  const [params, setParams] = useSearchParams()
+  const q = params.get('q') ?? ''
 
   const feed = useMemo(() => {
-    if (tab === 'following') return posts.filter((p) => me.following.includes(p.authorId) || p.authorId === me.id)
-    if (tab === 'challenges') return posts.filter((p) => p.challengeId)
-    if (tab === 'saved') return posts.filter((p) => p.saves.includes(me.id))
-    return posts
-  }, [posts, tab, me])
+    const base = searchPosts(visiblePosts(posts, me.blockedUsers), q)
+    if (tab === 'following') return base.filter((p) => me.following.includes(p.authorId) || p.authorId === me.id)
+    if (tab === 'challenges') return base.filter((p) => p.challengeId)
+    if (tab === 'saved') return base.filter((p) => p.saves.includes(me.id))
+    return base
+  }, [posts, tab, me, q])
+  const trending = useMemo(() => {
+    const c: Record<string, number> = {}
+    posts.forEach((p) => p.tags?.forEach((t) => (c[t] = (c[t] ?? 0) + 1)))
+    return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 8)
+  }, [posts])
 
   const leaders = useMemo(() => [...users].filter((u) => !u.roles.includes('admin')).sort((a, b) => b.xp - a.xp).slice(0, 5), [users])
 
@@ -31,6 +42,19 @@ export default function FitZone() {
       <div className="min-w-0">
         <PageHeader title="فیت‌زون" subtitle="شبکه‌ی اجتماعی ورزشکاران کی‌فیت" actions={<Button size="sm" icon={<PenSquare size={16} />} onClick={() => setCreate(true)}>پست جدید</Button>} />
         <StoriesBar />
+        <div className="relative mt-3">
+          <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-400" />
+          <Input value={q} onChange={(e) => setParams(e.target.value ? { q: e.target.value } : {}, { replace: true })} placeholder="جستجو یا #هشتگ" className="pr-10" />
+        </div>
+        {trending.length > 0 && !q && (
+          <div className="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 no-scrollbar">
+            {trending.map(([t]) => (
+              <button key={t} onClick={() => setParams({ q: '#' + t })} className="shrink-0 rounded-full bg-ink-900/[.05] px-3 py-1.5 text-xs text-brand-700 dark:bg-white/[.06] dark:text-brand-300">
+                #{t}
+              </button>
+            ))}
+          </div>
+        )}
         <Tabs
           className="my-4"
           value={tab}

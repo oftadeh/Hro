@@ -1,44 +1,19 @@
-import { AppError, mutate, db, useSession, currentUserId } from '../db'
+import { AppError, mutate, db, currentUserId, svc } from '../store'
 import { uid, now } from '../id'
 import type { Role, User } from '../types'
 import { notify } from './ledger'
-import { touchDaily } from './engagement'
 import { faDigitsToEn } from '../format'
 import { ROLE_META } from '../config'
-import { setupCycle } from './cycle'
-
-export const DEMO_OTP = '1234'
+import { setupCycleFor } from './cycle'
 
 export function normalizePhone(raw: string) {
   const p = faDigitsToEn(raw).replace(/\D/g, '').replace(/^98/, '0')
   return p.startsWith('9') ? `0${p}` : p
 }
 
-function checkOtp(rawPhone: string, otp: string) {
-  const phone = normalizePhone(rawPhone)
-  if (!/^09\d{9}$/.test(phone)) throw new AppError('شماره موبایل معتبر نیست')
-  if (faDigitsToEn(otp) !== DEMO_OTP) throw new AppError('کد تایید اشتباه است')
-  return phone
-}
+export const isValidPhone = (phone: string) => /^09\d{9}$/.test(phone)
 
-/**
- * تأیید کد یکبار مصرف (فعلاً کد ثابت ۱۲۳۴).
- * اگر کاربر از قبل وجود داشته باشد وارد می‌شود؛ وگرنه باید مرحله‌ی ثبت‌نام (انتخاب جنسیت و...) را کامل کند.
- */
-export function verifyOtp(rawPhone: string, otp: string): { exists: boolean; phone: string } {
-  const phone = checkOtp(rawPhone, otp)
-  const user = db().users.find((u) => u.phone === phone)
-  if (user?.blocked) throw new AppError('حساب کاربری شما مسدود شده است')
-  if (user) {
-    useSession.getState().login(user.id, 'user')
-    touchDaily(user.id)
-  }
-  return { exists: !!user, phone }
-}
-
-export interface RegisterInput {
-  phone: string
-  otp: string
+export interface ProfileInput {
   name: string
   gender: 'male' | 'female' | ''
   birthYear?: number
@@ -47,11 +22,13 @@ export interface RegisterInput {
   goal?: User['goal']
   activityLevel?: User['activityLevel']
   cycle?: { lastPeriodStart: string; cycleLength: number; periodLength: number }
+  /** کد معرفی دوست (اختیاری) */
+  referral?: string
 }
 
-/** ثبت‌نام کاربر جدید؛ انتخاب جنسیت الزامی است چون چیدمان و پیشنهادها بر اساس آن شخصی‌سازی می‌شود */
-export function registerUser(input: RegisterInput): User {
-  const phone = checkOtp(input.phone, input.otp)
+/** ساخت کاربر جدید پس از تأیید شماره؛ هم در حالت نمایشی و هم روی سرور استفاده می‌شود */
+export function createUser(phone: string, input: ProfileInput): User {
+  if (!isValidPhone(phone)) throw new AppError('شماره موبایل معتبر نیست')
   if (db().users.some((u) => u.phone === phone)) throw new AppError('این شماره قبلاً ثبت‌نام کرده است')
   const name = input.name.trim()
   if (name.length < 2) throw new AppError('نام و نام خانوادگی را وارد کنید')
@@ -59,8 +36,14 @@ export function registerUser(input: RegisterInput): User {
   if (input.birthYear && (input.birthYear < 1300 || input.birthYear > 1400)) throw new AppError('سال تولد معتبر نیست')
   if (input.heightCm && (input.heightCm < 100 || input.heightCm > 230)) throw new AppError('قد معتبر نیست')
   if (input.weightKg && (input.weightKg < 30 || input.weightKg > 250)) throw new AppError('وزن معتبر نیست')
+  const ref = input.referral?.trim().toUpperCase()
+  const referrer = ref ? db().users.find((u) => u.referralCode === ref) : undefined
+  if (ref && !referrer) throw new AppError('کد معرفی معتبر نیست')
+  const id = uid('u-')
   const created: User = {
-    id: uid('u-'),
+    id,
+    referralCode: id.slice(-5).toUpperCase() + Math.floor(10 + Math.random() * 90),
+    referredBy: referrer?.id,
     name,
     phone,
     city: 'تهران',
@@ -82,11 +65,9 @@ export function registerUser(input: RegisterInput): User {
     d.wallets[created.id] = 0
     notify(d, created.id, 'به کی‌فیت خوش اومدی!', 'با خرید اشتراک بدون ثبت‌نام وارد باشگاه‌ها شو.', '', '/wallet')
   })
-  useSession.getState().login(created.id, 'user')
-  touchDaily(created.id)
   if (input.gender === 'female' && input.cycle?.lastPeriodStart) {
     try {
-      setupCycle(input.cycle)
+      setupCycleFor(created.id, input.cycle)
     } catch {
       /* ردیاب اختیاری است؛ بعداً از پروفایل قابل تنظیم است */
     }
@@ -94,13 +75,16 @@ export function registerUser(input: RegisterInput): User {
   return created
 }
 
-export function loginAs(userId: string, role: Role = 'user') {
-  useSession.getState().login(userId, role)
-  touchDaily(userId)
+/** کنترل پیش از ورود */
+export function assertCanLogin(userId: string) {
+  const u = db().users.find((x) => x.id === userId)
+  if (!u) throw new AppError('کاربر یافت نشد')
+  if (u.blocked) throw new AppError('حساب کاربری شما مسدود شده است')
+  return u
 }
 
 /** فعال‌سازی نقش جدید (مربی، باشگاه‌دار و...) برای کاربر فعلی */
-export function activateRole(role: Exclude<Role, 'admin' | 'user'>) {
+export const activateRole = svc('auth.activateRole', (role: Exclude<Role, 'admin' | 'user'>) => {
   const me = currentUserId()
   mutate((d) => {
     const u = d.users.find((x) => x.id === me)!
@@ -111,18 +95,20 @@ export function activateRole(role: Exclude<Role, 'admin' | 'user'>) {
       d.doctors.push({ userId: me, specialty: 'پزشک عمومی', medicalCode: '', bio: '', visitPrice: 200_000, rating: 5, visits: 0, slots: [], online: true })
     notify(d, me, `پنل ${ROLE_META[role].label} فعال شد`, 'از منوی پروفایل وارد پنل شوید و اطلاعات خود را تکمیل کنید.', ROLE_META[role].icon, ROLE_META[role].panel)
   })
-  useSession.getState().setRole(role)
-}
+})
 
-export function updateProfile(input: Partial<User>) {
+const PROFILE_FIELDS = ['name', 'bio', 'avatar', 'city', 'gender', 'heightCm', 'weightKg', 'birthYear', 'goal', 'activityLevel', 'health', 'privacy', 'addresses', 'reminders', 'healthShares'] as const
+
+export const updateProfile = svc('auth.updateProfile', (input: Partial<User>) => {
   const me = currentUserId()
   if (input.name !== undefined && input.name.trim().length < 2) throw new AppError('نام را وارد کنید')
   if (input.heightCm && (input.heightCm < 100 || input.heightCm > 230)) throw new AppError('قد معتبر نیست')
   if (input.weightKg && (input.weightKg < 30 || input.weightKg > 250)) throw new AppError('وزن معتبر نیست')
   if (input.birthYear && (input.birthYear < 1300 || input.birthYear > 1400)) throw new AppError('سال تولد معتبر نیست')
+  if (input.bio && input.bio.length > 300) throw new AppError('متن معرفی حداکثر ۳۰۰ کاراکتر است')
   mutate((d) => {
-    const u = d.users.find((x) => x.id === me)!
-    const { id: _id, roles: _r, xp: _x, phone: _p, ...safe } = input
-    Object.assign(u, safe)
+    const u = d.users.find((x) => x.id === me)! as unknown as Record<string, unknown>
+    // فقط فیلدهای مجاز قابل تغییرند (نقش، امتیاز، شماره و... از این مسیر تغییر نمی‌کنند)
+    for (const k of PROFILE_FIELDS) if (k in input) u[k] = (input as Record<string, unknown>)[k]
   })
-}
+})

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { CalendarCheck, CalendarClock, MessageCircle, Wallet } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { faDateTime, num, toman } from '@/core/format'
-import { completeAppointment } from '@/core/services/doctor'
+import { cancelAppointment, completeAppointment } from '@/core/services/doctor'
+import { run } from '@/ui/toast'
 import { findThread } from '@/core/services/fityar'
 import type { Appointment } from '@/core/types'
 import { Avatar, Badge, Button, Card, Empty, PageHeader, Sheet, Stat, Tabs, Textarea } from '@/ui/kit'
@@ -48,10 +49,13 @@ export default function DoctorPanel() {
                 <Badge color={a.status === 'done' ? 'emerald' : 'sky'}>{a.status === 'done' ? 'انجام شد' : 'رزرو'}</Badge>
               </div>
               <div className="mt-3 rounded-2xl bg-ink-50 p-3 text-xs leading-6 dark:bg-white/5">{a.reason}</div>
+              {users[a.userId]?.healthShares?.includes(me.id) && <Link to={`/client/${a.userId}`} className="mt-2 block text-xs text-aqua-700 dark:text-aqua-300">پرونده‌ی سلامت بیمار (اشتراک‌گذاری‌شده)</Link>}
               {a.prescription && <div className="mt-2 whitespace-pre-line rounded-2xl bg-aqua-50 p-3 text-xs leading-6 dark:bg-aqua-500/10">{a.prescription}</div>}
               <div className="mt-3 flex gap-2">
                 {t && <Link to={`/messages/${t.id}`} className="flex-1"><Button variant="secondary" size="sm" className="w-full" icon={<MessageCircle size={14} />}>گفتگو</Button></Link>}
+                {a.status === 'booked' && a.callLink && <a href={a.callLink} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">ویزیت تصویری</Button></a>}
                 {a.status === 'booked' && <Button size="sm" className="flex-1" onClick={() => { setOpen(a); setRx('') }}>ثبت نتیجه‌ی ویزیت</Button>}
+                {a.status === 'booked' && <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => confirm('نوبت لغو و وجه به بیمار برگردد؟') && run(() => cancelAppointment(a.id), 'نوبت لغو شد')}>لغو</Button>}
               </div>
             </Card>
           )

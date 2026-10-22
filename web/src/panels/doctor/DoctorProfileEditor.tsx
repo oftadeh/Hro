@@ -20,6 +20,9 @@ export default function DoctorProfileEditor() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="space-y-4">
           <Field label="تخصص"><Input value={f.specialty ?? ''} onChange={(e) => setF({ ...f, specialty: e.target.value })} /></Field>
+          <div className={`rounded-2xl p-3 text-xs ${doc?.verified ? 'bg-aqua-400/10' : 'bg-gold-300/15'}`}>
+            {doc?.verified ? 'پروانه‌ی شما تأیید شده و به بیماران نمایش داده می‌شوید.' : 'پروانه‌ی شما در انتظار استعلام از سامانه‌ی نظام پزشکی است؛ پس از تأیید مدیر، در فهرست پزشکان نمایش داده می‌شوید.'}
+          </div>
           <Field label="کد نظام پزشکی"><Input value={f.medicalCode ?? ''} onChange={(e) => setF({ ...f, medicalCode: e.target.value })} /></Field>
           <Field label="هزینه‌ی ویزیت (تومان)"><NumberInput value={f.visitPrice ?? 0} onChange={(v) => setF({ ...f, visitPrice: v })} /></Field>
           <Field label="درباره"><Textarea value={f.bio ?? ''} onChange={(e) => setF({ ...f, bio: e.target.value })} /></Field>

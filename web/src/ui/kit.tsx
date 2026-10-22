@@ -3,6 +3,7 @@
  * پس‌زمینه‌ی زغالی-بنفش، گرادیان‌های پاستلی (یاسی، صورتی، نعنایی، هلویی)،
  * گوی‌های رنگی محو، تیترهای سریف (مرکزی) و کارت‌های لایه‌ای با گوشه‌های گرد.
  */
+import { uploadImage } from '@/core/client/remote'
 import clsx from 'clsx'
 import { ArrowLeft, ArrowRight, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
@@ -447,7 +448,7 @@ export function ImagePicker({ value, onChange, label = 'افزودن تصویر'
     if (!f) return
     setBusy(true)
     try {
-      onChange(await resizeImage(f, 900))
+      onChange(await uploadImage(await resizeImage(f, 900)).catch(() => undefined))
     } finally {
       setBusy(false)
     }

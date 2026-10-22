@@ -5,6 +5,7 @@ import { ArrowRight, LogOut, type LucideIcon } from 'lucide-react'
 import { ROLE_META } from '@/core/config'
 import type { Role } from '@/core/types'
 import { useSession } from '@/core/db'
+import { logout } from '@/core/client/session'
 import { Avatar, Orbs } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { RoleIcon } from '@/ui/icons'
@@ -22,7 +23,6 @@ export interface PanelLink {
 /** قالب مشترک پنل نقش‌ها (باشگاه‌دار، مربی، فروشنده، پزشک، رستوران، مدیر) */
 export function PanelShell({ role, links }: { role: Role; links: PanelLink[] }) {
   const me = useMe()!
-  const logout = useSession((s) => s.logout)
   const meta = ROLE_META[role]
   return (
     <div className="min-h-dvh lg:flex">
@@ -59,7 +59,7 @@ export function PanelShell({ role, links }: { role: Role; links: PanelLink[] }) 
         </nav>
         <div className="space-y-3 border-t hairline pt-4">
           <RoleSwitcher />
-          <button onClick={logout} className="flex items-center gap-2 px-3 text-xs text-ink-400 transition hover:text-coral-600">
+          <button onClick={() => logout()} className="flex items-center gap-2 px-3 text-xs text-ink-400 transition hover:text-coral-600">
             <LogOut size={14} strokeWidth={1.5} /> خروج از حساب
           </button>
         </div>

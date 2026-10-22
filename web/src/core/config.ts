@@ -9,6 +9,7 @@ export const ROLE_META: Record<Role, { label: string; panel: string; icon: strin
   seller: { label: 'فروشنده', panel: '/panel/seller', icon: '', color: 'from-ink-700 to-ink-900', desc: 'فروش مکمل و لوازم ورزشی در فروشگاه' },
   doctor: { label: 'پزشک', panel: '/panel/doctor', icon: '', color: 'from-ink-700 to-ink-900', desc: 'ویزیت آنلاین و حضوری ورزشکاران' },
   restaurant: { label: 'رستوران', panel: '/panel/restaurant', icon: '', color: 'from-ink-700 to-ink-900', desc: 'فروش غذای رژیمی در بوفه' },
+  company: { label: 'سازمان', panel: '/panel/company', icon: '', color: 'from-ink-700 to-ink-900', desc: 'اشتراک سلامت گروهی برای کارکنان' },
   admin: { label: 'مدیر سامانه', panel: '/panel/admin', icon: '', color: 'from-ink-800 to-ink-900', desc: 'نظارت بر کل سامانه' },
 }
 

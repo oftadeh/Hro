@@ -48,7 +48,7 @@ export default function UserProfile() {
               <button onClick={() => toggleFollow(user.id)} className={`flex h-10 items-center rounded-full px-5 text-sm font-medium transition ${following ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-white text-ink-950 hover:brightness-95'}`}>
                 {following ? 'دنبال می‌کنی' : 'دنبال کردن'}
               </button>
-              <button onClick={() => run(() => nav(`/messages/${openThread(user.id, isCoach ? 'coach' : isDoctor ? 'doctor' : 'direct')}`))} className="flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm transition hover:bg-white/15">
+              <button onClick={() => run(async () => nav(`/messages/${await openThread(user.id, isCoach ? 'coach' : isDoctor ? 'doctor' : 'direct')}`))} className="flex h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm transition hover:bg-white/15">
                 <MessageCircle size={15} /> پیام
               </button>
               {isCoach && (

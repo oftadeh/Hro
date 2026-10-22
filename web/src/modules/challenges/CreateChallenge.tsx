@@ -33,7 +33,7 @@ export default function CreateChallenge() {
   const bal = useBalance(me.id)
   const [f, setF] = useState<NewChallenge & { preset: string }>({
     title: '', description: '', metric: 'steps', unit: 'قدم', goal: 100_000, entryFee: 50_000, sponsorPrize: 0, extraReward: '',
-    prizes: PRIZE_PRESETS.top3, xpReward: 200, gradient: GRADIENTS[0], emoji: '', maxParticipants: 200, days: 30, preset: 'top3',
+    prizes: PRIZE_PRESETS.top3, xpReward: 200, gradient: GRADIENTS[0], emoji: '', maxParticipants: 200, days: 30, preset: 'top3', verification: 'proof',
   })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((s) => ({ ...s, [k]: v }))
   const total = fee + f.sponsorPrize
@@ -87,6 +87,18 @@ export default function CreateChallenge() {
               <option value="top3">۳ نفر اول (۵۰٪ / ۳۰٪ / ۲۰٪)</option>
             </Select>
           </Field>
+          <Field label="روش تأیید امتیاز" hint={f.entryFee > 0 || f.sponsorPrize > 0 ? 'چالش‌های جایزه‌دار باید روش تأیید داشته باشند' : undefined}>
+            <Select value={f.verification ?? 'proof'} onChange={(e) => set('verification', e.target.value as NewChallenge['verification'])}>
+              <option value="proof">عکس مدرک + تأیید من</option>
+              {(f.metric === 'workouts' || f.metric === 'minutes') && <option value="auto">خودکار (ورود تأییدشده به باشگاه و تمرین ثبت‌شده)</option>}
+              {!(f.entryFee > 0 || f.sponsorPrize > 0) && <option value="none">ثبت آزاد (بدون جایزه‌ی نقدی)</option>}
+            </Select>
+          </Field>
+          {me.orgId && me.roles.includes('company') && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!f.orgId} onChange={(e) => set('orgId', e.target.checked ? me.orgId : undefined)} /> چالش داخلی سازمان (فقط کارکنان)
+            </label>
+          )}
           <Field label="جایزه‌ی غیرنقدی (اختیاری)">
             <Input value={f.extraReward} onChange={(e) => set('extraReward', e.target.value)} placeholder="مثلاً: یک ماه برنامه‌ی رایگان" />
           </Field>

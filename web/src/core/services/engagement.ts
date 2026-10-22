@@ -1,8 +1,34 @@
-import { mutate, db, currentUserId, type DBState } from '../db'
+import { AppError, mutate, db, currentUserId, svc } from '../store'
+import type { DBState } from '../state'
 import { DAILY_MISSIONS, LEVELS, STREAK_BONUS_XP } from '../config'
 import { dayKey } from '../format'
 import type { DailyLog, ID } from '../types'
 import { notify } from './ledger'
+
+/** کلید هفته (شنبه‌ی هفته‌ی جاری) */
+export function weekKey(d = new Date()) {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  x.setDate(x.getDate() - ((x.getDay() + 1) % 7))
+  return dayKey(x)
+}
+
+export const LEAGUES = [
+  { id: 'bronze', name: 'برنز', min: 0, color: '#d39a72' },
+  { id: 'silver', name: 'نقره', min: 300, color: '#c0c4d6' },
+  { id: 'gold', name: 'طلا', min: 800, color: '#fcd679' },
+  { id: 'diamond', name: 'الماس', min: 1500, color: '#5eead4' },
+] as const
+
+/** لیگ هفتگی بر اساس امتیاز همین هفته */
+export function leagueOf(weekXp: number) {
+  let cur: (typeof LEAGUES)[number] = LEAGUES[0]
+  for (const l of LEAGUES) if (weekXp >= l.min) cur = l
+  const next = LEAGUES.find((l) => l.min > weekXp)
+  return { ...cur, next, progress: next ? (weekXp - cur.min) / (next.min - cur.min) : 1 }
+}
+
+export const weekXpOf = (u: { weekXp?: { week: string; xp: number } }) => (u.weekXp?.week === weekKey() ? u.weekXp.xp : 0)
 
 export function levelOf(xp: number) {
   let cur = LEVELS[0]
@@ -17,6 +43,10 @@ export function addXP(d: DBState, userId: ID, amount: number) {
   if (!u) return
   const before = levelOf(u.xp).level
   u.xp += amount
+  // امتیاز هفتگی برای لیگ
+  const wk = weekKey()
+  if (u.weekXp?.week !== wk) u.weekXp = { week: wk, xp: 0 }
+  u.weekXp.xp += amount
   const after = levelOf(u.xp)
   if (after.level > before) notify(d, userId, `سطح جدید: ${after.title}`, `تبریک! به سطح ${after.level} رسیدی.`, '', '/profile')
 }
@@ -41,7 +71,7 @@ export function getTodayLog(userId: ID): DailyLog {
 }
 
 /** هر بار که کاربر اپ را باز می‌کند؛ مدیریت «استریک» روزانه */
-export function touchDaily(userId: ID) {
+export function touchDailyFor(userId: ID) {
   const today = dayKey()
   const u = db().users.find((x) => x.id === userId)
   if (!u || u.lastActiveDay === today) return
@@ -66,18 +96,21 @@ export function completeMission(d: DBState, userId: ID, missionId: string) {
   addXP(d, userId, m.xp)
 }
 
-export function logActivity(kind: 'water' | 'steps' | 'workoutMinutes' | 'calories' | 'sleepHours', value: number) {
+const ACTIVITY_CAP = { water: 30, steps: 80_000, workoutMinutes: 600, calories: 10_000, sleepHours: 16 }
+
+export const logActivity = svc('engagement.log', (kind: 'water' | 'steps' | 'workoutMinutes' | 'calories' | 'sleepHours', value: number) => {
   const userId = currentUserId()
+  if (!(kind in ACTIVITY_CAP) || !isFinite(value)) throw new AppError('مقدار معتبر نیست')
   mutate((d) => {
     const log = ensureLog(d, userId)
-    log[kind] = Math.max(0, log[kind] + value)
+    log[kind] = Math.min(ACTIVITY_CAP[kind], Math.max(0, log[kind] + value))
     if (log.water >= 8) completeMission(d, userId, 'water')
     if (log.steps >= 6000) completeMission(d, userId, 'steps')
     if (log.workoutMinutes >= 20) completeMission(d, userId, 'workout')
   })
-}
+})
 
-export function claimDailyReward() {
+export const claimDailyReward = svc('engagement.reward', () => {
   const userId = currentUserId()
   mutate((d) => {
     const log = ensureLog(d, userId)
@@ -86,13 +119,15 @@ export function claimDailyReward() {
     addXP(d, userId, 100)
     notify(d, userId, 'جعبه‌ی جایزه‌ی روزانه باز شد', '۱۰۰ امتیاز تجربه گرفتی. فردا هم بیا!', '')
   })
-}
+})
 
-export function markNotificationsRead() {
+export const markNotificationsRead = svc('engagement.readAll', () => {
   const userId = currentUserId()
   mutate((d) => {
     d.notifications.forEach((n) => {
       if (n.userId === userId) n.read = true
     })
   })
-}
+})
+
+export const touchDaily = svc('engagement.touch', () => touchDailyFor(currentUserId()))

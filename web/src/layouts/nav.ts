@@ -1,4 +1,4 @@
-import { Bell, Bot, Dumbbell, HeartPulse, Home, MapPin, ShoppingBag, Trophy, UtensilsCrossed, Wallet, Users, MessageCircle, type LucideIcon } from 'lucide-react'
+import { Activity, Apple, Bell, Bot, Dumbbell, HeartPulse, Home, LifeBuoy, MapPin, ShoppingBag, Ticket, Trophy, UtensilsCrossed, Wallet, Users, MessageCircle, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -22,8 +22,13 @@ export const MODULES: NavItem[] = [
 export const SIDEBAR: NavItem[] = [
   { to: '/', label: 'خانه', icon: Home, color: '' },
   ...MODULES,
+  { to: '/tickets', label: 'بلیت‌های من', icon: Ticket, color: '' },
+  { to: '/workouts', label: 'تمرین‌ها', icon: Dumbbell, color: '' },
+  { to: '/nutrition', label: 'کالری‌شمار', icon: Apple, color: '' },
+  { to: '/progress', label: 'پیشرفت', icon: Activity, color: '' },
   { to: '/messages', label: 'پیام‌ها', icon: MessageCircle, color: '' },
   { to: '/notifications', label: 'اعلان‌ها', icon: Bell, color: '' },
+  { to: '/support', label: 'پشتیبانی', icon: LifeBuoy, color: '' },
 ]
 
 export const BOTTOM: NavItem[] = [

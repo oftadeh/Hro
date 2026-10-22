@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BadgeCheck, Bookmark, Heart, MessageCircle, Send, Trash2 } from 'lucide-react'
+import { BadgeCheck, Ban, Bookmark, Flag, Heart, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { num, timeAgo, toman } from '@/core/format'
-import { addComment, deletePost, toggleLike, toggleSave } from '@/core/services/fitzone'
+import { addComment, deleteComment, deletePost, reportContent, toggleBlock, toggleLike, toggleSave } from '@/core/services/fitzone'
 import { hasBadge } from '@/core/services/perks'
 import type { Post } from '@/core/types'
 import { ROLE_META } from '@/core/config'
-import { Avatar, Card } from '@/ui/kit'
+import { Avatar, Button, Card, Sheet, Textarea } from '@/ui/kit'
 import { MetricIcon } from '@/ui/icons'
 import { useMe, useUserMap } from '@/ui/hooks'
-import { toast } from '@/ui/toast'
+import { run, runOk, toast } from '@/ui/toast'
 
 const action = 'flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[13px] tabular-nums transition'
 
@@ -27,6 +27,10 @@ export function PostCard({ post }: { post: Post }) {
   const liked = post.likes.includes(me.id)
   const saved = post.saves.includes(me.id)
   const proRole = author?.roles.find((r) => r !== 'user' && r !== 'admin')
+  const [menu, setMenu] = useState(false)
+  const [report, setReport] = useState<{ kind: 'post' | 'comment' | 'user'; refId: string } | null>(null)
+  const [reason, setReason] = useState('')
+  const isAdmin = me.roles.includes('admin')
 
   if (!author) return null
   return (
@@ -45,14 +49,24 @@ export function PostCard({ post }: { post: Post }) {
             {timeAgo(post.createdAt)}
           </div>
         </div>
-        {post.authorId === me.id && (
-          <button onClick={() => deletePost(post.id)} className="rounded-full p-2 text-ink-400 transition hover:text-coral-600" aria-label="حذف">
-            <Trash2 size={15} strokeWidth={1.5} />
-          </button>
-        )}
+        <button onClick={() => setMenu(true)} className="rounded-full p-2 text-ink-400 transition hover:text-ink-900 dark:hover:text-white" aria-label="گزینه‌ها">
+          <MoreHorizontal size={17} strokeWidth={1.5} />
+        </button>
       </div>
 
-      {post.text && <p className="whitespace-pre-line px-4 pt-3 text-[14.5px] leading-7 text-ink-800 dark:text-ink-100">{post.text}</p>}
+      {post.text && (
+        <p className="whitespace-pre-line px-4 pt-3 text-[14.5px] leading-7 text-ink-800 dark:text-ink-100">
+          {post.text.split(/(#[\p{L}\p{N}_]+)/u).map((part, i) =>
+            part.startsWith('#') ? (
+              <Link key={i} to={`/fitzone?q=${encodeURIComponent(part)}`} className="text-brand-600 dark:text-brand-300">
+                {part}
+              </Link>
+            ) : (
+              part
+            ),
+          )}
+        </p>
+      )}
       {post.image && (
         <div className="mt-3" onDoubleClick={() => !liked && toggleLike(post.id)}>
           <img src={post.image} alt="" className="max-h-[34rem] w-full object-cover" />
@@ -85,7 +99,7 @@ export function PostCard({ post }: { post: Post }) {
       )}
 
       <div className="mt-2 flex items-center gap-1 px-2.5 pb-1">
-        <button onClick={() => toggleLike(post.id)} className={clsx(action, liked ? 'text-coral-600' : 'text-ink-500 hover:text-ink-950 dark:hover:text-white')}>
+        <button onClick={() => run(() => toggleLike(post.id))} className={clsx(action, liked ? 'text-coral-600' : 'text-ink-500 hover:text-ink-950 dark:hover:text-white')}>
           <Heart size={18} strokeWidth={1.5} className={clsx(liked && 'fill-coral-600')} /> {num(post.likes.length)}
         </button>
         <button onClick={() => setShowComments(!showComments)} className={clsx(action, 'text-ink-500 hover:text-ink-950 dark:hover:text-white')}>
@@ -102,7 +116,7 @@ export function PostCard({ post }: { post: Post }) {
           <Send size={17} strokeWidth={1.5} />
         </button>
         <div className="flex-1" />
-        <button onClick={() => toggleSave(post.id)} className={clsx(action, saved ? 'text-ink-950 dark:text-brand-300' : 'text-ink-500')} aria-label="ذخیره">
+        <button onClick={() => run(() => toggleSave(post.id))} className={clsx(action, saved ? 'text-ink-950 dark:text-brand-300' : 'text-ink-500')} aria-label="ذخیره">
           <Bookmark size={18} strokeWidth={1.5} className={clsx(saved && 'fill-current')} />
         </button>
       </div>
@@ -113,6 +127,16 @@ export function PostCard({ post }: { post: Post }) {
             <div key={c.id} className="text-[13px] leading-6">
               <span className="font-medium">{users[c.authorId]?.name} </span>
               <span className="text-ink-600 dark:text-ink-300">{c.text}</span>
+              {showComments && (
+                <span className="mr-2 inline-flex gap-1 align-middle">
+                  {(c.authorId === me.id || post.authorId === me.id || isAdmin) && (
+                    <button onClick={() => run(() => deleteComment(post.id, c.id))} className="text-ink-300 hover:text-coral-500" aria-label="حذف نظر"><Trash2 size={12} /></button>
+                  )}
+                  {c.authorId !== me.id && (
+                    <button onClick={() => setReport({ kind: 'comment', refId: c.id })} className="text-ink-300 hover:text-coral-500" aria-label="گزارش نظر"><Flag size={12} /></button>
+                  )}
+                </span>
+              )}
             </div>
           ))}
           {!showComments && post.comments.length > 1 && (
@@ -125,7 +149,7 @@ export function PostCard({ post }: { post: Post }) {
               className="flex gap-2 pt-1"
               onSubmit={(e) => {
                 e.preventDefault()
-                addComment(post.id, comment)
+                run(() => addComment(post.id, comment))
                 setComment('')
               }}
             >
@@ -135,6 +159,48 @@ export function PostCard({ post }: { post: Post }) {
           )}
         </div>
       )}
+      <Sheet open={menu} onClose={() => setMenu(false)} title="گزینه‌های پست">
+        <div className="space-y-2">
+          {(post.authorId === me.id || isAdmin) && (
+            <Button variant="ghost" className="w-full justify-start text-coral-500" icon={<Trash2 size={16} />} onClick={async () => { if (await runOk(() => deletePost(post.id), 'پست حذف شد')) setMenu(false) }}>
+              حذف پست
+            </Button>
+          )}
+          {post.authorId !== me.id && (
+            <>
+              <Button variant="ghost" className="w-full justify-start" icon={<Flag size={16} />} onClick={() => { setMenu(false); setReport({ kind: 'post', refId: post.id }) }}>
+                گزارش تخلف
+              </Button>
+              <Button variant="ghost" className="w-full justify-start" icon={<Ban size={16} />} onClick={async () => { if (await runOk(() => toggleBlock(post.authorId), `${author.name} مسدود شد؛ پست‌ها و پیام‌هایش را نمی‌بینید`)) setMenu(false) }}>
+                مسدود کردن {author.name}
+              </Button>
+            </>
+          )}
+        </div>
+      </Sheet>
+      <Sheet open={!!report} onClose={() => setReport(null)} title="گزارش تخلف">
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {['محتوای نامناسب', 'توهین یا آزار', 'اسپم یا تبلیغ', 'اطلاعات نادرست سلامت'].map((r) => (
+              <button key={r} onClick={() => setReason(r)} className={clsx('rounded-full px-3 py-1.5 text-xs', reason === r ? 'grad-lavender text-ink-950' : 'bg-ink-900/[.05] dark:bg-white/[.06]')}>
+                {r}
+              </button>
+            ))}
+          </div>
+          <Textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="توضیح (اختیاری)" />
+          <Button
+            className="w-full"
+            onClick={async () => {
+              if (report && (await runOk(() => reportContent(report.kind, report.refId, reason, report.kind === 'comment' ? post.id : undefined), 'گزارش ثبت شد و بررسی می‌شود'))) {
+                setReport(null)
+                setReason('')
+              }
+            }}
+          >
+            ارسال گزارش
+          </Button>
+        </div>
+      </Sheet>
     </Card>
   )
 }

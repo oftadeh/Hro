@@ -3,9 +3,10 @@
  * پیش‌بینی فاز بر اساس طول چرخه و طول پریود؛ توصیه‌های تمرین و تغذیه برای هر فاز.
  * این بخش ابزار سلامت عمومی است و جایگزین تشخیص پزشکی نیست.
  */
-import { AppError, currentUserId, db, mutate } from '../db'
+import { AppError, currentUserId, db, mutate, svc } from '../store'
 import { dayKey } from '../format'
 import type { CycleLog, CycleProfile, ID } from '../types'
+import type { DBState } from '../state'
 
 export type Phase = 'menstrual' | 'follicular' | 'ovulation' | 'luteal'
 
@@ -107,34 +108,84 @@ export function statusFor(c: CycleProfile, date = new Date()): CycleStatus {
   }
 }
 
-export function cycleOf(userId: ID) {
-  const u = db().users.find((x) => x.id === userId)
+export function cycleOf(userId: ID, s: Pick<DBState, 'users' | 'cycles'> = db()) {
+  const u = s.users.find((x) => x.id === userId)
   if (u?.gender !== 'female') return null
-  return db().cycles.find((c) => c.userId === userId) ?? null
+  return s.cycles.find((c) => c.userId === userId) ?? null
+}
+
+/** وضعیت چرخه؛ در حالت بارداری/پس از زایمان پیش‌بینی پریود نداریم */
+export function cycleStatusIn(s: Pick<DBState, 'users' | 'cycles'>, userId: ID, date?: Date) {
+  const c = cycleOf(userId, s)
+  return c && (c.mode ?? 'cycle') === 'cycle' ? statusFor(c, date) : null
 }
 
 export function cycleStatus(userId: ID, date?: Date) {
-  const c = cycleOf(userId)
-  return c ? statusFor(c, date) : null
+  return cycleStatusIn(db(), userId, date)
 }
 
-export function setupCycle(input: { lastPeriodStart: string; cycleLength: number; periodLength: number }) {
+/* ───────── بارداری و پس از زایمان ───────── */
+
+export const PREGNANCY_TIPS = [
+  { until: 13, title: 'سه‌ماهه‌ی اول', workout: 'پیاده‌روی، شنا و یوگای بارداری با شدت ملایم؛ از ورزش‌های پرخطر سقوط و ضربه دوری کنید.', nutrition: 'اسید فولیک، وعده‌های کوچک و مکرر برای کنترل تهوع، آب کافی.' },
+  { until: 27, title: 'سه‌ماهه‌ی دوم', workout: 'تمرین قدرتی سبک و پیلاتس بارداری؛ از خوابیدن طولانی به پشت هنگام تمرین پرهیز کنید.', nutrition: 'حدود ۳۴۰ کالری اضافه در روز، آهن و کلسیم کافی.' },
+  { until: 42, title: 'سه‌ماهه‌ی سوم', workout: 'پیاده‌روی، تمرینات تنفسی و کف لگن؛ شدت را با «تست صحبت کردن» کنترل کنید.', nutrition: 'حدود ۴۵۰ کالری اضافه، پروتئین و فیبر بیشتر.' },
+]
+export const POSTPARTUM_TIP = { title: 'پس از زایمان', workout: 'تا ۶ هفته فقط پیاده‌روی و تمرینات کف لگن؛ بازگشت به تمرین با تأیید پزشک.', nutrition: 'در دوران شیردهی حدود ۵۰۰ کالری اضافه و آب فراوان.' }
+
+/** هفته‌ی بارداری از روی تاریخ تقریبی زایمان (۴۰ هفته) */
+export function pregnancyStatus(c: CycleProfile, at = new Date()) {
+  if (!c.dueDate) return null
+  const due = parse(c.dueDate)
+  if (c.mode === 'postpartum') {
+    const weeks = Math.max(0, Math.floor(diffDays(at, due) / 7))
+    return { mode: 'postpartum' as const, weeks, ...POSTPARTUM_TIP }
+  }
+  const daysLeft = diffDays(due, at)
+  const week = Math.min(42, Math.max(1, 40 - Math.ceil(daysLeft / 7)))
+  const tip = PREGNANCY_TIPS.find((t) => week <= t.until) ?? PREGNANCY_TIPS[2]
+  return { mode: 'pregnancy' as const, week, daysLeft, progress: week / 40, ...tip }
+}
+
+export const setTrackerMode = svc('cycle.mode', (mode: 'cycle' | 'pregnancy' | 'postpartum', dueDate?: string) => {
   const me = currentUserId()
-  const u = db().users.find((x) => x.id === me)
+  if (!['cycle', 'pregnancy', 'postpartum'].includes(mode)) throw new AppError('حالت معتبر نیست')
+  if (mode !== 'cycle' && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate ?? '')) throw new AppError(mode === 'pregnancy' ? 'تاریخ تقریبی زایمان را وارد کنید' : 'تاریخ زایمان را وارد کنید')
+  if (mode === 'pregnancy' && parse(dueDate!) < new Date()) throw new AppError('تاریخ زایمان باید در آینده باشد')
+  mutate((d) => {
+    const u = d.users.find((x) => x.id === me)
+    if (u?.gender !== 'female') throw new AppError('این بخش فقط برای بانوان فعال است')
+    let c = d.cycles.find((x) => x.userId === me)
+    if (!c) {
+      c = { userId: me, lastPeriodStart: dayKey(), cycleLength: 28, periodLength: 5, history: [], logs: [] }
+      d.cycles.push(c)
+    }
+    c.mode = mode
+    c.dueDate = mode === 'cycle' ? undefined : dueDate
+  })
+})
+
+type CycleInput = { lastPeriodStart: string; cycleLength: number; periodLength: number }
+
+export function setupCycleFor(userId: ID, input: CycleInput) {
+  const u = db().users.find((x) => x.id === userId)
   if (u?.gender !== 'female') throw new AppError('این بخش فقط برای بانوان فعال است')
   if (!input.lastPeriodStart) throw new AppError('تاریخ شروع آخرین پریود را وارد کنید')
   if (parse(input.lastPeriodStart) > new Date()) throw new AppError('تاریخ نمی‌تواند در آینده باشد')
   if (input.cycleLength < 21 || input.cycleLength > 40) throw new AppError('طول چرخه معمولاً بین ۲۱ تا ۴۰ روز است')
   if (input.periodLength < 2 || input.periodLength > 10) throw new AppError('طول پریود معمولاً بین ۲ تا ۱۰ روز است')
+  const clean = { lastPeriodStart: input.lastPeriodStart, cycleLength: input.cycleLength, periodLength: input.periodLength }
   mutate((d) => {
-    const ex = d.cycles.find((c) => c.userId === me)
-    if (ex) Object.assign(ex, input, { history: [...new Set([...ex.history, input.lastPeriodStart])].sort() })
-    else d.cycles.push({ userId: me, ...input, history: [input.lastPeriodStart], logs: [] })
+    const ex = d.cycles.find((c) => c.userId === userId)
+    if (ex) Object.assign(ex, clean, { history: [...new Set([...ex.history, clean.lastPeriodStart])].sort() })
+    else d.cycles.push({ userId, ...clean, history: [clean.lastPeriodStart], logs: [] })
   })
 }
 
+export const setupCycle = svc('cycle.setup', (input: CycleInput) => setupCycleFor(currentUserId(), input))
+
 /** ثبت شروع پریود؛ طول چرخه از میانگین سه چرخه‌ی اخیر به‌روز می‌شود */
-export function logPeriodStart(day = dayKey()) {
+export const logPeriodStart = svc('cycle.periodStart', (day: string = dayKey()) => {
   const me = currentUserId()
   mutate((d) => {
     const c = d.cycles.find((x) => x.userId === me)
@@ -148,15 +199,20 @@ export function logPeriodStart(day = dayKey()) {
     c.history = hist
     c.lastPeriodStart = hist[hist.length - 1]
   })
-}
+})
 
-export function logCycleDay(entry: Omit<CycleLog, 'day'>, day = dayKey()) {
+export const logCycleDay = svc('cycle.logDay', (entry: Omit<CycleLog, 'day'>, day: string = dayKey()) => {
   const me = currentUserId()
   mutate((d) => {
     const c = d.cycles.find((x) => x.userId === me)
     if (!c) throw new AppError('ابتدا ردیاب چرخه را فعال کنید')
     const ex = c.logs.find((l) => l.day === day)
-    if (ex) Object.assign(ex, entry)
-    else c.logs.push({ day, ...entry })
+    const clean: Omit<CycleLog, 'day'> = {
+      flow: (['light', 'medium', 'heavy'] as const).find((f) => f === entry.flow),
+      mood: (['great', 'ok', 'low'] as const).find((m) => m === entry.mood),
+      symptoms: (entry.symptoms ?? []).filter((x) => x in SYMPTOMS),
+    }
+    if (ex) Object.assign(ex, clean)
+    else c.logs.push({ day, ...clean })
   })
-}
+})

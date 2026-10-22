@@ -20,6 +20,10 @@ import { StoriesBar } from '@/modules/fitzone/Stories'
 import { WeekBars } from '@/ui/WeekBars'
 import { CycleCard, useCycle } from '@/modules/health/Cycle'
 import { TrainingFocus } from '@/modules/health/TrainingFocus'
+import { HealthScoreCard } from '@/modules/health/HealthScore'
+import { ticketStatus } from '@/core/services/fityab'
+import { leagueOf, weekXpOf } from '@/core/services/engagement'
+import { Activity, Apple, Dumbbell, Ticket as TicketIcon } from 'lucide-react'
 
 const QUOTES = [
   'پیشرفت مهم است، نه بی‌نقصی',
@@ -69,6 +73,12 @@ export default function Home() {
   const lvl = levelOf(me.xp)
   const [q, setQ] = useState('')
   const { status: cycle } = useCycle()
+  const checkins = useDB((s) => s.checkins)
+  const requests = useDB((s) => s.entryRequests)
+  const nextTicket = checkins.filter((c) => c.userId === me.id && ticketStatus(c) === 'active').sort((a, b) => (a.slotAt ?? a.createdAt).localeCompare(b.slotAt ?? b.createdAt))[0]
+  const ticketGym = nextTicket && gyms.find((g) => g.id === nextTicket.gymId)
+  const pendingReq = requests.find((r) => r.userId === me.id && r.status === 'pending' && Date.now() - new Date(r.createdAt).getTime() < 30 * 60_000)
+  const league = leagueOf(weekXpOf(me))
   const female = me.gender === 'female'
 
   const nearGyms = useMemo(
@@ -145,6 +155,42 @@ export default function Home() {
           <Link to={sub ? '/fityab' : '/wallet'} className="col-span-2">
             <Stat tone="rose" art={<WalletCoins size={92} />} value={sub ? <><CountUp value={sub.credit} /> تومان</> : 'فعال‌سازی عضویت'} label={sub ? `اعتبار ورود · ${num(daysLeft(sub.expiresAt))} روز باقی‌مانده` : 'ورود به همه‌ی باشگاه‌ها با یک عضویت'} />
           </Link>
+        </div>
+      </div>
+
+      {pendingReq && (
+        <Link to={`/tickets?req=${pendingReq.id}`} className="mt-4 flex animate-pop items-center gap-3 rounded-3xl grad-peach p-4 text-ink-950">
+          <TicketIcon size={20} />
+          <span className="flex-1 text-sm font-medium">پذیرش {gyms.find((g) => g.id === pendingReq.gymId)?.name} منتظر تأیید ورود شماست</span>
+          <ArrowLeft size={16} />
+        </Link>
+      )}
+      {nextTicket && ticketGym && (
+        <Link to="/tickets" className="mt-4 flex items-center gap-3 rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl grad-lavender text-ink-950"><TicketIcon size={18} /></span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">بلیت فعال: {ticketGym.name}</div>
+            <div className="text-[11px] text-ink-500">{nextTicket.classId ? `کلاس ${ticketGym.classes?.find((k) => k.id === nextTicket.classId)?.title}` : 'سانس آزاد امروز'} · برای نمایش QR بزنید</div>
+          </div>
+          <ArrowLeft size={16} className="text-ink-400" />
+        </Link>
+      )}
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <HealthScoreCard userId={me.id} />
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { to: '/workouts', t: 'ثبت تمرین', d: 'ست، وزنه و رکورد', icon: <Dumbbell size={18} />, grad: 'grad-lavender' },
+            { to: '/nutrition', t: 'کالری‌شمار', d: 'غذاهای ایرانی', icon: <Apple size={18} />, grad: 'grad-mint' },
+            { to: '/progress', t: 'پیشرفت', d: 'وزن و اندازه‌ها', icon: <Activity size={18} />, grad: 'grad-peach' },
+            { to: '/league', t: `لیگ ${league.name}`, d: `${num(weekXpOf(me))} امتیاز هفته`, icon: <Trophy size={18} />, grad: 'grad-pink' },
+          ].map((x) => (
+            <Link key={x.to} to={x.to} className={`lift-hover rounded-3xl p-4 text-ink-950 ${x.grad}`}>
+              {x.icon}
+              <div className="mt-3 text-sm font-semibold">{x.t}</div>
+              <div className="text-[11px] opacity-60">{x.d}</div>
+            </Link>
+          ))}
         </div>
       </div>
 

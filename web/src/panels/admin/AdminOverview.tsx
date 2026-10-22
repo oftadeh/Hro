@@ -3,7 +3,7 @@ import { Activity, Building2, Coins, Landmark, Lock, Users } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { MODULE_LABEL, ROLE_META } from '@/core/config'
 import { num, toman } from '@/core/format'
-import { platformStats } from '@/core/services/admin'
+import { dailySeries, platformStats } from '@/core/services/admin'
 import type { RevenueModule, Role } from '@/core/types'
 import { Card, PageHeader, SectionTitle, Stat } from '@/ui/kit'
 import { TxList } from '@/pages/TxList'
@@ -64,6 +64,28 @@ export default function AdminOverview() {
           </div>
         </Card>
       </div>
+
+      <SectionTitle title="۱۴ روز اخیر" />
+      {(() => {
+        const series = dailySeries(14)
+        const lbl = (d: string) => new Intl.DateTimeFormat('fa-IR', { day: 'numeric' }).format(new Date(d + 'T12:00'))
+        return (
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card>
+              <div className="mb-1 text-sm font-semibold">درآمد خالص کی‌فیت (هزار تومان)</div>
+              <MiniBars data={series.map((x) => ({ label: lbl(x.day), value: Math.round(x.revenue / 1000) }))} />
+            </Card>
+            <Card>
+              <div className="mb-1 text-sm font-semibold">ورود به باشگاه‌ها</div>
+              <MiniBars data={series.map((x) => ({ label: lbl(x.day), value: x.checkins }))} />
+            </Card>
+            <Card>
+              <div className="mb-1 text-sm font-semibold">کاربران فعال و ثبت‌نام</div>
+              <MiniBars data={series.map((x) => ({ label: lbl(x.day), value: x.active + x.signups }))} />
+            </Card>
+          </div>
+        )
+      })()}
 
       <SectionTitle title="آخرین تراکنش‌های سامانه" />
       <Card>

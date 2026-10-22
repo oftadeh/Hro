@@ -25,7 +25,7 @@ export default function Doctors() {
       </div>
       {mine.length > 0 && (
         <>
-          <SectionTitle title="نوبت‌های من" />
+          <SectionTitle title="نوبت‌های من" action={<Link to="/medical" className="text-xs text-ink-500">پرونده‌ی پزشکی</Link>} />
           <div className="space-y-2">
             {mine.map((a) => (
               <Card key={a.id}>
@@ -45,7 +45,7 @@ export default function Doctors() {
       )}
       <SectionTitle title="پزشکان" />
       <div className="grid gap-3 sm:grid-cols-2">
-        {doctors.map((d) => {
+        {doctors.filter((d) => d.verified).map((d) => {
           const u = users[d.userId]
           if (!u) return null
           return (

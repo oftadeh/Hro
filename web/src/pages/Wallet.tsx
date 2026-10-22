@@ -1,4 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { REMOTE, api } from '@/core/client/remote'
+import { couponDiscount } from '@/core/services/commerce'
+import { Input } from '@/ui/kit'
+import { toast } from '@/ui/toast'
 import { ArrowDownLeft, ArrowUpRight, Check, CreditCard, Plus, Ticket } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
@@ -24,6 +29,16 @@ export default function WalletPage() {
   const [amount, setAmount] = useState(500_000)
   const [busy, setBusy] = useState(false)
   const [buy, setBuy] = useState<string>()
+  const [coupon, setCoupon] = useState('')
+  const [params, setParams] = useSearchParams()
+  // بازگشت از درگاه بانکی
+  useEffect(() => {
+    const st = params.get('pay')
+    if (!st) return
+    if (st === 'ok') toast.success(`پرداخت موفق بود${params.get('ref') ? ` — کد پیگیری ${params.get('ref')}` : ''}`)
+    else toast.error('پرداخت ناموفق بود یا لغو شد؛ مبلغی کسر نشده است')
+    setParams({}, { replace: true })
+  }, [params, setParams])
   const mine = txs.filter((t) => t.payerId === me.id || t.to === me.id)
   const monthAgo = Date.now() - 30 * 86_400_000
   const recent = mine.filter((t) => new Date(t.createdAt).getTime() > monthAgo)
@@ -125,6 +140,15 @@ export default function WalletPage() {
             loading={busy}
             onClick={async () => {
               setBusy(true)
+              if (REMOTE) {
+                // انتقال به درگاه بانکی؛ پس از پرداخت به همین صفحه برمی‌گردد
+                const ok = await runOk(async () => {
+                  const r = await api<{ url: string }>('/pay/start', { amount })
+                  location.href = r.url
+                })
+                if (!ok) setBusy(false)
+                return
+              }
               const ok = await runOk(() => topUp(amount), 'کیف پول شارژ شد')
               setBusy(false)
               if (ok) setCharge(false)
@@ -132,7 +156,7 @@ export default function WalletPage() {
           >
             پرداخت از درگاه بانکی
           </Button>
-          <p className="text-center text-[11px] text-ink-400">در نسخه‌ی آزمایشی، پرداخت شبیه‌سازی می‌شود.</p>
+          <p className="text-center text-[11px] text-ink-400">{REMOTE ? 'پرداخت امن از طریق درگاه شاپرک' : 'در نسخه‌ی آزمایشی، پرداخت شبیه‌سازی می‌شود.'}</p>
         </div>
       </Sheet>
 
@@ -142,13 +166,28 @@ export default function WalletPage() {
           return (
             <div className="space-y-3">
               <p className="text-sm text-ink-500">اشتراک {p.name} — {toman(p.price)} از کیف پول کسر و {toman(p.credit)} اعتبار ورود دریافت می‌کنید.</p>
+              <div className="flex gap-2">
+                <Input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="کد تخفیف (اختیاری)" dir="ltr" className="text-left" />
+              </div>
+              {(() => {
+                try {
+                  const d = coupon ? couponDiscount(coupon, 'subscription', p.price, me.id).discount : 0
+                  return d ? <div className="text-xs text-emerald-600 dark:text-emerald-400">تخفیف کد: {toman(d)} — مبلغ نهایی {toman(p.price - d)}</div> : null
+                } catch (e) {
+                  return <div className="text-xs text-coral-500">{(e as Error).message}</div>
+                }
+              })()}
               <div className="text-xs text-ink-400">موجودی: {toman(bal)}</div>
               <Button className="w-full" size="lg" onClick={async () => {
-                const ok = await runOk(() => buySubscription(p.id), `اشتراک ${p.name} فعال شد`)
-                if (ok) setBuy(undefined)
+                const ok = await runOk(() => buySubscription(p.id, coupon || undefined), `اشتراک ${p.name} فعال شد`)
+                if (ok) {
+                  setBuy(undefined)
+                  setCoupon('')
+                }
               }}>
                 پرداخت از کیف پول
               </Button>
+              <Link to="/invite" className="block text-center text-xs text-ink-500 underline">خرید این اشتراک به‌عنوان هدیه</Link>
               {bal < p.price && <Button variant="secondary" className="w-full" onClick={() => { setBuy(undefined); setAmount(p.price - bal); setCharge(true) }}>شارژ کیف پول ({toman(p.price - bal)})</Button>}
             </div>
           )

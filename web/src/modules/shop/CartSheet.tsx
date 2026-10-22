@@ -3,12 +3,11 @@ import { Minus, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
-import { addToCart, cartLines, checkout } from '@/core/services/commerce'
-import { priceAfter } from '@/core/services/perks'
+import { addToCart, checkout, quote } from '@/core/services/commerce'
 import type { CartItem } from '@/core/types'
 import { Button, Empty, Field, Input, Sheet } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
-import { runOk } from '@/ui/toast'
+import { run, runOk } from '@/ui/toast'
 import { FoodIcon } from '@/ui/icons'
 import { ShoppingBag } from 'lucide-react'
 
@@ -24,12 +23,15 @@ export function CartSheet({ kind, open, onClose }: { kind: CartItem['kind']; ope
   useDB((s) => s.foods)
   const nav = useNavigate()
   const bal = useBalance(me.id)
-  const lines = cartLines(me.id, kind)
-  const gross = lines.reduce((a, l) => a + l.price * l.qty, 0)
   useDB((s) => s.subscriptions)
-  const { pct, discount, final: total } = priceAfter(me.id, kind === 'product' ? 'shop' : 'buffet', gross)
+  useDB((s) => s.coupons)
+  const [coupon, setCoupon] = useState('')
+  const [applied, setApplied] = useState('')
+  const q = quote(me.id, kind, applied, useDB.getState())
+  const { lines, gross, pct, perk: discount, shipping, total } = q
   const cal = lines.reduce((a, l) => a + ('calories' in l ? (l.calories as number) : 0), 0)
-  const [address, setAddress] = useState('تهران، ')
+  const saved = me.addresses ?? []
+  const [address, setAddress] = useState(saved[0]?.text ?? 'تهران، ')
 
   return (
     <Sheet open={open} onClose={onClose} title={kind === 'product' ? 'سبد خرید' : 'سفارش غذا'}>
@@ -45,23 +47,35 @@ export function CartSheet({ kind, open, onClose }: { kind: CartItem['kind']; ope
                 <div className="text-xs text-ink-500">{toman(l.price)}</div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => addToCart(kind, l.refId, 1)} className="rounded-lg bg-white p-1 shadow-sm dark:bg-ink-800" aria-label="افزایش"><Plus size={14} /></button>
+                <button onClick={() => run(() => addToCart(kind, l.refId, 1))} className="rounded-lg bg-white p-1 shadow-sm dark:bg-ink-800" aria-label="افزایش"><Plus size={14} /></button>
                 <span className="w-5 text-center text-sm font-semibold">{num(l.qty)}</span>
-                <button onClick={() => addToCart(kind, l.refId, -1)} className="rounded-lg bg-white p-1 shadow-sm dark:bg-ink-800" aria-label="کاهش"><Minus size={14} /></button>
+                <button onClick={() => run(() => addToCart(kind, l.refId, -1))} className="rounded-lg bg-white p-1 shadow-sm dark:bg-ink-800" aria-label="کاهش"><Minus size={14} /></button>
               </div>
             </div>
           ))}
           {kind === 'food' && <div className="text-center text-xs text-ink-500">مجموع کالری سفارش: <b>{num(cal)}</b> کالری</div>}
           <Field label="آدرس تحویل">
+            {saved.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {saved.map((a) => (
+                  <button key={a.id} type="button" onClick={() => setAddress(a.text)} className={`rounded-full px-3 py-1.5 text-[11px] ${address === a.text ? 'grad-lavender text-ink-950' : 'bg-ink-900/[.05] dark:bg-white/[.06]'}`}>
+                    {a.title}
+                  </button>
+                ))}
+              </div>
+            )}
             <Input value={address} onChange={(e) => setAddress(e.target.value)} />
           </Field>
+          <div className="flex gap-2">
+            <Input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="کد تخفیف" dir="ltr" className="text-left" />
+            <Button variant="secondary" onClick={() => setApplied(coupon)}>اعمال</Button>
+          </div>
+          {applied && q.couponError && <div className="text-xs text-coral-500">{q.couponError}</div>}
           <div className="space-y-1.5 rounded-2xl border border-ink-100 p-3 text-sm dark:border-white/10">
-            {pct > 0 && (
-              <>
-                <div className="flex justify-between text-ink-500"><span>جمع</span><span>{toman(gross)}</span></div>
-                <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>تخفیف اشتراک ({num(pct)}٪)</span><span>−{toman(discount)}</span></div>
-              </>
-            )}
+            <div className="flex justify-between text-ink-500"><span>جمع کالاها</span><span>{toman(gross)}</span></div>
+            {pct > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>تخفیف اشتراک ({num(pct)}٪)</span><span>−{toman(discount)}</span></div>}
+            {q.coupon > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>کد تخفیف {applied}</span><span>−{toman(q.coupon)}</span></div>}
+            {kind === 'product' && <div className="flex justify-between text-ink-500"><span>هزینه‌ی ارسال</span><span>{shipping ? toman(shipping) : 'رایگان'}</span></div>}
             <div className="flex items-center justify-between"><span>مبلغ قابل پرداخت</span><b className="text-lg">{toman(total)}</b></div>
           </div>
           <div className="text-xs text-ink-400">موجودی کیف پول: {toman(bal)}</div>
@@ -69,7 +83,7 @@ export function CartSheet({ kind, open, onClose }: { kind: CartItem['kind']; ope
             className="w-full"
             size="lg"
             onClick={async () => {
-              const ok = await runOk(() => checkout(kind, address), 'سفارش با موفقیت ثبت شد')
+              const ok = await runOk(() => checkout(kind, address, q.coupon ? applied : undefined), 'سفارش با موفقیت ثبت شد')
               if (ok) {
                 onClose()
                 nav('/orders')

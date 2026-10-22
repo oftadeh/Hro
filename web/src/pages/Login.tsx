@@ -1,13 +1,15 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, Lock } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { ROLE_META } from '@/core/config'
-import { loginAs, verifyOtp, registerUser, DEMO_OTP, type RegisterInput } from '@/core/services/auth'
+import { loginAs, verifyOtp, registerUser, requestOtp, DEMO_OTP, REMOTE } from '@/core/client/session'
+import type { ProfileInput as RegisterInput } from '@/core/services/auth'
+import { api } from '@/core/client/remote'
 import { faDigitsToEn } from '@/core/format'
 import type { Role } from '@/core/types'
-import { run } from '@/ui/toast'
+import { run, runOk } from '@/ui/toast'
 import { RoleIcon } from '@/ui/icons'
 import { Runner, Lifter, Yoga, Trophy } from '@/ui/art'
 import { daysAgoKey, GOALS, ACTIVITY } from '@/core/profile'
@@ -19,6 +21,7 @@ const DEMOS: { userId: string; role: Role }[] = [
   { userId: 'u-seller', role: 'seller' },
   { userId: 'u-doctor', role: 'doctor' },
   { userId: 'u-rest', role: 'restaurant' },
+  { userId: 'u-org', role: 'company' },
   { userId: 'u-admin', role: 'admin' },
 ]
 
@@ -45,13 +48,23 @@ export default function Login() {
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
-  const [f, setF] = useState({ name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
+  const [hint, setHint] = useState('')
+  const [demoUsers, setDemoUsers] = useState<{ id: string; name: string }[] | null>(REMOTE ? null : [])
+  useEffect(() => {
+    if (REMOTE) api<{ demo: boolean; demoUsers?: { id: string; name: string }[] }>('/config').then((c) => setDemoUsers(c.demo ? c.demoUsers ?? [] : null)).catch(() => setDemoUsers(null))
+  }, [])
+  const [f, setF] = useState({ referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }))
   const n = (v: string) => Number(faDigitsToEn(v)) || undefined
 
   const submit = async () => {
     if (step === 'phone') {
       if (phone.replace(/\D/g, '').length < 10 && !/[۰-۹]{10}/.test(phone)) return
+      setLoading(true)
+      const r = await run(() => requestOtp(phone))
+      setLoading(false)
+      if (!r) return
+      setHint(r.demo ? `در نسخه‌ی آزمایشی، کد ${DEMO_OTP} است.` : r.devCode ? `کد آزمایشی: ${r.devCode}` : 'کد ۴ رقمی به شماره‌ی شما پیامک شد.')
       setStep('otp')
       return
     }
@@ -61,14 +74,13 @@ export default function Login() {
       if (r && !r.exists) setStep('profile')
     } else {
       const cycle = f.gender === 'female' && f.track && f.ago !== '' ? { lastPeriodStart: daysAgoKey(n(f.ago) ?? 0), cycleLength: n(f.cycleLength) ?? 28, periodLength: n(f.periodLength) ?? 5 } : undefined
-      await run(() => registerUser({ phone, otp, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))
+      await run(() => registerUser({ referral: f.referral || undefined, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))
     }
     setLoading(false)
   }
 
-  const demo = (userId: string, role: Role) => {
-    loginAs(userId, role)
-    nav(ROLE_META[role].panel)
+  const demo = async (userId: string, role: Role) => {
+    if (await runOk(() => loginAs(userId, role))) nav(ROLE_META[role].panel)
   }
 
   return (
@@ -129,7 +141,7 @@ export default function Login() {
               <label className="block space-y-2">
                 <span className="text-xs text-white/50">کد تأیید ارسال‌شده به {phone}</span>
                 <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="• • • •" dir="ltr" className={`${field} text-center text-xl tracking-[1em]`} inputMode="numeric" maxLength={4} autoFocus />
-                <span className="block text-[11px] text-white/35">در نسخه‌ی آزمایشی، کد {DEMO_OTP} است.</span>
+                <span className="block text-[11px] text-white/35">{hint}</span>
               </label>
             ) : (
               <Onboarding f={f} set={set} />
@@ -145,11 +157,12 @@ export default function Login() {
             )}
           </form>
 
+          {demoUsers && (
           <div className="mt-10 border-t border-white/10 pt-6">
             <div className="mb-4 text-[11px] tracking-wide text-white/40">ورود سریع با حساب‌های نمایشی</div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {DEMOS.map((d) => {
-                const u = users.find((x) => x.id === d.userId)
+                const u = REMOTE ? demoUsers.find((x) => x.id === d.userId) : users.find((x) => x.id === d.userId)
                 if (!u) return null
                 return (
                   <button
@@ -165,6 +178,7 @@ export default function Login() {
               })}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
@@ -172,6 +186,7 @@ export default function Login() {
 }
 
 type Form = {
+  referral: string
   name: string
   gender: RegisterInput['gender']
   birthYear: string
@@ -193,6 +208,10 @@ function Onboarding({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: 
       <label className="block space-y-2">
         <span className="text-xs text-white/50">نام و نام خانوادگی</span>
         <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً سارا محمدی" className={field} autoFocus />
+      </label>
+      <label className="block space-y-2">
+        <span className="text-xs text-white/50">کد معرفی دوست (اختیاری)</span>
+        <input value={f.referral} onChange={(e) => set('referral', e.target.value.toUpperCase())} placeholder="مثلاً SARA24" dir="ltr" className={`${field} text-left tracking-wider`} />
       </label>
 
       <div className="space-y-2">

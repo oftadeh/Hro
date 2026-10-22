@@ -7,7 +7,7 @@
 export type ID = string
 export type ISODate = string
 
-export type Role = 'user' | 'gym' | 'coach' | 'seller' | 'doctor' | 'restaurant' | 'admin'
+export type Role = 'user' | 'gym' | 'coach' | 'seller' | 'doctor' | 'restaurant' | 'company' | 'admin'
 
 /** ماژول‌هایی که درآمد کمیسیونی دارند */
 export type RevenueModule = 'fityab' | 'fityar' | 'shop' | 'doctor' | 'buffet' | 'challenge'
@@ -29,6 +29,20 @@ export interface User {
   /** اطلاعات سلامت؛ فقط برای خود کاربر */
   health?: { injuries?: string; conditions?: string; allergies?: string }
   privacy?: { publicProfile: boolean; showBody: boolean }
+  /** مربی/پزشکانی که اجازه‌ی دیدن پرونده‌ی سلامت را دارند */
+  healthShares?: ID[]
+  addresses?: Address[]
+  reminders?: Reminders
+  favoriteGyms?: ID[]
+  blockedUsers?: ID[]
+  /** کد معرفی اختصاصی و معرف */
+  referralCode?: string
+  referredBy?: ID
+  referralRewarded?: boolean
+  /** عضویت سازمانی */
+  orgId?: ID
+  /** امتیاز هفته‌ی جاری برای لیگ */
+  weekXp?: { week: string; xp: number }
   xp: number
   streak: number
   lastActiveDay?: string // YYYY-MM-DD
@@ -47,6 +61,10 @@ export interface CycleLog {
 
 export interface CycleProfile {
   userId: ID
+  /** حالت ردیاب: چرخه‌ی عادی، بارداری یا پس از زایمان */
+  mode?: 'cycle' | 'pregnancy' | 'postpartum'
+  /** تاریخ تقریبی زایمان (بارداری) یا تاریخ زایمان (پس از زایمان) */
+  dueDate?: string
   lastPeriodStart: string // YYYY-MM-DD
   cycleLength: number
   periodLength: number
@@ -64,6 +82,8 @@ export interface Subscription {
   /** مزایای مصرف‌شده در دوره‌ی فعلی اشتراک */
   freeChallengeUsed: number
   freeDoctorUsed: number
+  /** اشتراک اهدایی سازمان */
+  orgId?: ID
 }
 
 /** مزایای قابل اجرای هر پلن؛ تخفیف‌ها از سهم کی‌فیت پرداخت می‌شود نه از سهم ارائه‌دهنده */
@@ -99,6 +119,9 @@ export type TxType =
   | 'challenge_prize'
   | 'withdraw'
   | 'refund'
+  | 'reward'
+  | 'gift'
+  | 'org_seats'
 
 /** هر جابجایی پول یک سطر در دفتر کل (Ledger) است */
 export interface Transaction {
@@ -154,16 +177,59 @@ export interface Gym {
   reviews: number
   approved: boolean
   createdAt: ISODate
+  /** ظرفیت هم‌زمان سالن (برای نمایش شلوغی) */
+  capacity?: number
+  classes?: GymClass[]
+  /** تخفیف ساعات خلوت: از ساعت from تا to (۰ تا ۲۴) */
+  offPeak?: { from: number; to: number; discountPct: number }
 }
 
+/** کلاس گروهی هفتگی */
+export interface GymClass {
+  id: ID
+  title: string
+  sport: string
+  coachName: string
+  /** ۰ = شنبه … ۶ = جمعه */
+  weekday: number
+  time: string // HH:MM
+  durationMin: number
+  capacity: number
+  /** اگر خالی باشد هزینه‌ی سانس عادی اعمال می‌شود */
+  price?: number
+}
+
+/** بلیت ورود به باشگاه (سانس آزاد یا کلاس) */
 export interface CheckIn {
   id: ID
   userId: ID
   gymId: ID
+  /** مبلغ پایه‌ی سانس */
   price: number
+  /** مبلغ پرداخت‌شده پس از تخفیف ساعت خلوت */
+  paid?: number
   code: string
   paidWith: 'subscription' | 'wallet'
-  status: 'active' | 'used'
+  status: 'active' | 'used' | 'cancelled' | 'expired'
+  classId?: ID
+  /** زمان شروع کلاس (برای رزرو کلاس) */
+  slotAt?: ISODate
+  validUntil?: ISODate
+  usedAt?: ISODate
+  offPeak?: boolean
+  /** ورود از طریق درخواست پذیرش */
+  viaReception?: boolean
+  txId?: ID
+  reviewed?: boolean
+  createdAt: ISODate
+}
+
+/** درخواست ورود که پذیرش باشگاه برای کاربر می‌فرستد و کاربر تأیید می‌کند */
+export interface EntryRequest {
+  id: ID
+  gymId: ID
+  userId: ID
+  status: 'pending' | 'approved' | 'rejected' | 'expired'
   createdAt: ISODate
 }
 
@@ -178,6 +244,8 @@ export interface CoachPlan {
 
 export interface CoachProfile {
   userId: ID
+  /** تأیید مدارک توسط مدیر */
+  verified?: boolean
   title: string
   specialties: string[]
   experienceYears: number
@@ -200,7 +268,30 @@ export interface PlanOrder {
   status: 'pending' | 'delivered'
   answers: string
   content?: string
+  /** برنامه‌ی ساختاریافته‌ی هفتگی */
+  program?: Program
+  /** روزهای انجام‌شده با کلید w-d */
+  done?: string[]
   createdAt: ISODate
+}
+
+export interface ProgramExercise {
+  exerciseId: ID
+  sets: number
+  reps: string
+  rest?: number
+  note?: string
+}
+
+export interface ProgramDay {
+  title: string
+  exercises: ProgramExercise[]
+  meals?: string
+}
+
+export interface Program {
+  weeks: { days: ProgramDay[] }[]
+  notes?: string
 }
 
 export interface Message {
@@ -209,6 +300,8 @@ export interface Message {
   text: string
   at: ISODate
   kind?: 'text' | 'call' | 'system'
+  /** لینک تماس تصویری */
+  link?: string
 }
 
 export interface Thread {
@@ -258,7 +351,40 @@ export interface Order {
   total: number
   address: string
   status: 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled'
+  shipping?: number
+  discount?: number
+  coupon?: string
+  trackingCode?: string
+  timeline?: { status: Order['status']; at: ISODate }[]
+  reviewed?: boolean
   createdAt: ISODate
+}
+
+export interface Address {
+  id: ID
+  title: string
+  text: string
+  phone?: string
+}
+
+export interface Reminders {
+  water: boolean
+  workout: boolean
+  period: boolean
+  workoutTime: string // HH:MM
+}
+
+export interface Coupon {
+  id: ID
+  code: string
+  pct: number
+  /** سقف تخفیف به تومان */
+  maxAmount: number
+  module: 'shop' | 'buffet' | 'subscription' | 'all'
+  maxUses: number
+  usedBy: ID[]
+  expiresAt: ISODate
+  active: boolean
 }
 
 export interface DoctorProfile {
@@ -272,6 +398,8 @@ export interface DoctorProfile {
   /** نوبت‌های آزاد به صورت ISO */
   slots: ISODate[]
   online: boolean
+  /** تأیید پروانه‌ی نظام پزشکی توسط مدیر */
+  verified?: boolean
 }
 
 export interface Appointment {
@@ -283,6 +411,8 @@ export interface Appointment {
   reason: string
   status: 'booked' | 'done' | 'cancelled'
   prescription?: string
+  /** لینک ویزیت تصویری */
+  callLink?: string
   createdAt: ISODate
 }
 
@@ -335,6 +465,9 @@ export interface Post {
   comments: Comment[]
   challengeId?: ID
   gymId?: ID
+  tags?: string[]
+  /** پنهان‌شده توسط مدیر */
+  hidden?: boolean
   createdAt: ISODate
 }
 
@@ -354,7 +487,20 @@ export interface ChallengeParticipant {
   userId: ID
   score: number
   joinedAt: ISODate
-  logs: { at: ISODate; value: number; note?: string }[]
+  logs: ChallengeLog[]
+}
+
+export interface ChallengeLog {
+  id?: ID
+  at: ISODate
+  value: number
+  note?: string
+  /** عکس مدرک */
+  proof?: string
+  /** منبع داده: دستی، ورود تأییدشده به باشگاه یا تمرین ثبت‌شده */
+  source?: 'manual' | 'checkin' | 'workout'
+  /** وضعیت تأیید؛ فقط موارد ok در امتیاز حساب می‌شوند */
+  status?: 'ok' | 'pending' | 'rejected'
 }
 
 export interface Prize {
@@ -388,6 +534,10 @@ export interface Challenge {
   participants: ChallengeParticipant[]
   status: 'active' | 'finished'
   winners?: { userId: ID; rank: number; amount: number }[]
+  /** نحوه‌ی تأیید امتیاز: خودکار از داده‌های اپ یا با عکس مدرک و تأیید سازنده */
+  verification?: 'auto' | 'proof' | 'none'
+  /** چالش سازمانی */
+  orgId?: ID
   createdAt: ISODate
 }
 
@@ -418,4 +568,122 @@ export interface PlatformSettings {
   commissions: Record<RevenueModule, number> // درصد
   challengeCreationFee: number
   minWithdraw: number
+  /** هزینه‌ی ارسال فروشگاه و حد ارسال رایگان */
+  shippingFee?: number
+  freeShippingOver?: number
+  /** پاداش معرفی برای هر دو طرف */
+  referralReward?: number
+  /** تخفیف خرید سازمانی (درصد) */
+  orgDiscountPct?: number
+}
+
+/* ───────── نظرها، گزارش‌ها و پشتیبانی ───────── */
+
+export interface Review {
+  id: ID
+  kind: 'gym' | 'product' | 'food' | 'coach' | 'doctor'
+  refId: ID
+  userId: ID
+  stars: number
+  text: string
+  image?: string
+  reply?: string
+  createdAt: ISODate
+}
+
+export interface Report {
+  id: ID
+  reporterId: ID
+  kind: 'post' | 'comment' | 'user' | 'story'
+  refId: ID
+  /** شناسه‌ی پست والد برای نظرها */
+  parentId?: ID
+  reason: string
+  status: 'open' | 'resolved' | 'dismissed'
+  createdAt: ISODate
+}
+
+export interface Ticket {
+  id: ID
+  userId: ID
+  subject: string
+  category: 'payment' | 'gym' | 'order' | 'account' | 'other'
+  status: 'open' | 'answered' | 'closed'
+  messages: { from: ID; text: string; at: ISODate; staff?: boolean }[]
+  createdAt: ISODate
+  updatedAt: ISODate
+}
+
+/* ───────── تمرین، تغذیه و پیشرفت ───────── */
+
+export interface WorkoutSet {
+  reps: number
+  weight: number
+}
+
+export interface WorkoutSession {
+  id: ID
+  userId: ID
+  day: string // YYYY-MM-DD
+  title: string
+  durationMin: number
+  exercises: { exerciseId: ID; sets: WorkoutSet[] }[]
+  note?: string
+  /** اگر از برنامه‌ی مربی انجام شده */
+  program?: { orderId: ID; week: number; day: number }
+  createdAt: ISODate
+}
+
+export interface MealLog {
+  id: ID
+  userId: ID
+  day: string
+  meal: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  name: string
+  qty: number
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+  source: 'db' | 'buffet' | 'custom' | 'photo'
+  createdAt: ISODate
+}
+
+export interface BodyEntry {
+  id: ID
+  userId: ID
+  day: string
+  weightKg?: number
+  waistCm?: number
+  hipCm?: number
+  chestCm?: number
+  armCm?: number
+  bodyFatPct?: number
+  photo?: string
+  createdAt: ISODate
+}
+
+/* ───────── سازمان‌ها، هدیه و معرفی ───────── */
+
+export interface Org {
+  id: ID
+  name: string
+  adminId: ID
+  /** کد عضویت کارمندان */
+  code: string
+  planId: ID
+  seats: number
+  members: ID[]
+  createdAt: ISODate
+}
+
+export interface GiftCard {
+  id: ID
+  code: string
+  planId: ID
+  fromId: ID
+  toPhone: string
+  message?: string
+  redeemedBy?: ID
+  createdAt: ISODate
 }

@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { useDB } from '@/core/db'
 import { MODULE_LABEL } from '@/core/config'
-import { broadcast, setCommission, setPlatformSetting } from '@/core/services/admin'
+import { broadcast, saveCoupon, setCommission, setPlatformSetting } from '@/core/services/admin'
+import type { Coupon } from '@/core/types'
+import { faDate, num } from '@/core/format'
 import type { RevenueModule } from '@/core/types'
-import { Button, Card, Field, Input, NumberInput, PageHeader, SectionTitle, Textarea } from '@/ui/kit'
+import { Badge, Button, Card, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
 import { run } from '@/ui/toast'
 
 export default function AdminSettings() {
   const settings = useDB((s) => s.settings)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
+  const coupons = useDB((s) => s.coupons)
+  const [cp, setCp] = useState<Partial<Coupon>>({ code: '', pct: 10, maxAmount: 200_000, module: 'all', maxUses: 100 })
+  const num0 = (k: 'shippingFee' | 'freeShippingOver' | 'referralReward' | 'orgDiscountPct') => settings[k] ?? 0
   return (
     <div className="animate-fade-up">
       <PageHeader title="کمیسیون و تنظیمات" />
@@ -34,6 +39,20 @@ export default function AdminSettings() {
             <Field label="حداقل مبلغ تسویه (تومان)">
               <NumberInput value={settings.minWithdraw} onChange={(v) => setPlatformSetting('minWithdraw', v)} />
             </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="هزینه‌ی ارسال فروشگاه">
+                <NumberInput value={num0('shippingFee')} onChange={(v) => setPlatformSetting('shippingFee', v)} />
+              </Field>
+              <Field label="ارسال رایگان از مبلغ">
+                <NumberInput value={num0('freeShippingOver')} onChange={(v) => setPlatformSetting('freeShippingOver', v)} />
+              </Field>
+              <Field label="پاداش معرفی (هر طرف)">
+                <NumberInput value={num0('referralReward')} onChange={(v) => setPlatformSetting('referralReward', v)} />
+              </Field>
+              <Field label="تخفیف سازمانی (٪)">
+                <NumberInput value={num0('orgDiscountPct')} onChange={(v) => setPlatformSetting('orgDiscountPct', v)} />
+              </Field>
+            </div>
           </Card>
           <Card className="space-y-3">
             <div className="font-semibold">ارسال اعلان همگانی</div>
@@ -42,6 +61,50 @@ export default function AdminSettings() {
             <Button className="w-full" disabled={!title.trim()} onClick={() => { run(() => broadcast(title, body), 'اعلان ارسال شد'); setTitle(''); setBody('') }}>ارسال به همه‌ی کاربران</Button>
           </Card>
         </div>
+      </div>
+
+      <SectionTitle title="کدهای تخفیف" />
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+        <Card className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="کد">
+              <Input value={cp.code} onChange={(e) => setCp({ ...cp, code: e.target.value.toUpperCase() })} dir="ltr" placeholder="NOWRUZ30" />
+            </Field>
+            <Field label="بخش">
+              <Select value={cp.module} onChange={(e) => setCp({ ...cp, module: e.target.value as Coupon['module'] })}>
+                <option value="all">همه</option>
+                <option value="shop">فروشگاه</option>
+                <option value="buffet">بوفه</option>
+                <option value="subscription">اشتراک</option>
+              </Select>
+            </Field>
+            <Field label="درصد">
+              <NumberInput value={cp.pct ?? 0} onChange={(v) => setCp({ ...cp, pct: v })} />
+            </Field>
+            <Field label="سقف تخفیف (تومان)">
+              <NumberInput value={cp.maxAmount ?? 0} onChange={(v) => setCp({ ...cp, maxAmount: v })} />
+            </Field>
+            <Field label="تعداد استفاده">
+              <NumberInput value={cp.maxUses ?? 0} onChange={(v) => setCp({ ...cp, maxUses: v })} />
+            </Field>
+          </div>
+          <Button className="w-full" onClick={() => run(() => saveCoupon(cp), 'کد تخفیف ذخیره شد')}>
+            ذخیره‌ی کد
+          </Button>
+        </Card>
+        <Card className="px-4 py-1">
+          {coupons.map((c) => (
+            <div key={c.id} className="flex items-center gap-3 border-b hairline py-3 text-sm last:border-0">
+              <b dir="ltr" className="w-28">{c.code}</b>
+              <span className="flex-1 text-xs text-ink-500">
+                {num(c.pct)}٪ تا {num(c.maxAmount)} تومان · {num(c.usedBy.length)}/{num(c.maxUses)} · تا {faDate(c.expiresAt)}
+              </span>
+              <button onClick={() => run(() => saveCoupon({ ...c, active: !c.active }))}>
+                <Badge color={c.active ? 'emerald' : 'slate'}>{c.active ? 'فعال' : 'غیرفعال'}</Badge>
+              </button>
+            </div>
+          ))}
+        </Card>
       </div>
     </div>
   )

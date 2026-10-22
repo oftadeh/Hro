@@ -1,8 +1,10 @@
 import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { BarChart3, Building2, ClipboardList, Cog, FileText, Package, QrCode, Stethoscope, Trophy, UserCog, Users, UtensilsCrossed, Wallet } from 'lucide-react'
+import { BadgeCheck, BarChart3, Building2, ClipboardList, Cog, FileText, Flag, LifeBuoy, Package, QrCode, Stethoscope, Trophy, UserCog, Users, UtensilsCrossed, Wallet, Briefcase, Star } from 'lucide-react'
 import { useSession } from '@/core/db'
 import { touchDaily } from '@/core/services/engagement'
+import { expireTickets } from '@/core/services/fityab'
+import { REMOTE } from '@/core/client/remote'
 import type { Role } from '@/core/types'
 import { Toaster } from '@/ui/toast'
 import { useMe } from '@/ui/hooks'
@@ -18,6 +20,18 @@ const Messages = lazy(() => import('@/pages/Messages'))
 const ChatThread = lazy(() => import('@/pages/ChatThread'))
 const Orders = lazy(() => import('@/pages/Orders'))
 const UserProfile = lazy(() => import('@/pages/UserProfile'))
+const Tickets = lazy(() => import('@/pages/Tickets'))
+const Medical = lazy(() => import('@/pages/Medical'))
+const Support = lazy(() => import('@/pages/Support'))
+const SupportThread = lazy(() => import('@/pages/SupportThread'))
+const League = lazy(() => import('@/pages/League'))
+const Invite = lazy(() => import('@/pages/Invite'))
+const OrgPage = lazy(() => import('@/pages/OrgPage'))
+const ClientHealth = lazy(() => import('@/pages/ClientHealth'))
+const Workouts = lazy(() => import('@/modules/health/Workouts'))
+const Nutrition = lazy(() => import('@/modules/health/Nutrition'))
+const Progress = lazy(() => import('@/modules/health/Progress'))
+const ProgramView = lazy(() => import('@/modules/fityar/ProgramView'))
 
 const FitYab = lazy(() => import('@/modules/fityab/FitYab'))
 const GymDetail = lazy(() => import('@/modules/fityab/GymDetail'))
@@ -52,6 +66,11 @@ const AdminGyms = lazy(() => import('@/panels/admin/AdminGyms'))
 const AdminFinance = lazy(() => import('@/panels/admin/AdminFinance'))
 const AdminChallenges = lazy(() => import('@/panels/admin/AdminChallenges'))
 const AdminSettings = lazy(() => import('@/panels/admin/AdminSettings'))
+const AdminApprovals = lazy(() => import('@/panels/admin/AdminApprovals'))
+const AdminModeration = lazy(() => import('@/panels/admin/AdminModeration'))
+const AdminSupport = lazy(() => import('@/panels/admin/AdminSupport'))
+const GymReviews = lazy(() => import('@/panels/gym/GymReviews'))
+const CompanyPanel = lazy(() => import('@/panels/company/CompanyPanel'))
 
 const finance: PanelLink = { to: 'finance', label: 'درآمد و تسویه', icon: Wallet }
 
@@ -59,6 +78,7 @@ const PANELS: Record<Exclude<Role, 'user'>, PanelLink[]> = {
   gym: [
     { to: '/panel/gym', label: 'داشبورد', icon: BarChart3, end: true },
     { to: 'checkins', label: 'پذیرش ورود', icon: QrCode },
+    { to: 'reviews', label: 'نظرات', icon: Star },
     { to: 'edit', label: 'ثبت باشگاه جدید', icon: Building2 },
     finance,
   ],
@@ -83,10 +103,14 @@ const PANELS: Record<Exclude<Role, 'user'>, PanelLink[]> = {
     { to: 'orders', label: 'سفارش‌ها', icon: ClipboardList },
     finance,
   ],
+  company: [{ to: '/panel/company', label: 'سلامت سازمان', icon: Briefcase, end: true }],
   admin: [
     { to: '/panel/admin', label: 'نمای کلی', icon: BarChart3, end: true },
     { to: 'users', label: 'کاربران و نقش‌ها', icon: Users },
     { to: 'gyms', label: 'باشگاه‌ها', icon: Building2 },
+    { to: 'approvals', label: 'تأیید مدارک', icon: BadgeCheck },
+    { to: 'moderation', label: 'گزارش تخلف', icon: Flag },
+    { to: 'support', label: 'پشتیبانی', icon: LifeBuoy },
     { to: 'finance', label: 'مالی و تسویه', icon: FileText },
     { to: 'challenges', label: 'چالش‌ها', icon: Trophy },
     { to: 'settings', label: 'کمیسیون و تنظیمات', icon: Cog },
@@ -110,7 +134,9 @@ export default function App() {
   }, [theme])
 
   useEffect(() => {
-    if (me) touchDaily(me.id)
+    if (!me) return
+    touchDaily().catch(() => {})
+    if (!REMOTE) expireTickets()
   }, [me?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => window.scrollTo(0, 0), [pathname, me?.id])
@@ -161,11 +187,24 @@ export default function App() {
           <Route path="challenges" element={<Challenges />} />
           <Route path="challenges/new" element={<CreateChallenge />} />
           <Route path="challenges/:id" element={<ChallengeDetail />} />
+          <Route path="tickets" element={<Tickets />} />
+          <Route path="workouts" element={<Workouts />} />
+          <Route path="nutrition" element={<Nutrition />} />
+          <Route path="progress" element={<Progress />} />
+          <Route path="medical" element={<Medical />} />
+          <Route path="support" element={<Support />} />
+          <Route path="support/:id" element={<SupportThread />} />
+          <Route path="league" element={<League />} />
+          <Route path="invite" element={<Invite />} />
+          <Route path="org" element={<OrgPage />} />
+          <Route path="program/:id" element={<ProgramView />} />
+          <Route path="client/:id" element={<ClientHealth />} />
         </Route>
 
         <Route path="/panel/gym" element={panel('gym')}>
           <Route index element={<GymDashboard />} />
           <Route path="checkins" element={<GymCheckins />} />
+          <Route path="reviews" element={<GymReviews />} />
           <Route path="edit" element={<GymEditor />} />
           <Route path="edit/:id" element={<GymEditor />} />
           <Route path="finance" element={<PanelFinance />} />
@@ -191,6 +230,9 @@ export default function App() {
           <Route path="orders" element={<VendorOrders kind="food" />} />
           <Route path="finance" element={<PanelFinance />} />
         </Route>
+        <Route path="/panel/company" element={panel('company')}>
+          <Route index element={<CompanyPanel />} />
+        </Route>
         <Route path="/panel/admin" element={panel('admin')}>
           <Route index element={<AdminOverview />} />
           <Route path="users" element={<AdminUsers />} />
@@ -198,6 +240,9 @@ export default function App() {
           <Route path="finance" element={<AdminFinance />} />
           <Route path="challenges" element={<AdminChallenges />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="approvals" element={<AdminApprovals />} />
+          <Route path="moderation" element={<AdminModeration />} />
+          <Route path="support" element={<AdminSupport />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

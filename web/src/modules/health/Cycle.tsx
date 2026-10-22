@@ -9,7 +9,7 @@ import { Droplet, Lock, Settings2, Sparkles } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { dayKey, faDigitsToEn, num } from '@/core/format'
 import { daysAgoKey } from '@/core/profile'
-import { PHASES, SYMPTOMS, logCycleDay, logPeriodStart, phaseOfDay, setupCycle, statusFor, type CycleStatus } from '@/core/services/cycle'
+import { PHASES, SYMPTOMS, logCycleDay, logPeriodStart, phaseOfDay, pregnancyStatus, setTrackerMode, setupCycle, statusFor, type CycleStatus } from '@/core/services/cycle'
 import type { CycleLog } from '@/core/types'
 import { Button, Field, Input, Sheet } from '@/ui/kit'
 import { Yoga } from '@/ui/art'
@@ -21,8 +21,9 @@ const DAY = 86_400_000
 export function useCycle() {
   const me = useMe()
   const c = useDB((s) => s.cycles.find((x) => x.userId === me?.id))
-  if (!me || me.gender !== 'female' || !c) return { profile: undefined, status: undefined }
-  return { profile: c, status: statusFor(c) }
+  if (!me || me.gender !== 'female' || !c) return { profile: undefined, status: undefined, pregnancy: undefined }
+  if ((c.mode ?? 'cycle') !== 'cycle') return { profile: c, status: undefined, pregnancy: pregnancyStatus(c) ?? undefined }
+  return { profile: c, status: statusFor(c), pregnancy: undefined }
 }
 
 /** حلقه‌ی چرخه: هر روز یک قطعه به رنگ فاز، با نشانگر امروز */
@@ -55,9 +56,32 @@ export function CycleWheel({ st, size = 176 }: { st: CycleStatus; size?: number 
 
 /** کارت چرخه در صفحه‌ی خانه/پروفایل */
 export function CycleCard() {
-  const { status: st, profile } = useCycle()
+  const { status: st, profile, pregnancy } = useCycle()
   const [setup, setSetup] = useState(false)
   const [log, setLog] = useState(false)
+
+  if (pregnancy)
+    return (
+      <>
+        <div className="relative overflow-hidden rounded-[2rem] grad-pink p-5 text-ink-950">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-1.5 text-xs opacity-60"><Lock size={11} /> {pregnancy.mode === 'pregnancy' ? 'بارداری' : 'پس از زایمان'}</div>
+              <div className="mt-1 font-display text-[2rem] leading-none">{pregnancy.mode === 'pregnancy' ? `هفته‌ی ${num(pregnancy.week)}` : `${num(pregnancy.weeks)} هفته پس از زایمان`}</div>
+              <div className="mt-1 text-xs opacity-70">{pregnancy.title}{pregnancy.mode === 'pregnancy' && ` · ${num(Math.max(0, pregnancy.daysLeft))} روز تا زایمان`}</div>
+            </div>
+            <button onClick={() => setSetup(true)} className="rounded-full p-2 opacity-60 hover:opacity-100" aria-label="تنظیمات"><Settings2 size={17} /></button>
+          </div>
+          {pregnancy.mode === 'pregnancy' && <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/50"><div className="h-full rounded-full bg-ink-950/70" style={{ width: `${pregnancy.progress * 100}%` }} /></div>}
+          <div className="mt-4 space-y-2 text-xs leading-6">
+            <div><b>تمرین: </b>{pregnancy.workout}</div>
+            <div><b>تغذیه: </b>{pregnancy.nutrition}</div>
+          </div>
+          <p className="mt-3 text-[10px] opacity-60">هر برنامه‌ی ورزشی در این دوران باید با نظر پزشک یا ماما باشد.</p>
+        </div>
+        <CycleSetupSheet open={setup} onClose={() => setSetup(false)} />
+      </>
+    )
 
   if (!st || !profile)
     return (
@@ -161,10 +185,43 @@ export function CycleSetupSheet({ open, onClose }: { open: boolean; onClose: () 
   const c = useDB((s) => s.cycles.find((x) => x.userId === me?.id))
   const since = c ? Math.max(0, Math.round((Date.now() - new Date(c.lastPeriodStart + 'T00:00').getTime()) / DAY)) : 0
   const [f, setF] = useState({ ago: c ? String(since) : '', cycleLength: String(c?.cycleLength ?? 28), periodLength: String(c?.periodLength ?? 5) })
+  const [mode, setMode] = useState<'cycle' | 'pregnancy' | 'postpartum'>(c?.mode ?? 'cycle')
+  const [weeks, setWeeks] = useState('')
   const n = (v: string) => Number(faDigitsToEn(v))
   return (
-    <Sheet open={open} onClose={onClose} title="تنظیم ردیاب چرخه">
+    <Sheet open={open} onClose={onClose} title="تنظیم ردیاب">
       <div className="space-y-3">
+        <div className="flex gap-1.5">
+          {(
+            [
+              ['cycle', 'چرخه‌ی قاعدگی'],
+              ['pregnancy', 'باردار هستم'],
+              ['postpartum', 'پس از زایمان'],
+            ] as const
+          ).map(([v, l]) => (
+            <button key={v} type="button" onClick={() => setMode(v)} className={pill(mode === v)}>
+              {l}
+            </button>
+          ))}
+        </div>
+        {mode !== 'cycle' ? (
+          <>
+            <Field label={mode === 'pregnancy' ? 'چند هفته باردار هستید؟' : 'چند هفته از زایمان گذشته است؟'}>
+              <Input value={weeks} onChange={(e) => setWeeks(e.target.value)} inputMode="numeric" placeholder={mode === 'pregnancy' ? 'مثلاً ۱۲' : 'مثلاً ۴'} />
+            </Field>
+            <Button
+              className="w-full"
+              onClick={async () => {
+                const w = n(weeks)
+                const due = mode === 'pregnancy' ? daysAgoKey(-Math.round((40 - w) * 7)) : daysAgoKey(Math.round(w * 7))
+                if (await runOk(() => setTrackerMode(mode, due), 'ذخیره شد')) onClose()
+              }}
+            >
+              ذخیره
+            </Button>
+          </>
+        ) : (
+        <>
         <p className="flex items-start gap-1.5 text-xs leading-6 text-ink-500">
           <Lock size={13} className="mt-1 shrink-0" /> این اطلاعات فقط برای خودت قابل مشاهده است و در پروفایل عمومی یا برای دیگران نمایش داده نمی‌شود.
         </p>
@@ -182,12 +239,15 @@ export function CycleSetupSheet({ open, onClose }: { open: boolean; onClose: () 
         <Button
           className="w-full"
           onClick={async () => {
+            if (c?.mode && c.mode !== 'cycle') await setTrackerMode('cycle')
             const ok = await runOk(() => setupCycle({ lastPeriodStart: f.ago.trim() === '' ? '' : daysAgoKey(n(f.ago)), cycleLength: n(f.cycleLength), periodLength: n(f.periodLength) }), 'ردیاب چرخه ذخیره شد')
             if (ok) onClose()
           }}
         >
           ذخیره
         </Button>
+        </>
+        )}
       </div>
     </Sheet>
   )

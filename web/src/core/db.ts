@@ -8,66 +8,30 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
-import type {
-  Appointment, CartItem, Challenge, CheckIn, CoachProfile, CycleProfile, DailyLog, DoctorProfile, Food, Gym, ID, Notification,
-  Order, Payout, PlanOrder, PlatformSettings, Post, Product, Restaurant, Role, Story, Subscription, Thread,
-  Transaction, User,
-} from './types'
-import { createSeed } from './seed'
+import type { ID, Role } from './types'
+import type { DBState } from './state'
+import { createEmpty, createSeed } from './seed'
+import { AppError, configureCore } from './store'
 
-export interface AIChatMessage {
-  role: 'user' | 'assistant'
-  text: string
-  at: string
-  suggestions?: { label: string; link: string }[]
-}
+export type { DBState, AIChatMessage } from './state'
 
-export interface DBState {
-  version: number
-  users: User[]
-  subscriptions: Subscription[]
-  /** موجودی کیف پول هر کاربر؛ کلیدهای ویژه: platform (درآمد کی‌فیت) و escrow (صندوق چالش‌ها) */
-  wallets: Record<string, number>
-  transactions: Transaction[]
-  payouts: Payout[]
-  gyms: Gym[]
-  checkins: CheckIn[]
-  coaches: CoachProfile[]
-  planOrders: PlanOrder[]
-  threads: Thread[]
-  products: Product[]
-  orders: Order[]
-  doctors: DoctorProfile[]
-  appointments: Appointment[]
-  restaurants: Restaurant[]
-  foods: Food[]
-  posts: Post[]
-  stories: Story[]
-  challenges: Challenge[]
-  notifications: Notification[]
-  dailyLogs: DailyLog[]
-  cycles: CycleProfile[]
-  carts: Record<ID, CartItem[]>
-  aiChats: Record<ID, AIChatMessage[]>
-  settings: PlatformSettings
-}
+const REMOTE = import.meta.env.VITE_REMOTE === '1'
+export { AppError, currentUserId, db, mutate } from './store'
 
 export const useDB = create<DBState>()(
   persist(
-    immer(() => createSeed()),
+    immer(() => (REMOTE ? createEmpty() : createSeed())),
     {
-      name: 'keyfit-db',
+      // در حالت سرور فقط یک کپی موقت از نمای کاربر نگه داشته می‌شود
+      name: REMOTE ? 'keyfit-cache' : 'keyfit-db',
       // نسخه‌ی داده‌های نمایشی؛ با تغییر ساختار، داده‌ها به حالت اولیه برمی‌گردند
-      version: 5,
-      migrate: () => createSeed(),
+      version: 6,
+      migrate: () => (REMOTE ? createEmpty() : createSeed()),
       storage: createJSONStorage(() => localStorage),
     },
   ),
 )
 
-/** اعمال تغییر روی دیتابیس (معادل یک تراکنش سمت سرور) */
-export const mutate = (fn: (db: DBState) => void) => useDB.setState(fn)
-export const db = () => useDB.getState()
 
 export function resetDemo() {
   useDB.setState(createSeed(), true)
@@ -98,10 +62,10 @@ export const useSession = create<SessionState>()(
   ),
 )
 
-export function currentUserId(): ID {
-  const id = useSession.getState().userId
-  if (!id) throw new AppError('ابتدا وارد حساب کاربری شوید')
-  return id
-}
+configureCore({
+  get: () => useDB.getState(),
+  mutate: (fn) => useDB.setState(fn),
+  userId: () => useSession.getState().userId,
+})
 
-export class AppError extends Error {}
+void AppError
