@@ -1,4 +1,4 @@
-import type { InsurancePlan, Role, SubscriptionPlan, RevenueModule, VenueKind } from './types'
+import type { CareKind, InsurancePlan, Role, SubscriptionPlan, RevenueModule, VenueKind } from './types'
 
 export const APP_NAME = 'کی‌فیت'
 
@@ -21,6 +21,8 @@ export const MODULE_LABEL: Record<RevenueModule, string> = {
   buffet: 'بوفه',
   challenge: 'چالش‌ها',
   insurance: 'بیمه‌ی ورزشی',
+  event: 'رویدادها',
+  market: 'بازار دست‌دوم',
 }
 
 export const DEFAULT_COMMISSIONS: Record<RevenueModule, number> = {
@@ -31,6 +33,8 @@ export const DEFAULT_COMMISSIONS: Record<RevenueModule, number> = {
   buffet: 12,
   challenge: 20,
   insurance: 10,
+  event: 10,
+  market: 5,
 }
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
@@ -121,3 +125,22 @@ export const DEFAULT_INSURANCE_PLANS: InsurancePlan[] = [
     sports: ['همه‌ی رشته‌های فیت‌یاب', 'کراس‌فیت', 'رزمی', 'فوتبال', 'سوارکاری'], perks: ['هزینه‌ی درمان تا ۱۵۰ میلیون', 'فیزیوتراپی تا ۱۰ جلسه', 'غرامت نقص عضو تا ۵۰۰ میلیون', 'فرانشیز ۱۰٪'], active: true,
   },
 ]
+
+/** انواع خدمات سلامت در بخش «پزشک و درمان» */
+export const CARE_KINDS: Record<CareKind, { label: string; plural: string; license: string; desc: string }> = {
+  doctor: { label: 'پزشک', plural: 'پزشکان', license: 'کد نظام پزشکی', desc: 'پزشکی ورزشی، ارتوپدی، تغذیه و چکاپ' },
+  physio: { label: 'فیزیوتراپ', plural: 'فیزیوتراپی', license: 'کد نظام پزشکی (فیزیوتراپی)', desc: 'توانبخشی آسیب و درد مفاصل' },
+  massage: { label: 'ماساژ ورزشی', plural: 'ماساژ ورزشی', license: 'شماره‌ی مدرک فنی‌وحرفه‌ای', desc: 'ریکاوری و ماساژ ورزشی حضوری' },
+  psych: { label: 'روان‌شناس ورزشی', plural: 'روان‌شناسی ورزشی', license: 'کد نظام روان‌شناسی', desc: 'انگیزه، تمرکز، اضطراب مسابقه' },
+}
+
+export const EVENT_KINDS = {
+  race: 'مسابقه‌ی دو',
+  hike: 'کوهپیمایی',
+  tournament: 'تورنمنت',
+  workshop: 'کارگاه و همایش',
+  other: 'رویداد ورزشی',
+} as const
+
+export const LISTING_CONDITION = { new: 'نو (آکبند)', like_new: 'در حد نو', good: 'خوب', fair: 'کارکرده' } as const
+export const LISTING_CATEGORY = { equipment: 'تجهیزات', apparel: 'لباس و کفش', accessory: 'لوازم جانبی', supplement: 'مکمل (پلمپ)', other: 'سایر' } as const

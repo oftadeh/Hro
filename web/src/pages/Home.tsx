@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, ChevronLeft, Gift, Plus } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { DAILY_MISSIONS, DEFAULT_CENTER } from '@/core/config'
-import { dayKey, distanceKm, num, toman, daysLeft } from '@/core/format'
+import { dayKey, distanceKm, faDateTime, num, toman, daysLeft } from '@/core/format'
 import { claimDailyReward, levelOf, logActivity } from '@/core/services/engagement'
 import { activeSubscription } from '@/core/services/wallet'
 import { rankings } from '@/core/services/challenges'
@@ -23,7 +23,8 @@ import { TrainingFocus } from '@/modules/health/TrainingFocus'
 import { HealthScoreCard } from '@/modules/health/HealthScore'
 import { ticketStatus } from '@/core/services/fityab'
 import { leagueOf, weekXpOf } from '@/core/services/engagement'
-import { Activity, Apple, Dumbbell, Ticket as TicketIcon } from 'lucide-react'
+import { Activity, Apple, CalendarDays, Dumbbell, Radio, Ticket as TicketIcon } from 'lucide-react'
+import { liveEnd } from '@/core/services/live'
 
 const QUOTES = [
   'پیشرفت مهم است، نه بی‌نقصی',
@@ -75,6 +76,10 @@ export default function Home() {
   const { status: cycle } = useCycle()
   const checkins = useDB((s) => s.checkins)
   const requests = useDB((s) => s.entryRequests)
+  const liveClasses = useDB((s) => s.liveClasses)
+  const events = useDB((s) => s.events)
+  const nextLive = liveClasses.filter((c) => c.status === 'scheduled' && c.attendees.includes(me.id) && liveEnd(c) > new Date() && new Date(c.at).getTime() - Date.now() < 48 * 3_600_000).sort((a, b) => a.at.localeCompare(b.at))[0]
+  const nextEvent = events.filter((e) => (e.status === 'open' || e.status === 'closed') && e.registrations.some((r) => r.userId === me.id) && new Date(e.at) > new Date()).sort((a, b) => a.at.localeCompare(b.at))[0]
   const nextTicket = checkins.filter((c) => c.userId === me.id && ticketStatus(c) === 'active').sort((a, b) => (a.slotAt ?? a.createdAt).localeCompare(b.slotAt ?? b.createdAt))[0]
   const ticketGym = nextTicket && gyms.find((g) => g.id === nextTicket.gymId)
   const pendingReq = requests.find((r) => r.userId === me.id && r.status === 'pending' && Date.now() - new Date(r.createdAt).getTime() < 30 * 60_000)
@@ -171,6 +176,27 @@ export default function Home() {
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">بلیت فعال: {ticketGym.name}</div>
             <div className="text-[11px] text-ink-500">{nextTicket.classId ? `کلاس ${ticketGym.classes?.find((k) => k.id === nextTicket.classId)?.title}` : 'سانس آزاد امروز'} · برای نمایش QR بزنید</div>
+          </div>
+          <ArrowLeft size={16} className="text-ink-400" />
+        </Link>
+      )}
+
+      {nextLive && (
+        <Link to={`/live/${nextLive.id}`} className="mt-3 flex items-center gap-3 rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl grad-pink text-ink-950"><Radio size={18} /></span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">کلاس آنلاین: {nextLive.title}</div>
+            <div className="text-[11px] text-ink-500">{faDateTime(nextLive.at)}</div>
+          </div>
+          <ArrowLeft size={16} className="text-ink-400" />
+        </Link>
+      )}
+      {nextEvent && (
+        <Link to={`/events/${nextEvent.id}`} className="mt-3 flex items-center gap-3 rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl grad-mint text-ink-950"><CalendarDays size={18} /></span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">{nextEvent.title}</div>
+            <div className="text-[11px] text-ink-500">{faDateTime(nextEvent.at)} · شماره‌ی شما {num(nextEvent.registrations.find((r) => r.userId === me.id)!.bib)}</div>
           </div>
           <ArrowLeft size={16} className="text-ink-400" />
         </Link>
@@ -296,7 +322,11 @@ export default function Home() {
         {[
           { to: '/shop', t: 'فروشگاه', d: 'مکمل و لوازم', art: <Shaker size={84} /> },
           { to: '/buffet', t: 'بوفه', d: 'غذای سالم', art: <SaladBowl size={92} /> },
-          { to: '/doctors', t: 'پزشک', d: 'ویزیت آنلاین', art: <DoctorArt size={92} /> },
+          { to: '/doctors', t: 'سلامت و درمان', d: 'پزشک، فیزیو، روان‌شناس', art: <DoctorArt size={92} /> },
+          { to: '/live', t: 'کلاس آنلاین', d: 'تمرین زنده از خانه', art: <Yoga size={92} /> },
+          { to: '/events', t: 'رویدادها', d: 'مسابقه و کوهپیمایی', art: <Runner size={92} /> },
+          { to: '/market', t: 'دست‌دوم', d: 'خرید و فروش امن', art: <Lifter size={92} /> },
+          { to: '/family', t: 'خانواده', d: 'کلاس کودکان', art: <HeartPulse size={84} /> },
           { to: '/wallet', t: 'کیف پول', d: 'عضویت و اعتبار', art: <WalletCoins size={88} /> },
         ].map((m, i) => (
           <Link key={m.to} to={m.to} className="lift-hover relative min-h-[9.5rem] overflow-hidden rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">

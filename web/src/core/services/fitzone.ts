@@ -132,7 +132,7 @@ export const deletePost = svc('zone.deletePost', (postId: string) => {
 /** گزارش تخلف */
 export const reportContent = svc('zone.report', (kind: Report['kind'], refId: string, reason: string, parentId?: string) => {
   const me = currentUserId()
-  if (!['post', 'comment', 'user', 'story'].includes(kind)) throw new AppError('نوع گزارش معتبر نیست')
+  if (!['post', 'comment', 'user', 'story', 'listing'].includes(kind)) throw new AppError('نوع گزارش معتبر نیست')
   if (String(reason ?? '').trim().length < 3) throw new AppError('دلیل گزارش را بنویسید')
   if (db().reports.some((r) => r.reporterId === me && r.refId === refId && r.status === 'open')) throw new AppError('این مورد را قبلاً گزارش داده‌اید')
   mutate((d) => {

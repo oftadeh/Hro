@@ -41,7 +41,8 @@ export const logWorkout = svc('health.workout', (input: Omit<WorkoutSession, 'id
       if (!o) program = undefined
       else if (!o.done?.includes(`${program.week}-${program.day}`)) (o.done ??= []).push(`${program.week}-${program.day}`)
     }
-    d.workouts.unshift({ id, userId: me, day, title: String(input.title || 'تمرین').slice(0, 60), durationMin, exercises, note: input.note?.slice(0, 300), program, createdAt: now() })
+    const hr = input.hr && input.hr.avg >= 40 && input.hr.avg <= 230 && input.hr.max >= input.hr.avg && input.hr.max <= 240 ? { avg: Math.round(input.hr.avg), max: Math.round(input.hr.max) } : undefined
+    d.workouts.unshift({ id, userId: me, day, title: String(input.title || 'تمرین').slice(0, 60), durationMin, exercises, note: input.note?.slice(0, 300), program, hr, createdAt: now() })
     if (day === dayKey()) {
       const log = d.dailyLogs.find((l) => l.userId === me && l.day === day)
       if (log) log.workoutMinutes = Math.min(600, log.workoutMinutes + durationMin)
@@ -155,6 +156,10 @@ export const addBodyEntry = svc('health.body', (input: Omit<BodyEntry, 'id' | 'u
     chestCm: r(input.chestCm, 50, 200, 'دور سینه'),
     armCm: r(input.armCm, 15, 70, 'دور بازو'),
     bodyFatPct: r(input.bodyFatPct, 3, 60, 'درصد چربی'),
+    muscleKg: r(input.muscleKg, 10, 120, 'وزن عضله'),
+    visceralFat: r(input.visceralFat, 1, 30, 'چربی احشایی'),
+    bmr: r(input.bmr, 800, 4000, 'متابولیسم پایه'),
+    waterPct: r(input.waterPct, 30, 80, 'درصد آب'),
   }
   if (!Object.values(e).some((v) => v !== undefined) && !input.photo) throw new AppError('حداقل یک اندازه یا عکس ثبت کنید')
   mutate((d) => {

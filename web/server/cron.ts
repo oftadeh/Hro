@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { getState, kv, dailyBackup, sql } from './storage'
 import { mutate } from '../src/core/store'
 import { expireTickets } from '../src/core/services/fityab'
+import { autoReleaseDeals } from '../src/core/services/market'
 import { cycleStatusIn } from '../src/core/services/cycle'
 import { notify } from '../src/core/services/ledger'
 import { dayKey } from '../src/core/format'
@@ -12,6 +13,7 @@ export function startCron(ctx: AsyncLocalStorage<{ userId: string | null }>) {
     ctx.run({ userId: null }, () => {
       try {
         expireTickets()
+        autoReleaseDeals()
         reminders()
         dailyBackup()
         sql.prepare("DELETE FROM kv WHERE key LIKE 'rem:%' AND key NOT LIKE ?").run(`%${dayKey()}%`)
@@ -50,6 +52,18 @@ function reminders() {
       const st = cycleStatusIn(s, u.id)
       if (st && st.daysToNext === 2 && once(`rem:${u.id}:period:${today}`)) due.push({ userId: u.id, title: 'یادآور چرخه', body: 'حدود ۲ روز تا شروع پریود بعدی؛ برنامه‌ی تمرینت را سبک‌تر بچین.', link: '/profile?tab=health' })
     }
+  }
+  // کلاس آنلاین: ۱۵ دقیقه قبل؛ رویداد: یک روز قبل
+  for (const c of s.liveClasses ?? []) {
+    const left = new Date(c.at).getTime() - now.getTime()
+    if (c.status === 'scheduled' && left > 0 && left <= 15 * 60_000 && once(`rem:live:${c.id}:${today}`))
+      for (const u of [c.hostId, ...c.attendees]) due.push({ userId: u, title: 'کلاس آنلاین تا چند دقیقه‌ی دیگر', body: `«${c.title}» — دکمه‌ی ورود فعال شد.`, link: `/live/${c.id}` })
+  }
+  for (const e of s.events ?? []) {
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    if (e.approved && (e.status === 'open' || e.status === 'closed') && dayKey(new Date(e.at)) === dayKey(tomorrow) && h >= 18 && once(`rem:event:${e.id}:${today}`))
+      for (const r of e.registrations) due.push({ userId: r.userId, title: `فردا: ${e.title}`, body: `شماره‌ی شما ${r.bib} — ${e.location}`, link: `/events/${e.id}` })
   }
   if (due.length) mutate((d) => due.forEach((x) => notify(d, x.userId, x.title, x.body, '', x.link)))
 }

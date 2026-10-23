@@ -153,6 +153,13 @@ export const resolveReport = svc(
           p.comments = p.comments.filter((x) => x.id !== r.refId)
           if (action === 'ban') d.users.find((u) => u.id === c.authorId)!.blocked = true
         }
+      } else if (r.kind === 'listing') {
+        const l = d.listings.find((x) => x.id === r.refId)
+        if (l && l.status === 'active') {
+          l.status = 'removed'
+          notify(d, l.sellerId, 'آگهی شما حذف شد', `«${l.title}» به دلیل نقض قوانین بازار حذف شد.`, '', '/market')
+        }
+        if (l && action === 'ban') d.users.find((u) => u.id === l.sellerId)!.blocked = true
       } else if (r.kind === 'story') {
         d.stories = d.stories.filter((x) => x.id !== r.refId)
       } else if (r.kind === 'user' && action === 'ban') {

@@ -32,6 +32,10 @@ export default function Shop() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="فروشگاه" subtitle="مکمل اصل و لوازم ورزشی با ضمانت" actions={<CartButton kind="product" onClick={() => setCart(true)} />} />
+      <Link to="/market" className="mb-4 flex items-center justify-between rounded-2xl bg-ink-900/[.04] px-4 py-3 text-sm dark:bg-white/[.05]">
+        <span>بازار دست‌دوم: خرید و فروش لوازم کارکرده با خرید امن</span>
+        <span className="text-xs text-ink-500">ورود ←</span>
+      </Link>
       <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white min-h-[10rem]">
         <Orbs seed="shop" intensity={0.8} />
         <Shaker size={120} className="pointer-events-none absolute -bottom-2 left-4" />

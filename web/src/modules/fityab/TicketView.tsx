@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 /** نمایش بلیت ورود (QR + کد) و پرداخت سانس/کلاس */
 import { Link } from 'react-router-dom'
 import { Navigation, Undo2 } from 'lucide-react'
@@ -43,6 +44,7 @@ export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckI
             <p className="py-6 text-sm text-ink-500">{st === 'used' ? `ورود در ${faDateTime(ticket.usedAt ?? ticket.createdAt)} ثبت شد.` : st === 'cancelled' ? 'این بلیت لغو و مبلغ آن برگشت داده شد.' : 'اعتبار این بلیت بدون استفاده تمام شد.'}</p>
           )}
           <div className="mt-3 space-y-1 rounded-2xl bg-ink-900/[.04] p-3 text-xs leading-6 text-ink-500 dark:bg-white/[.05]">
+            {ticket.memberName && <div>شرکت‌کننده: <b className="text-ink-900 dark:text-white">{ticket.memberName}</b></div>}
             {cls && ticket.slotAt && <div>زمان کلاس: <b className="text-ink-900 dark:text-white">{faDateTime(ticket.slotAt)}</b> · مربی: {cls.coachName}</div>}
             {ticket.rentalEnd && ticket.slotAt && <div>از <b className="text-ink-900 dark:text-white">{faDateTime(ticket.slotAt)}</b> تا {faDateTime(ticket.rentalEnd)}</div>}
             <div>
@@ -96,7 +98,11 @@ export function PaySheet({
   credit,
   balance,
   onPay,
+  children,
+  disabled,
 }: {
+  children?: ReactNode
+  disabled?: boolean
   open: boolean
   onClose: () => void
   title: string
@@ -111,14 +117,15 @@ export function PaySheet({
     <Sheet open={open} onClose={onClose} title={title}>
       <div className="space-y-3">
         <p className="text-sm leading-7 text-ink-500">{desc}</p>
+        {children}
         <div className="flex items-baseline justify-between rounded-2xl bg-ink-900/[.04] p-4 dark:bg-white/[.05]">
           <span className="text-xs text-ink-500">مبلغ قابل پرداخت</span>
           <span className="font-display text-3xl">{toman(price)}</span>
         </div>
-        <Button className="w-full" size="lg" disabled={!canSub} onClick={() => onPay('subscription')}>
+        <Button className="w-full" size="lg" disabled={!canSub || disabled} onClick={() => onPay('subscription')}>
           پرداخت از اشتراک {credit !== undefined ? `(اعتبار: ${toman(credit)})` : '(اشتراک ندارید)'}
         </Button>
-        <Button className="w-full" size="lg" variant="outline" disabled={balance < price} onClick={() => onPay('wallet')}>
+        <Button className="w-full" size="lg" variant="outline" disabled={balance < price || disabled} onClick={() => onPay('wallet')}>
           پرداخت از کیف پول (موجودی: {toman(balance)})
         </Button>
         {!canSub && balance < price && (

@@ -1,7 +1,10 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useDB } from '@/core/db'
+import { CARE_KINDS } from '@/core/config'
+import { careKind, careModes } from '@/core/services/doctor'
+import type { CareKind } from '@/core/types'
 import { faDateTime, num, toman } from '@/core/format'
-import { Avatar, Badge, Card, Orbs, PageHeader, SectionTitle, Stars } from '@/ui/kit'
+import { Avatar, Badge, Card, Chips, Orbs, PageHeader, SectionTitle, Stars } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 import { Doctor } from '@/ui/art'
 
@@ -11,16 +14,28 @@ export default function Doctors() {
   const appts = useDB((s) => s.appointments)
   const users = useUserMap()
   const mine = appts.filter((a) => a.userId === me.id)
+  const [params, setParams] = useSearchParams()
+  const kind = (params.get('kind') as CareKind) in CARE_KINDS ? (params.get('kind') as CareKind) : 'doctor'
+  const HERO: Record<CareKind, [string, string]> = {
+    doctor: ['مشاوره با پزشک، بدون صف', 'آسیب‌های ورزشی، چکاپ پیش از شروع ورزش، مکمل و تغذیه‌ی درمانی'],
+    physio: ['برگشت سریع‌تر به تمرین', 'توانبخشی آسیب زانو، شانه و کمر؛ جلسه‌ی آنلاین یا حضوری'],
+    massage: ['ریکاوری عضلات', 'ماساژ ورزشی حضوری پس از تمرین سنگین یا مسابقه'],
+    psych: ['ذهن قوی، عملکرد بهتر', 'انگیزه، تمرکز، اضطراب مسابقه و بازگشت ذهنی پس از آسیب'],
+  }
+  const list = doctors.filter((d) => d.verified && careKind(d) === kind)
   return (
     <div className="animate-fade-up">
-      <PageHeader title="پزشک" subtitle="ویزیت آنلاین با پزشکان ورزشی و متخصصان" />
+      <PageHeader title="سلامت و درمان" subtitle="پزشک، فیزیوتراپی، ماساژ ورزشی و روان‌شناسی ورزشی" />
+      <div className="mb-4">
+        <Chips value={kind} onChange={(k) => setParams(k === 'doctor' ? {} : { kind: k }, { replace: true })} items={(Object.keys(CARE_KINDS) as CareKind[]).map((k) => ({ value: k, label: CARE_KINDS[k].plural }))} />
+      </div>
       <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-ink-850 p-6 text-white min-h-[10rem]">
         <Orbs seed="doctor" intensity={0.8} />
         <Doctor size={130} className="pointer-events-none absolute -bottom-3 left-2" />
         <div className="relative max-w-[62%]">
-          <div className="text-[11px] text-white/70">ویزیت آنلاین</div>
-          <div className="mt-2 font-display text-[2rem] leading-[1.1]">مشاوره با پزشک، بدون صف</div>
-          <div className="mt-1 text-[13px] text-white/75">آسیب‌های ورزشی، چکاپ پیش از شروع ورزش، مکمل و تغذیه‌ی درمانی</div>
+          <div className="text-[11px] text-white/70">{CARE_KINDS[kind].plural}</div>
+          <div className="mt-2 font-display text-[2rem] leading-[1.1]">{HERO[kind][0]}</div>
+          <div className="mt-1 text-[13px] text-white/75">{HERO[kind][1]}</div>
         </div>
       </div>
       {mine.length > 0 && (
@@ -33,7 +48,7 @@ export default function Doctors() {
                   <Avatar name={users[a.doctorId]?.name ?? ''} size={42} />
                   <div className="flex-1">
                     <div className="text-sm font-semibold">{users[a.doctorId]?.name}</div>
-                    <div className="text-xs text-ink-500">{faDateTime(a.at)}</div>
+                    <div className="text-xs text-ink-500">{faDateTime(a.at)} · {a.mode === 'inperson' ? 'حضوری' : 'آنلاین'}</div>
                   </div>
                   <Badge color={a.status === 'done' ? 'emerald' : a.status === 'cancelled' ? 'rose' : 'sky'}>{a.status === 'done' ? 'انجام شد' : a.status === 'cancelled' ? 'لغو' : 'رزرو شده'}</Badge>
                 </div>
@@ -43,9 +58,10 @@ export default function Doctors() {
           </div>
         </>
       )}
-      <SectionTitle title="پزشکان" />
+      <SectionTitle title={CARE_KINDS[kind].plural} />
+      {list.length === 0 && <div className="rounded-2xl bg-ink-900/[.04] p-4 text-sm text-ink-500 dark:bg-white/5">به‌زودی {CARE_KINDS[kind].plural} به کی‌فیت اضافه می‌شوند.</div>}
       <div className="grid gap-3 sm:grid-cols-2">
-        {doctors.filter((d) => d.verified).map((d) => {
+        {list.map((d) => {
           const u = users[d.userId]
           if (!u) return null
           return (
@@ -59,8 +75,9 @@ export default function Doctors() {
                     <Stars value={d.rating} /> {num(d.visits)} ویزیت
                   </div>
                   <div className="mt-1 text-xs">
-                    ویزیت: <b className="text-aqua-600">{toman(d.visitPrice)}</b> · {num(d.slots.length)} نوبت آزاد
+                    هر جلسه: <b className="text-aqua-600">{toman(d.visitPrice)}</b> · {num(d.slots.length)} نوبت آزاد
                   </div>
+                  <div className="mt-1 flex gap-1">{careModes(d).map((m) => <Badge key={m} color={m === 'online' ? 'sky' : 'violet'}>{m === 'online' ? 'آنلاین' : 'حضوری'}</Badge>)}</div>
                 </div>
               </Card>
             </Link>

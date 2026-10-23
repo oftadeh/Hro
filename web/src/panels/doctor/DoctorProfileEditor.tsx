@@ -3,8 +3,9 @@ import { X } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { faDateTime } from '@/core/format'
 import { saveDoctorProfile } from '@/core/services/doctor'
-import type { DoctorProfile } from '@/core/types'
-import { Button, Card, Field, Input, NumberInput, PageHeader, Textarea } from '@/ui/kit'
+import type { CareKind, DoctorProfile } from '@/core/types'
+import { CARE_KINDS } from '@/core/config'
+import { Button, Card, Chips, Field, Input, NumberInput, PageHeader, Select, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 
@@ -19,14 +20,27 @@ export default function DoctorProfileEditor() {
       <PageHeader title="پروفایل و زمان‌بندی" />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="space-y-4">
+          <Field label="نوع خدمت">
+            <Select value={f.kind ?? 'doctor'} onChange={(e) => setF({ ...f, kind: e.target.value as CareKind })}>
+              {(Object.keys(CARE_KINDS) as CareKind[]).map((k) => <option key={k} value={k}>{CARE_KINDS[k].label} — {CARE_KINDS[k].desc}</option>)}
+            </Select>
+          </Field>
           <Field label="تخصص"><Input value={f.specialty ?? ''} onChange={(e) => setF({ ...f, specialty: e.target.value })} /></Field>
           <div className={`rounded-2xl p-3 text-xs ${doc?.verified ? 'bg-aqua-400/10' : 'bg-gold-300/15'}`}>
-            {doc?.verified ? 'پروانه‌ی شما تأیید شده و به بیماران نمایش داده می‌شوید.' : 'پروانه‌ی شما در انتظار استعلام از سامانه‌ی نظام پزشکی است؛ پس از تأیید مدیر، در فهرست پزشکان نمایش داده می‌شوید.'}
+            {doc?.verified ? 'مدارک شما تأیید شده و به ورزشکاران نمایش داده می‌شوید.' : `مدارک شما در انتظار استعلام است (${CARE_KINDS[f.kind ?? 'doctor'].license})؛ پس از تأیید مدیر نمایش داده می‌شوید.`}
           </div>
-          <Field label="کد نظام پزشکی"><Input value={f.medicalCode ?? ''} onChange={(e) => setF({ ...f, medicalCode: e.target.value })} /></Field>
-          <Field label="هزینه‌ی ویزیت (تومان)"><NumberInput value={f.visitPrice ?? 0} onChange={(v) => setF({ ...f, visitPrice: v })} /></Field>
+          <Field label={CARE_KINDS[f.kind ?? 'doctor'].license}><Input value={f.medicalCode ?? ''} onChange={(e) => setF({ ...f, medicalCode: e.target.value })} /></Field>
+          {(f.kind ?? 'doctor') !== 'massage' && (
+            <Field label="نحوه‌ی ارائه">
+              <Chips value={f.mode ?? 'online'} onChange={(v) => setF({ ...f, mode: v })} items={[{ value: 'online', label: 'آنلاین' }, { value: 'inperson', label: 'حضوری' }, { value: 'both', label: 'هر دو' }]} />
+            </Field>
+          )}
+          {((f.kind ?? 'doctor') === 'massage' || f.mode === 'inperson' || f.mode === 'both') && (
+            <Field label="نشانی مطب / کلینیک"><Input value={f.address ?? ''} onChange={(e) => setF({ ...f, address: e.target.value })} /></Field>
+          )}
+          <Field label="هزینه‌ی هر جلسه (تومان)"><NumberInput value={f.visitPrice ?? 0} onChange={(v) => setF({ ...f, visitPrice: v })} /></Field>
           <Field label="درباره"><Textarea value={f.bio ?? ''} onChange={(e) => setF({ ...f, bio: e.target.value })} /></Field>
-          <Button className="w-full" onClick={() => run(() => saveDoctorProfile({ specialty: f.specialty, medicalCode: f.medicalCode, visitPrice: f.visitPrice, bio: f.bio }), 'ذخیره شد')}>ذخیره</Button>
+          <Button className="w-full" onClick={() => run(() => saveDoctorProfile({ kind: f.kind ?? 'doctor', mode: f.mode ?? 'online', address: f.address ?? '', specialty: f.specialty, medicalCode: f.medicalCode, visitPrice: f.visitPrice, bio: f.bio }), 'ذخیره شد')}>ذخیره</Button>
         </Card>
         <Card className="space-y-3">
           <div className="font-semibold">نوبت‌های آزاد</div>

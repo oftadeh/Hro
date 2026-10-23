@@ -8,6 +8,7 @@ import { Avatar, Badge, Button, Card, Empty, Input, PageHeader, SectionTitle, Se
 import { useMe, useUserMap } from '@/ui/hooks'
 import { run, toast } from '@/ui/toast'
 import { QrScanner } from '@/ui/QrScanner'
+import { InBodySheet } from './GymMembers'
 
 type Result = Awaited<ReturnType<typeof verifyEntry>>
 
@@ -24,6 +25,7 @@ export default function GymCheckins() {
   const [phone, setPhone] = useState('')
   const [scan, setScan] = useState(false)
   const [result, setResult] = useState<Result>()
+  const [inbody, setInbody] = useState(false)
   const [tab, setTab] = useState<'today' | 'expected' | 'all'>('today')
 
   const verify = useCallback(async (raw: string) => {
@@ -81,13 +83,16 @@ export default function GymCheckins() {
               <CheckCircle2 size={28} className="shrink-0 text-aqua-600 dark:text-aqua-300" />
               <Avatar name={result.userName} src={result.avatar} size={40} />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold">{result.userName}</div>
+                <div className="truncate text-sm font-semibold">{result.memberName ? `${result.memberName} (فرزند ${result.userName})` : result.userName}</div>
                 <div className="text-[11px] text-ink-500">
                   {result.className ? `کلاس ${result.className}` : 'سانس آزاد'} · {toman(result.paid)}
                 </div>
+                {result.memberNotes && <div className="mt-1 text-[11px] font-medium text-coral-600">نکته‌ی والد: {result.memberNotes}</div>}
               </div>
+              {!result.memberName && <Button size="sm" variant="secondary" onClick={() => setInbody(true)}>InBody</Button>}
             </div>
           )}
+          {result && <InBodySheet open={inbody} onClose={() => setInbody(false)} gymId={checkins.find((c) => c.id === result.ticketId)?.gymId ?? gymId} userId={result.userId} name={result.userName} />}
         </Card>
 
         <Card className="p-5">

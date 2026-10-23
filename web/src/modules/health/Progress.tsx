@@ -28,6 +28,7 @@ export default function Progress() {
   const weights = entries.filter((e) => e.weightKg).map((e) => ({ label: fmtDay(e.day), value: e.weightKg! }))
   const waists = entries.filter((e) => e.waistCm).map((e) => ({ label: fmtDay(e.day), value: e.waistCm! }))
   const photos = entries.filter((e) => e.photo)
+  const inbody = entries.filter((e) => e.source === 'inbody' || (e.bodyFatPct && e.muscleKg))
   const scores = week.days.map((d, i) => ({ label: new Intl.DateTimeFormat('fa-IR', { weekday: 'narrow' }).format(new Date(d + 'T12:00')), value: week.scores[i], today: i === 6 }))
 
   return (
@@ -79,6 +80,39 @@ export default function Progress() {
         ))}
       </Card>
 
+      {inbody.length > 0 && (
+        <>
+          <SectionTitle title="آنالیز ترکیب بدن (InBody)" action={<span className="text-[11px] text-ink-400">{state.gyms.find((g) => g.id === inbody[inbody.length - 1].gymId)?.name}</span>} />
+          <Card>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {(
+                [
+                  ['bodyFatPct', 'چربی', '٪', true],
+                  ['muscleKg', 'عضله', 'کیلو', false],
+                  ['visceralFat', 'چربی احشایی', '', true],
+                  ['bmr', 'متابولیسم پایه', 'kcal', false],
+                  ['waterPct', 'آب بدن', '٪', false],
+                  ['weightKg', 'وزن', 'کیلو', true],
+                ] as const
+              ).map(([k, label, unit, lowerBetter]) => {
+                const last = inbody[inbody.length - 1][k]
+                const prev = inbody.length > 1 ? inbody[inbody.length - 2][k] : undefined
+                const diff = last !== undefined && prev !== undefined ? Math.round((last - prev) * 10) / 10 : undefined
+                const good = diff !== undefined && diff !== 0 && (lowerBetter ? diff < 0 : diff > 0)
+                return (
+                  <div key={k} className="rounded-2xl bg-ink-900/[.03] p-2.5 dark:bg-white/[.04]">
+                    <div className="text-[10px] text-ink-400">{label}</div>
+                    <div className="mt-0.5 font-display text-xl tabular-nums">{last !== undefined ? last.toLocaleString('fa-IR') : '—'}<span className="text-[10px] text-ink-400"> {unit}</span></div>
+                    {diff !== undefined && diff !== 0 && <div className={`text-[10px] ${good ? 'text-aqua-600' : 'text-coral-500'}`}>{diff > 0 ? '+' : ''}{diff.toLocaleString('fa-IR')}</div>}
+                  </div>
+                )
+              })}
+            </div>
+            {inbody.length > 1 && <div className="mt-2 text-[11px] text-ink-400">مقایسه با آنالیز {faDate(inbody[inbody.length - 2].day + 'T12:00')}</div>}
+          </Card>
+        </>
+      )}
+
       <SectionTitle title="روند وزن" action={week.weightChange !== undefined ? <span className="text-xs text-ink-500">{week.weightChange > 0 ? '+' : ''}{num(week.weightChange)} کیلو</span> : undefined} />
       <Card className="p-4">
         <LineChart data={weights} format={(n) => n.toLocaleString('fa-IR', { maximumFractionDigits: 1 })} />
@@ -112,7 +146,7 @@ export default function Progress() {
           <div key={e.id} className="flex items-center gap-3 border-b hairline py-2.5 text-xs last:border-0">
             <span className="w-20 text-ink-500">{faDate(e.day + 'T12:00')}</span>
             <span className="flex-1">
-              {[e.weightKg && `وزن ${num(e.weightKg)}`, e.waistCm && `کمر ${num(e.waistCm)}`, e.bodyFatPct && `چربی ${num(e.bodyFatPct)}٪`, e.photo && 'عکس'].filter(Boolean).join(' · ')}
+              {[e.source === 'inbody' && 'InBody', e.weightKg && `وزن ${num(e.weightKg)}`, e.waistCm && `کمر ${num(e.waistCm)}`, e.bodyFatPct && `چربی ${num(e.bodyFatPct)}٪`, e.muscleKg && `عضله ${num(e.muscleKg)}`, e.photo && 'عکس'].filter(Boolean).join(' · ')}
             </span>
             <button className="text-ink-300 hover:text-coral-500" onClick={() => run(() => deleteBodyEntry(e.id))} aria-label="حذف"><Trash2 size={13} /></button>
           </div>
@@ -131,6 +165,8 @@ export default function Progress() {
                 ['chestCm', 'دور سینه'],
                 ['armCm', 'دور بازو'],
                 ['bodyFatPct', 'درصد چربی'],
+                ['muscleKg', 'وزن عضله (InBody)'],
+                ['visceralFat', 'چربی احشایی'],
               ] as const
             ).map(([k, l]) => (
               <Field key={k} label={l}>

@@ -3,7 +3,7 @@
  * شماره‌ی موبایل، سلامت، چرخه، کیف پول و پیام‌های دیگران هرگز به‌صورت عمومی ارسال نمی‌شود.
  */
 import type { DBState } from '../src/core/state'
-import type { CheckIn, User } from '../src/core/types'
+import type { CheckIn, GymCampaign, Listing, LiveClass, SportEvent, User } from '../src/core/types'
 
 const DAY = 86_400_000
 
@@ -40,6 +40,18 @@ export function project(s: DBState, uid: string): DBState {
     const relevant = ((c.classId || c.rentalEnd) && c.slotAt && new Date(c.slotAt).getTime() > now - DAY) || (c.status === 'used' && c.usedAt && now - new Date(c.usedAt).getTime() < 3 * 3_600_000)
     return relevant && (c.status === 'active' || c.status === 'used') ? [anonTicket(c)] : []
   })
+
+  // کلاس آنلاین: لینک و فهرست شرکت‌کنندگان فقط برای مدرس و ثبت‌نام‌شده‌ها
+  const liveView = (c: LiveClass): LiveClass =>
+    admin || c.hostId === uid ? c : { ...c, link: c.attendees.includes(uid) ? c.link : '', attendees: c.attendees.map((a) => (a === uid ? a : 'anon')), joined: c.joined.filter((a) => a === uid) }
+  // رویداد: برگزارکننده همه را می‌بیند؛ بقیه فقط نتایج (نام شرکت‌کنندگان دارای رتبه) و ثبت‌نام خودشان
+  const eventView = (e: SportEvent): SportEvent =>
+    admin || e.organizerId === uid ? e : { ...e, registrations: e.registrations.map((r) => (r.userId === uid || (e.status === 'done' && r.result) ? r : { ...r, userId: 'anon', bib: 0 })) }
+  // بازار: نشانی و جزئیات معامله فقط برای دو طرف
+  const listingView = (l: Listing): Listing =>
+    admin || l.sellerId === uid || l.deal?.buyerId === uid ? l : { ...l, deal: undefined }
+  // کمپین: باشگاه‌دار همه را می‌بیند؛ گیرنده فقط پیشنهاد خودش را
+  const campaignView = (c: GymCampaign): GymCampaign => ({ ...c, recipients: [uid], usedBy: c.usedBy.filter((x) => x === uid) })
 
   const involves = (t: { from: string; to: string; payerId?: string }) => t.from === uid || t.to === uid || t.payerId === uid
   const canSeeLogs = (creatorId: string) => admin || creatorId === uid
@@ -80,5 +92,9 @@ export function project(s: DBState, uid: string): DBState {
     teams: s.teams.filter((t) => t.members.includes(uid) || admin),
     policies: admin ? s.policies : s.policies.filter((x) => x.userId === uid),
     claims: admin ? s.claims : s.claims.filter((x) => x.userId === uid),
+    liveClasses: s.liveClasses.filter((c) => c.status === 'scheduled' || c.hostId === uid || c.attendees.includes(uid) || admin).map(liveView),
+    campaigns: admin ? s.campaigns : s.campaigns.filter((c) => myGyms.has(c.gymId)).concat(s.campaigns.filter((c) => !myGyms.has(c.gymId) && c.recipients.includes(uid)).map(campaignView)),
+    events: s.events.filter((e) => e.approved || e.organizerId === uid || admin).map(eventView),
+    listings: s.listings.filter((l) => l.status === 'active' || l.sellerId === uid || l.deal?.buyerId === uid || admin).map(listingView),
   }
 }

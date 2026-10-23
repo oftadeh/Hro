@@ -25,7 +25,7 @@ export default function Messages() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">{team ? t.title : other?.name}</span>
-                    <Badge color={t.context === 'doctor' ? 'sky' : t.context === 'coach' ? 'violet' : team ? 'emerald' : 'slate'}>{t.context === 'doctor' ? 'پزشک' : t.context === 'coach' ? 'مربی' : team ? 'تیم' : 'دوست'}</Badge>
+                    <Badge color={t.context === 'doctor' ? 'sky' : t.context === 'coach' ? 'violet' : team ? 'emerald' : t.context === 'market' ? 'amber' : 'slate'}>{t.context === 'doctor' ? 'درمان' : t.context === 'coach' ? 'مربی' : team ? 'تیم' : t.context === 'market' ? 'دست‌دوم' : 'دوست'}</Badge>
                   </div>
                   <div className="truncate text-xs text-ink-500">{last ? `${team && last.from !== me.id ? `${users[last.from]?.name ?? ''}: ` : ''}${last.text}` : 'گفتگو را شروع کنید'}</div>
                 </div>

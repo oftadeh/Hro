@@ -109,6 +109,15 @@ export default function GymEditor() {
                   <NumberInput value={c.price ?? 0} onChange={(v) => up({ price: v || undefined })} placeholder="قیمت" aria-label="قیمت" />
                   <button onClick={() => set('classes', classes.filter((_, j) => j !== i))} className="shrink-0 rounded-full p-2 text-coral-500" aria-label="حذف کلاس"><Trash2 size={15} /></button>
                 </div>
+                <label className="col-span-2 flex items-center gap-2 text-xs sm:col-span-3">
+                  <input type="checkbox" checked={c.audience === 'kids'} onChange={(e) => up(e.target.checked ? { audience: 'kids', ageMin: c.ageMin ?? 5, ageMax: c.ageMax ?? 12 } : { audience: undefined, ageMin: undefined, ageMax: undefined })} />
+                  کلاس کودکان
+                </label>
+                {c.audience === 'kids' && (
+                  <div className="col-span-2 flex items-center gap-1 text-xs sm:col-span-5">
+                    سن از <NumberInput value={c.ageMin ?? 5} onChange={(v) => up({ ageMin: v })} aria-label="حداقل سن" /> تا <NumberInput value={c.ageMax ?? 12} onChange={(v) => up({ ageMax: v })} aria-label="حداکثر سن" /> سال
+                  </div>
+                )}
               </div>
             )
           })}

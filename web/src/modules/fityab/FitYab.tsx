@@ -20,6 +20,7 @@ export default function FitYab() {
   const [params] = useSearchParams()
   const [sport, setSport] = useState(params.get('sport') ?? 'all')
   const [womenOnly, setWomenOnly] = useState(false)
+  const [kidsOnly, setKidsOnly] = useState(params.get('kids') === '1')
   const enabled = useDB((s) => s.settings.venueKinds) ?? ['gym']
   const [kind, setKind] = useState<VenueKind | 'all'>((params.get('kind') as VenueKind) ?? 'all')
   const visibleGyms = useMemo(() => gyms.filter((g) => enabled.includes(g.kind ?? 'gym')), [gyms, enabled])
@@ -38,13 +39,15 @@ export default function FitYab() {
       .filter((g) => g.approved)
       .filter((g) => kind === 'all' || (g.kind ?? 'gym') === kind)
       // باشگاه‌های تک‌جنسیتی فقط به همان جنسیت نمایش داده می‌شوند
-      .filter((g) => g.gender === 'mixed' || !me?.gender || g.gender === me.gender)
+      // کلاس کودکان: محدودیت جنسیتی برای خود فرزند در رزرو بررسی می‌شود
+      .filter((g) => kidsOnly || g.gender === 'mixed' || !me?.gender || g.gender === me.gender)
+      .filter((g) => !kidsOnly || !!g.classes?.some((c) => c.audience === 'kids'))
       .filter((g) => !womenOnly || g.gender === 'female')
       .filter((g) => sport === 'all' || g.sports.includes(sport))
       .filter((g) => !q || g.name.includes(q) || g.address.includes(q) || g.sports.some((s) => s.includes(q)))
       .map((g) => ({ g, d: distanceKm(origin, [g.lat, g.lng]) }))
     return l.sort((a, b) => (sort === 'near' ? a.d - b.d : sort === 'price' ? (a.g.rental?.hourlyPrice ?? a.g.sessionPrice) - (b.g.rental?.hourlyPrice ?? b.g.sessionPrice) : b.g.rating - a.g.rating))
-  }, [visibleGyms, kind, sport, q, sort, origin, me?.gender, womenOnly])
+  }, [visibleGyms, kind, sport, q, sort, origin, me?.gender, womenOnly, kidsOnly])
 
   const sel = list.find((x) => x.g.id === selected)
 
@@ -72,8 +75,8 @@ export default function FitYab() {
             value={view}
             onChange={setView}
             items={[
-              { value: 'map', label: <MapIcon size={16} /> },
-              { value: 'list', label: <List size={16} /> },
+              { value: 'map', label: <><MapIcon size={16} /><span className="sr-only">نقشه</span></> },
+              { value: 'list', label: <><List size={16} /><span className="sr-only">فهرست</span></> },
             ]}
           />
         }
@@ -90,11 +93,16 @@ export default function FitYab() {
           <Chips value={kind} onChange={(k) => { setKind(k); setSport('all') }} items={[{ value: 'all' as const, label: 'همه' }, ...enabled.map((k) => ({ value: k, label: VENUE_KINDS[k].plural }))]} />
         </div>
       )}
-      {me?.gender === 'female' && (
-        <button onClick={() => setWomenOnly((v) => !v)} className={`mb-2 rounded-full px-4 py-2 text-xs transition ${womenOnly ? 'grad-pink font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300'}`}>
-          فقط باشگاه‌های ویژه‌ی بانوان
+      <div className="flex flex-wrap gap-2">
+        {me?.gender === 'female' && (
+          <button onClick={() => setWomenOnly((v) => !v)} className={`mb-2 rounded-full px-4 py-2 text-xs transition ${womenOnly ? 'grad-pink font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300'}`}>
+            فقط باشگاه‌های ویژه‌ی بانوان
+          </button>
+        )}
+        <button onClick={() => setKidsOnly((v) => !v)} className={`mb-2 rounded-full px-4 py-2 text-xs transition ${kidsOnly ? 'grad-peach font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300'}`}>
+          کلاس کودکان
         </button>
-      )}
+      </div>
       <Chips value={sport} onChange={setSport} items={[{ value: 'all', label: 'همه‌ی رشته‌ها' }, ...sports.map((s) => ({ value: s, label: s }))]} />
 
       {view === 'map' ? (

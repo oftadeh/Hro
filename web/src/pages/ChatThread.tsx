@@ -38,6 +38,14 @@ export default function ChatThread() {
                 <span className="block text-[11px] font-normal text-ink-400">{thread.members.length.toLocaleString('fa-IR')} عضو</span>
               </span>
             </Link>
+          ) : thread.context === 'market' ? (
+            <Link to={`/market/${thread.listingId}`} className="flex items-center gap-2">
+              <Avatar name={other?.name ?? ''} src={other?.avatar} size={34} />
+              <span>
+                {other?.name}
+                <span className="block truncate text-[11px] font-normal text-ink-400">آگهی: {thread.title}</span>
+              </span>
+            </Link>
           ) : (
             <span className="flex items-center gap-2">
               <Avatar name={other?.name ?? ''} src={other?.avatar} size={34} /> {other?.name}

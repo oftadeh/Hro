@@ -4,6 +4,7 @@ import { useDB } from '@/core/db'
 import { faDateTime } from '@/core/format'
 import { cancelAppointment } from '@/core/services/doctor'
 import { careProviders, toggleHealthShare } from '@/core/services/health'
+import { activePolicy } from '@/core/services/insurance'
 import { Avatar, Badge, Button, Card, Empty, PageHeader, SectionTitle } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 import { run } from '@/ui/toast'
@@ -19,6 +20,8 @@ export default function Medical() {
   const past = mine.filter((a) => a.status !== 'booked')
   const providers = careProviders(me.id, state)
   const shares = me.healthShares ?? []
+  const insured = !!activePolicy(me.id, state)
+  const addrOf = (id: string) => state.doctors.find((d) => d.userId === id)?.address
 
   return (
     <div className="animate-fade-up">
@@ -37,9 +40,10 @@ export default function Medical() {
                   <div className="text-sm font-semibold">{users[a.doctorId]?.name}</div>
                   <div className="text-xs text-ink-500">{faDateTime(a.at)}</div>
                 </div>
-                <Badge color="sky">رزرو شده</Badge>
+                <Badge color={a.mode === 'inperson' ? 'violet' : 'sky'}>{a.mode === 'inperson' ? 'حضوری' : 'آنلاین'}</Badge>
               </div>
               <div className="mt-2 text-xs text-ink-500">علت: {a.reason}</div>
+              {a.mode === 'inperson' && addrOf(a.doctorId) && <div className="mt-1 text-xs text-ink-500">نشانی: {addrOf(a.doctorId)}</div>}
               <div className="mt-3 flex gap-2">
                 {a.callLink && (
                   <a href={a.callLink} target="_blank" rel="noreferrer" className="flex-1">
@@ -71,6 +75,9 @@ export default function Medical() {
               </Badge>
             </div>
             {a.prescription && <div className="mt-3 whitespace-pre-line rounded-2xl bg-aqua-400/10 p-3 text-sm leading-7">{a.prescription}</div>}
+            {a.status === 'done' && insured && (
+              <Link to={`/insurance?from=${a.id}`} className="mt-2 inline-flex items-center gap-1 text-xs text-aqua-600"><ShieldCheck size={13} /> ثبت هزینه در بیمه‌ی ورزشی</Link>
+            )}
           </Card>
         ))}
       </div>

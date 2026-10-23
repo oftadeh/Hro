@@ -2,7 +2,7 @@
 import {
   Apple, Bell, Bot, Building2, Coffee, Dumbbell, Flame, Footprints, Gauge, HeartPulse, Pill, Route, Scale, Shield, Shirt,
   ShoppingBag, Sparkles, Star, Stethoscope, Timer, Trophy, UserRound, UtensilsCrossed, Watch, Droplets, MessageCircle, Wallet,
-  Receipt, ArrowDownLeft, ArrowUpRight, Undo2, Ticket, Landmark, Briefcase, Gift, ShieldPlus, CalendarRange, type LucideIcon,
+  Receipt, ArrowDownLeft, ArrowUpRight, Undo2, Ticket, Landmark, Briefcase, Gift, ShieldPlus, CalendarRange, Radio, CalendarDays, Recycle, type LucideIcon,
 } from 'lucide-react'
 import type { ChallengeMetric, Product, Role, TxType } from '@/core/types'
 
@@ -15,6 +15,7 @@ const MISSION: Record<string, LucideIcon> = { water: Droplets, steps: Footprints
 const TX: Record<TxType, LucideIcon> = {
   topup: ArrowDownLeft, subscription: Sparkles, checkin: Ticket, coach_plan: Dumbbell, shop_order: ShoppingBag, doctor_visit: HeartPulse,
   food_order: UtensilsCrossed, challenge_create: Trophy, challenge_entry: Trophy, challenge_prize: Trophy, withdraw: Landmark, refund: Undo2, reward: Gift, gift: Gift, org_seats: Briefcase, insurance: ShieldPlus, claim_payout: ShieldPlus, rental: CalendarRange,
+  live_class: Radio, event_entry: CalendarDays, market_buy: Recycle, market_release: Recycle,
 }
 
 type P = { size?: number; className?: string }

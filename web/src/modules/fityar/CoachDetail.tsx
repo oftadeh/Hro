@@ -12,6 +12,8 @@ import { Avatar, Badge, Button, Card, Empty, Field, PageHeader, SectionTitle, Sh
 import { useMe, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { PostCard } from '@/modules/fitzone/PostCard'
+import { LiveCard } from '@/modules/live/LiveClasses'
+import { liveEnd } from '@/core/services/live'
 
 const KIND = { workout: 'تمرینی', diet: 'تغذیه', both: 'تمرین + تغذیه' } as const
 
@@ -22,6 +24,7 @@ export default function CoachDetail() {
   const coach = useDB((s) => s.coaches.find((c) => c.userId === id))
   const user = useDB((s) => s.users.find((u) => u.id === id))
   const posts = useDB((s) => s.posts)
+  const liveAll = useDB((s) => s.liveClasses)
   const bal = useBalance(me.id)
   const [plan, setPlan] = useState<CoachPlan>()
   const [answers, setAnswers] = useState('')
@@ -75,6 +78,15 @@ export default function CoachDetail() {
           </div>
         </div>
       </Card>
+
+      {liveAll.some((c) => c.hostId === coach.userId && c.status === 'scheduled' && liveEnd(c) > new Date()) && (
+        <>
+          <SectionTitle title="کلاس‌های آنلاین پیش‌رو" />
+          <div className="space-y-2">
+            {liveAll.filter((c) => c.hostId === coach.userId && c.status === 'scheduled' && liveEnd(c) > new Date()).map((c) => <LiveCard key={c.id} c={c} />)}
+          </div>
+        </>
+      )}
 
       {coach.certificates.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">

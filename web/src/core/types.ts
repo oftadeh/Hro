@@ -10,7 +10,7 @@ export type ISODate = string
 export type Role = 'user' | 'gym' | 'coach' | 'seller' | 'doctor' | 'restaurant' | 'company' | 'admin'
 
 /** ماژول‌هایی که درآمد کمیسیونی دارند */
-export type RevenueModule = 'fityab' | 'fityar' | 'shop' | 'doctor' | 'buffet' | 'challenge' | 'insurance'
+export type RevenueModule = 'fityab' | 'fityar' | 'shop' | 'doctor' | 'buffet' | 'challenge' | 'insurance' | 'event' | 'market'
 
 export interface User {
   id: ID
@@ -43,6 +43,10 @@ export interface User {
   orgId?: ID
   /** ویدیوی معرفی پروفایل (مربی، باشگاه‌دار، کاربران برتر و ویژه) */
   introVideo?: string
+  /** اعضای خانواده (فرزندان و…) که حساب جداگانه ندارند */
+  family?: FamilyMember[]
+  /** دستگاه‌ها و منابع داده‌ی سلامت متصل */
+  devices?: Device[]
   /** امتیاز هفته‌ی جاری برای لیگ */
   weekXp?: { week: string; xp: number }
   xp: number
@@ -127,6 +131,10 @@ export type TxType =
   | 'insurance'
   | 'claim_payout'
   | 'rental'
+  | 'live_class'
+  | 'event_entry'
+  | 'market_buy'
+  | 'market_release'
 
 /** هر جابجایی پول یک سطر در دفتر کل (Ledger) است */
 export interface Transaction {
@@ -195,6 +203,27 @@ export interface Gym {
 
 export type VenueKind = 'gym' | 'pool' | 'equestrian' | 'hall' | 'turf'
 
+/** عضو خانواده؛ رزرو کلاس کودکان با حساب والد انجام می‌شود */
+export interface FamilyMember {
+  id: ID
+  name: string
+  relation: 'child' | 'spouse' | 'parent' | 'other'
+  birthYear: number
+  gender: 'male' | 'female'
+  /** حساسیت، بیماری یا نکته برای مربی */
+  notes?: string
+}
+
+export type DeviceKind = 'hr_monitor' | 'watch' | 'apple_health' | 'health_connect' | 'file'
+
+export interface Device {
+  id: ID
+  kind: DeviceKind
+  name: string
+  connectedAt: ISODate
+  lastSyncAt?: ISODate
+}
+
 /** کلاس گروهی هفتگی */
 export interface GymClass {
   id: ID
@@ -208,6 +237,10 @@ export interface GymClass {
   capacity: number
   /** اگر خالی باشد هزینه‌ی سانس عادی اعمال می‌شود */
   price?: number
+  /** کلاس کودکان/نوجوانان با بازه‌ی سنی */
+  audience?: 'adult' | 'kids'
+  ageMin?: number
+  ageMax?: number
 }
 
 /** بلیت ورود به باشگاه (سانس آزاد یا کلاس) */
@@ -232,6 +265,11 @@ export interface CheckIn {
   rentalEnd?: ISODate
   /** تیمی که رزرو برایش انجام شده */
   teamId?: ID
+  /** رزرو برای عضو خانواده (کلاس کودکان) */
+  memberId?: ID
+  memberName?: string
+  /** کمپین تخفیف باشگاه که روی این بلیت اعمال شد */
+  campaignId?: ID
   /** ورود از طریق درخواست پذیرش */
   viaReception?: boolean
   txId?: ID
@@ -322,7 +360,9 @@ export interface Message {
 export interface Thread {
   id: ID
   members: ID[]
-  context: 'coach' | 'doctor' | 'direct' | 'team'
+  context: 'coach' | 'doctor' | 'direct' | 'team' | 'market'
+  /** آگهی بازار دست‌دوم */
+  listingId?: ID
   /** عنوان گفتگوی گروهی */
   title?: string
   teamId?: ID
@@ -405,8 +445,17 @@ export interface Coupon {
   active: boolean
 }
 
+/** نوع ارائه‌دهنده‌ی خدمات سلامت */
+export type CareKind = 'doctor' | 'physio' | 'massage' | 'psych'
+
 export interface DoctorProfile {
   userId: ID
+  /** پزشک (پیش‌فرض)، فیزیوتراپ، ماساژ ورزشی یا روان‌شناس ورزشی */
+  kind?: CareKind
+  /** نحوه‌ی ارائه‌ی خدمت */
+  mode?: 'online' | 'inperson' | 'both'
+  /** نشانی مطب/کلینیک برای خدمات حضوری */
+  address?: string
   specialty: string
   medicalCode: string
   bio: string
@@ -431,6 +480,8 @@ export interface Appointment {
   prescription?: string
   /** لینک ویزیت تصویری */
   callLink?: string
+  /** حضوری یا آنلاین */
+  mode?: 'online' | 'inperson'
   createdAt: ISODate
 }
 
@@ -515,8 +566,8 @@ export interface ChallengeLog {
   note?: string
   /** عکس مدرک */
   proof?: string
-  /** منبع داده: دستی، ورود تأییدشده به باشگاه یا تمرین ثبت‌شده */
-  source?: 'manual' | 'checkin' | 'workout'
+  /** منبع داده: دستی، ورود تأییدشده به باشگاه، تمرین ثبت‌شده یا دستگاه متصل */
+  source?: 'manual' | 'checkin' | 'workout' | 'device'
   /** وضعیت تأیید؛ فقط موارد ok در امتیاز حساب می‌شوند */
   status?: 'ok' | 'pending' | 'rejected'
 }
@@ -580,6 +631,10 @@ export interface DailyLog {
   workoutMinutes: number
   calories: number
   sleepHours: number
+  /** ضربان قلب در حال استراحت (از ساعت هوشمند) */
+  restingHr?: number
+  /** منبع قدم‌ها: دستی یا دستگاه (فقط قدم دستگاه در چالش خودکار حساب می‌شود) */
+  stepsSource?: 'manual' | 'device'
   missionsDone: string[]
   rewardClaimed: boolean
 }
@@ -616,7 +671,7 @@ export interface Review {
 export interface Report {
   id: ID
   reporterId: ID
-  kind: 'post' | 'comment' | 'user' | 'story'
+  kind: 'post' | 'comment' | 'user' | 'story' | 'listing'
   refId: ID
   /** شناسه‌ی پست والد برای نظرها */
   parentId?: ID
@@ -653,6 +708,10 @@ export interface WorkoutSession {
   note?: string
   /** اگر از برنامه‌ی مربی انجام شده */
   program?: { orderId: ID; week: number; day: number }
+  /** ضربان قلب از سنسور بلوتوث */
+  hr?: { avg: number; max: number }
+  /** شرکت در کلاس آنلاین زنده */
+  liveClassId?: ID
   createdAt: ISODate
 }
 
@@ -681,6 +740,14 @@ export interface BodyEntry {
   chestCm?: number
   armCm?: number
   bodyFatPct?: number
+  /** آنالیز ترکیب بدن (InBody) */
+  muscleKg?: number
+  visceralFat?: number
+  bmr?: number
+  waterPct?: number
+  /** منبع: ثبت خود کاربر یا دستگاه InBody باشگاه */
+  source?: 'manual' | 'inbody'
+  gymId?: ID
   photo?: string
   createdAt: ISODate
 }
@@ -781,4 +848,98 @@ export interface InsuranceClaim {
   note?: string
   createdAt: ISODate
   updatedAt: ISODate
+}
+
+/* ───────── کلاس آنلاین زنده ───────── */
+
+export interface LiveClass {
+  id: ID
+  hostId: ID
+  title: string
+  sport: string
+  description: string
+  level: 'beginner' | 'intermediate' | 'advanced' | 'all'
+  at: ISODate
+  durationMin: number
+  /** صفر = رایگان */
+  price: number
+  capacity: number
+  attendees: ID[]
+  /** کسانی که واقعاً وارد کلاس شدند */
+  joined: ID[]
+  /** لینک کلاس؛ فقط برای ثبت‌نام‌شده‌ها ارسال می‌شود */
+  link: string
+  status: 'scheduled' | 'cancelled'
+  createdAt: ISODate
+}
+
+/* ───────── باشگاه‌دار: ارتباط با اعضا ───────── */
+
+export type MemberSegment = 'all' | 'new' | 'active' | 'at_risk' | 'lost'
+
+export interface GymCampaign {
+  id: ID
+  gymId: ID
+  segment: MemberSegment
+  title: string
+  body: string
+  /** تخفیف اختصاصی برای ورود بعدی (از سهم باشگاه) */
+  pct?: number
+  expiresAt?: ISODate
+  recipients: ID[]
+  usedBy: ID[]
+  createdAt: ISODate
+}
+
+/* ───────── رویدادهای ورزشی ───────── */
+
+export interface EventRegistration {
+  userId: ID
+  bib: number
+  /** مسافت/رده‌ی انتخابی */
+  category?: string
+  at: ISODate
+  checkedIn?: boolean
+  result?: { rank?: number; time?: string; note?: string }
+}
+
+export interface SportEvent {
+  id: ID
+  organizerId: ID
+  title: string
+  kind: 'race' | 'hike' | 'tournament' | 'workshop' | 'other'
+  sport: string
+  description: string
+  at: ISODate
+  location: string
+  city: string
+  lat?: number
+  lng?: number
+  fee: number
+  capacity: number
+  categories: string[]
+  gender: 'male' | 'female' | 'mixed'
+  cover: string
+  registrations: EventRegistration[]
+  approved: boolean
+  status: 'open' | 'closed' | 'done' | 'cancelled'
+  createdAt: ISODate
+}
+
+/* ───────── بازار دست‌دوم ───────── */
+
+export interface Listing {
+  id: ID
+  sellerId: ID
+  title: string
+  category: 'equipment' | 'apparel' | 'accessory' | 'supplement' | 'other'
+  condition: 'new' | 'like_new' | 'good' | 'fair'
+  price: number
+  description: string
+  photos: string[]
+  city: string
+  status: 'active' | 'reserved' | 'sold' | 'removed'
+  /** خرید امن: پول تا تأیید دریافت نزد کی‌فیت می‌ماند */
+  deal?: { buyerId: ID; status: 'paid' | 'shipped' | 'done' | 'cancelled'; address: string; tracking?: string; paidAt: ISODate; shippedAt?: ISODate; doneAt?: ISODate }
+  createdAt: ISODate
 }

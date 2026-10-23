@@ -1,4 +1,4 @@
-import { Activity, Apple, Bell, Bot, Dumbbell, HeartPulse, Home, LifeBuoy, MapPin, ShieldPlus, UsersRound, ShoppingBag, Ticket, Trophy, UtensilsCrossed, Wallet, Users, MessageCircle, type LucideIcon } from 'lucide-react'
+import { Activity, Apple, Baby, Bell, Bot, CalendarDays, Dumbbell, HeartPulse, Home, LifeBuoy, MapPin, Radio, Recycle, ShieldPlus, UsersRound, ShoppingBag, Ticket, Trophy, UtensilsCrossed, Wallet, Watch, Users, MessageCircle, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -15,7 +15,10 @@ export const MODULES: NavItem[] = [
   { to: '/fitzone', label: 'فیت‌زون', icon: Users, color: '', desc: 'شبکه اجتماعی' },
   { to: '/shop', label: 'فروشگاه', icon: ShoppingBag, color: '', desc: 'مکمل و لوازم' },
   { to: '/buffet', label: 'بوفه', icon: UtensilsCrossed, color: '', desc: 'غذای رژیمی' },
-  { to: '/doctors', label: 'پزشک', icon: HeartPulse, color: '', desc: 'ویزیت آنلاین' },
+  { to: '/doctors', label: 'سلامت و درمان', icon: HeartPulse, color: '', desc: 'پزشک، فیزیو، روان‌شناس' },
+  { to: '/live', label: 'کلاس آنلاین', icon: Radio, color: '', desc: 'تمرین زنده با مربی' },
+  { to: '/events', label: 'رویدادها', icon: CalendarDays, color: '', desc: 'مسابقه و کوهپیمایی' },
+  { to: '/market', label: 'دست‌دوم', icon: Recycle, color: '', desc: 'خرید و فروش امن' },
   { to: '/wallet', label: 'کیف پول', icon: Wallet, color: '', desc: 'اشتراک و اعتبار' },
 ]
 
@@ -25,6 +28,8 @@ export const SIDEBAR: NavItem[] = [
   { to: '/tickets', label: 'بلیت‌های من', icon: Ticket, color: '' },
   { to: '/teams', label: 'هم‌تیمی‌ها', icon: UsersRound, color: '' },
   { to: '/insurance', label: 'بیمه‌ی ورزشی', icon: ShieldPlus, color: '' },
+  { to: '/family', label: 'خانواده و کودکان', icon: Baby, color: '' },
+  { to: '/devices', label: 'ساعت و دستگاه‌ها', icon: Watch, color: '' },
   { to: '/workouts', label: 'تمرین‌ها', icon: Dumbbell, color: '' },
   { to: '/nutrition', label: 'کالری‌شمار', icon: Apple, color: '' },
   { to: '/progress', label: 'پیشرفت', icon: Activity, color: '' },

@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { BadgeCheck, BarChart3, Building2, ClipboardList, Cog, FileText, Flag, LifeBuoy, Package, QrCode, Stethoscope, Trophy, UserCog, Users, UtensilsCrossed, Wallet, Briefcase, Star, ShieldPlus } from 'lucide-react'
+import { BadgeCheck, BarChart3, Building2, ClipboardList, Cog, FileText, Flag, LifeBuoy, Package, QrCode, Stethoscope, Trophy, UserCog, Users, UtensilsCrossed, Wallet, Briefcase, Star, ShieldPlus, Radio, Megaphone, CalendarDays } from 'lucide-react'
 import { useSession } from '@/core/db'
 import { touchDaily } from '@/core/services/engagement'
 import { expireTickets } from '@/core/services/fityab'
+import { connectDevice, syncHealthData } from '@/core/services/devices'
+import { installNativeHealthBridge } from '@/core/client/health'
 import { REMOTE } from '@/core/client/remote'
 import type { Role } from '@/core/types'
 import { Toaster } from '@/ui/toast'
@@ -35,6 +37,18 @@ const ProgramView = lazy(() => import('@/modules/fityar/ProgramView'))
 const Teams = lazy(() => import('@/modules/teams/Teams'))
 const TeamDetail = lazy(() => import('@/modules/teams/TeamDetail'))
 const Insurance = lazy(() => import('@/pages/Insurance'))
+const Family = lazy(() => import('@/pages/Family'))
+const Devices = lazy(() => import('@/pages/Devices'))
+const LiveClasses = lazy(() => import('@/modules/live/LiveClasses'))
+const LiveDetail = lazy(() => import('@/modules/live/LiveClasses').then((m) => ({ default: m.LiveDetail })))
+const Events = lazy(() => import('@/modules/events/Events'))
+const EventDetail = lazy(() => import('@/modules/events/Events').then((m) => ({ default: m.EventDetail })))
+const CreateEvent = lazy(() => import('@/modules/events/Events').then((m) => ({ default: m.CreateEvent })))
+const Market = lazy(() => import('@/modules/market/Market'))
+const ListingDetail = lazy(() => import('@/modules/market/Market').then((m) => ({ default: m.ListingDetail })))
+const ListingEditor = lazy(() => import('@/modules/market/Market').then((m) => ({ default: m.ListingEditor })))
+const CoachLive = lazy(() => import('@/panels/coach/CoachLive'))
+const GymMembers = lazy(() => import('@/panels/gym/GymMembers'))
 
 const FitYab = lazy(() => import('@/modules/fityab/FitYab'))
 const GymDetail = lazy(() => import('@/modules/fityab/GymDetail'))
@@ -82,14 +96,18 @@ const PANELS: Record<Exclude<Role, 'user'>, PanelLink[]> = {
   gym: [
     { to: '/panel/gym', label: 'داشبورد', icon: BarChart3, end: true },
     { to: 'checkins', label: 'پذیرش ورود', icon: QrCode },
+    { to: 'members', label: 'اعضا و کمپین', icon: Megaphone },
     { to: 'reviews', label: 'نظرات', icon: Star },
+    { to: '/events', label: 'رویدادها', icon: CalendarDays },
     { to: 'edit', label: 'ثبت باشگاه جدید', icon: Building2 },
     finance,
   ],
   coach: [
     { to: '/panel/coach', label: 'داشبورد', icon: BarChart3, end: true },
     { to: 'orders', label: 'سفارش برنامه‌ها', icon: ClipboardList },
+    { to: 'live', label: 'کلاس آنلاین', icon: Radio },
     { to: 'profile', label: 'پروفایل و پکیج‌ها', icon: UserCog },
+    { to: '/events', label: 'رویدادها', icon: CalendarDays },
     finance,
   ],
   seller: [
@@ -112,7 +130,7 @@ const PANELS: Record<Exclude<Role, 'user'>, PanelLink[]> = {
     { to: '/panel/admin', label: 'نمای کلی', icon: BarChart3, end: true },
     { to: 'users', label: 'کاربران و نقش‌ها', icon: Users },
     { to: 'gyms', label: 'باشگاه‌ها', icon: Building2 },
-    { to: 'approvals', label: 'تأیید مدارک', icon: BadgeCheck },
+    { to: 'approvals', label: 'تأیید مدارک و رویدادها', icon: BadgeCheck },
     { to: 'moderation', label: 'گزارش تخلف', icon: Flag },
     { to: 'support', label: 'پشتیبانی', icon: LifeBuoy },
     { to: 'insurance', label: 'بیمه و خسارت', icon: ShieldPlus },
@@ -141,6 +159,7 @@ export default function App() {
   useEffect(() => {
     if (!me) return
     touchDaily().catch(() => {})
+    installNativeHealthBridge(async (kind, samples) => syncHealthData(await connectDevice(kind), samples))
     if (!REMOTE) expireTickets()
   }, [me?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -207,11 +226,23 @@ export default function App() {
           <Route path="teams" element={<Teams />} />
           <Route path="teams/:id" element={<TeamDetail />} />
           <Route path="insurance" element={<Insurance />} />
+          <Route path="family" element={<Family />} />
+          <Route path="devices" element={<Devices />} />
+          <Route path="live" element={<LiveClasses />} />
+          <Route path="live/:id" element={<LiveDetail />} />
+          <Route path="events" element={<Events />} />
+          <Route path="events/new" element={<CreateEvent />} />
+          <Route path="events/:id" element={<EventDetail />} />
+          <Route path="market" element={<Market />} />
+          <Route path="market/new" element={<ListingEditor />} />
+          <Route path="market/:id" element={<ListingDetail />} />
+          <Route path="market/:id/edit" element={<ListingEditor />} />
         </Route>
 
         <Route path="/panel/gym" element={panel('gym')}>
           <Route index element={<GymDashboard />} />
           <Route path="checkins" element={<GymCheckins />} />
+          <Route path="members" element={<GymMembers />} />
           <Route path="reviews" element={<GymReviews />} />
           <Route path="edit" element={<GymEditor />} />
           <Route path="edit/:id" element={<GymEditor />} />
@@ -220,6 +251,7 @@ export default function App() {
         <Route path="/panel/coach" element={panel('coach')}>
           <Route index element={<CoachDashboard />} />
           <Route path="orders" element={<CoachOrders />} />
+          <Route path="live" element={<CoachLive />} />
           <Route path="profile" element={<CoachProfileEditor />} />
           <Route path="finance" element={<PanelFinance />} />
         </Route>

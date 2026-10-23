@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import clsx from 'clsx'
 import { CalendarClock, Clock, Heart, MapPin, Navigation, Phone, Share2, Star, Ticket, Users } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { faDate, faTime, num, toman } from '@/core/format'
+import { campaignOffer } from '@/core/services/members'
+import { ageOf, classEligibility } from '@/core/services/family'
 import { bookClass, bookedCount, checkIn, classPrice, occupancy, priceAt, reviewGym, ticketStatus, toggleFavoriteGym, upcomingClasses, weekdayLabel, weekdayOf } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
 import type { GymClass } from '@/core/types'
-import { Avatar, Badge, Button, Card, Cover, Empty, PageHeader, SectionTitle, Sheet, Stars, Textarea } from '@/ui/kit'
+import { Avatar, Badge, Button, Card, Cover, Empty, Field, PageHeader, SectionTitle, Select, Sheet, Stars, Textarea } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run, runOk, toast } from '@/ui/toast'
 import { GymMap } from './GymMap'
@@ -32,6 +34,8 @@ export default function GymDetail() {
   const sub = activeSubscription(me.id)
   const [confirm, setConfirm] = useState(false)
   const [book, setBook] = useState<{ cls: GymClass; at: Date }>()
+  const [memberId, setMemberId] = useState('')
+  const campaigns = useDB((s) => s.campaigns)
   const [ticketId, setTicketId] = useState<string>()
   const [media, setMedia] = useState(0)
   const [share, setShare] = useState(false)
@@ -44,7 +48,10 @@ export default function GymDetail() {
   const active = mine.find((c) => !c.classId && ticketStatus(c) === 'active')
   const myClasses = mine.filter((c) => c.classId && ticketStatus(c) === 'active')
   const ticket = checkins.find((c) => c.id === ticketId)
+  const offer = campaignOffer({ campaigns }, me.id, gym.id)
+  const withOffer = (p: number) => (offer ? Math.round((p * (100 - offer.pct!)) / 100 / 1000) * 1000 : p)
   const now = priceAt(gym)
+  const kidsOk = book?.cls.audience === 'kids' ? (me.family ?? []).filter((m) => !classEligibility(book.cls, m)) : []
   const occ = occupancy(gym, { checkins })
   const fav = me.favoriteGyms?.includes(gym.id)
   const canReview = mine.some((c) => c.status === 'used' && !c.reviewed)
@@ -67,9 +74,11 @@ export default function GymDetail() {
   }
   const doBook = async (prefer: 'subscription' | 'wallet') => {
     if (!book) return
-    const ci = await run(() => bookClass(gym.id, book.cls.id, book.at.toISOString(), prefer), 'کلاس رزرو شد')
+    const forMember = book.cls.audience === 'kids' ? memberId || kidsOk[0]?.id : undefined
+    const ci = await run(() => bookClass(gym.id, book.cls.id, book.at.toISOString(), prefer, forMember), 'کلاس رزرو شد')
     if (ci) {
       setBook(undefined)
+      setMemberId('')
       setTicketId(ci.id)
     }
   }
@@ -120,7 +129,7 @@ export default function GymDetail() {
       )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card>
             <div className="flex flex-wrap items-center gap-2">
               <Stars value={gym.rating} count={gym.reviews} />
@@ -171,7 +180,8 @@ export default function GymDetail() {
                     const key = at.toISOString()
                     const taken = bookedCount(cls.id, key, { checkins })
                     const left = cls.capacity - taken
-                    const booked = mine.some((c) => c.classId === cls.id && c.slotAt === key && (c.status === 'active' || c.status === 'used'))
+                    const kids = cls.audience === 'kids'
+                    const booked = !kids && mine.some((c) => c.classId === cls.id && c.slotAt === key && !c.memberId && (c.status === 'active' || c.status === 'used'))
                     return (
                       <div key={cls.id + key} className="flex items-center gap-3 border-b hairline py-3 last:border-0">
                         <div className="w-14 text-center">
@@ -179,7 +189,7 @@ export default function GymDetail() {
                           <div className="text-[10px] text-ink-400">{num(cls.durationMin)} دقیقه</div>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium">{cls.title}</div>
+                          <div className="flex items-center gap-1.5 truncate text-sm font-medium">{cls.title}{kids && <Badge color="violet">کودکان {num(cls.ageMin ?? 0)}–{num(cls.ageMax ?? 0)} سال</Badge>}</div>
                           <div className="truncate text-[11px] text-ink-500">
                             {cls.coachName} · {left > 0 ? `${num(left)} جای خالی` : 'تکمیل'} · {toman(classPrice(gym, cls))}
                           </div>
@@ -302,24 +312,39 @@ export default function GymDetail() {
         onClose={() => setConfirm(false)}
         title="بلیت سانس آزاد"
         desc={`ورود به «${gym.name}» تا پایان امروز${now.offPeak ? ' — با تخفیف ساعت خلوت' : ''}.`}
-        price={now.price}
+        price={withOffer(now.price)}
         credit={sub?.credit}
         balance={bal}
         onPay={doCheckIn}
-      />
+      >
+        {offer && <div className="rounded-2xl bg-aqua-400/10 p-3 text-xs">تخفیف ویژه‌ی {gym.name} برای شما: {num(offer.pct!)}٪</div>}
+      </PaySheet>
       <PaySheet
         open={!!book}
         onClose={() => setBook(undefined)}
         title={book ? `رزرو کلاس ${book.cls.title}` : ''}
         desc={book ? `${weekdayLabel(weekdayOf(book.at))} ${faDate(book.at.toISOString())} ساعت ${faTime(book.at.toISOString())} · مربی: ${book.cls.coachName}` : ''}
-        price={book ? classPrice(gym, book.cls) : 0}
+        price={book ? withOffer(classPrice(gym, book.cls)) : 0}
         credit={sub?.credit}
         balance={bal}
         onPay={doBook}
-      />
+        disabled={book?.cls.audience === 'kids' && kidsOk.length === 0}
+      >
+        {book?.cls.audience === 'kids' &&
+          (kidsOk.length ? (
+            <Field label="برای کدام فرزند؟">
+              <Select value={memberId || kidsOk[0].id} onChange={(e) => setMemberId(e.target.value)}>
+                {kidsOk.map((m) => <option key={m.id} value={m.id}>{m.name} ({num(ageOf(m.birthYear))} ساله)</option>)}
+              </Select>
+            </Field>
+          ) : (
+            <div className="rounded-2xl bg-gold-300/15 p-3 text-xs leading-6">این کلاس برای کودکان {num(book.cls.ageMin ?? 0)} تا {num(book.cls.ageMax ?? 0)} سال است. ابتدا فرزندتان را در <Link to="/family" className="underline">خانواده</Link> اضافه کنید.</div>
+          ))}
+        {offer && <div className="rounded-2xl bg-aqua-400/10 p-3 text-xs">تخفیف ویژه‌ی {gym.name} برای شما: {num(offer.pct!)}٪</div>}
+      </PaySheet>
       <TicketSheet ticket={ticket} gym={gym} onClose={() => setTicketId(undefined)} onShare={() => { setTicketId(undefined); setShare(true) }} />
       <Sheet open={rv.open} onClose={() => setRv({ ...rv, open: false })} title="نظر شما درباره‌ی باشگاه">
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <div className="flex justify-center gap-2" dir="ltr">
             {[1, 2, 3, 4, 5].map((s) => (
               <button key={s} onClick={() => setRv({ ...rv, stars: s })} aria-label={`${s} ستاره`}>

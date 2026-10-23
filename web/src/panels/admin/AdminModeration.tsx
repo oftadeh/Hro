@@ -7,11 +7,12 @@ import { Badge, Button, Card, Empty, PageHeader, Tabs } from '@/ui/kit'
 import { useUserMap } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 
-const KIND: Record<Report['kind'], string> = { post: 'پست', comment: 'نظر', user: 'کاربر', story: 'استوری' }
+const KIND: Record<Report['kind'], string> = { post: 'پست', comment: 'نظر', user: 'کاربر', story: 'استوری', listing: 'آگهی بازار' }
 
 export default function AdminModeration() {
   const reports = useDB((s) => s.reports)
   const posts = useDB((s) => s.posts)
+  const listings = useDB((s) => s.listings)
   const users = useUserMap()
   const [tab, setTab] = useState<'open' | 'done'>('open')
   // گزارش‌های تکراری یک مورد با هم نمایش داده می‌شوند
@@ -21,11 +22,13 @@ export default function AdminModeration() {
     if (r.kind === 'post') return posts.find((p) => p.id === r.refId)?.text ?? '(حذف شده)'
     if (r.kind === 'comment') return posts.find((p) => p.id === r.parentId)?.comments.find((c) => c.id === r.refId)?.text ?? '(حذف شده)'
     if (r.kind === 'user') return users[r.refId]?.name ?? ''
+    if (r.kind === 'listing') { const l = listings.find((x) => x.id === r.refId); return l ? `${l.title} — ${l.description}` : '(حذف شده)' }
     return ''
   }
   const author = (r: Report) => {
     if (r.kind === 'post') return users[posts.find((p) => p.id === r.refId)?.authorId ?? '']?.name
     if (r.kind === 'comment') return users[posts.find((p) => p.id === r.parentId)?.comments.find((c) => c.id === r.refId)?.authorId ?? '']?.name
+    if (r.kind === 'listing') return users[listings.find((x) => x.id === r.refId)?.sellerId ?? '']?.name
     return users[r.refId]?.name
   }
   return (

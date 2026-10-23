@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Bot, Send, Trash2 } from 'lucide-react'
+import { Bot, Radio, Send, Trash2 } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { askAI, clearAIChat } from '@/core/services/ai'
@@ -17,7 +17,7 @@ export default function FitYar() {
   const tab = (params.get('tab') as Tab) || 'ai'
   return (
     <div className="animate-fade-up">
-      <PageHeader title="فیت‌یار" subtitle="مشاوره‌ی هوشمند و مربیان حرفه‌ای تغذیه و تمرین" />
+      <PageHeader title="فیت‌یار" subtitle="مشاوره‌ی هوشمند و مربیان حرفه‌ای تغذیه و تمرین" actions={<Link to="/live"><Button size="sm" variant="secondary" icon={<Radio size={15} />}>کلاس زنده</Button></Link>} />
       <Tabs
         className="mb-4"
         value={tab}

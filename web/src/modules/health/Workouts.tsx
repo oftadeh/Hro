@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { Dumbbell, Plus, Search, Trash2, Trophy } from 'lucide-react'
+import { Dumbbell, HeartPulse, Plus, Search, Trash2, Trophy } from 'lucide-react'
+import { bluetoothSupported, connectHeartRate } from '@/core/client/health'
+import { connectDevice } from '@/core/services/devices'
 import { useDB } from '@/core/db'
 import { dayKey, faDate, num } from '@/core/format'
 import { EXERCISES, EQUIPMENT_LABEL, MUSCLE_LABEL, exerciseById, type Muscle } from '@/core/catalog'
@@ -10,7 +12,7 @@ import type { WorkoutSet } from '@/core/types'
 import { Button, Card, Empty, Field, Input, NumberInput, PageHeader, Sheet, Tabs } from '@/ui/kit'
 import { Lifter } from '@/ui/art'
 import { useMe } from '@/ui/hooks'
-import { run, runOk } from '@/ui/toast'
+import { run, runOk, toast } from '@/ui/toast'
 
 type Draft = { title: string; durationMin: number; exercises: { exerciseId: string; sets: WorkoutSet[] }[]; program?: { orderId: string; week: number; day: number } }
 const empty = (): Draft => ({ title: '', durationMin: 45, exercises: [] })
@@ -27,6 +29,25 @@ export default function Workouts() {
   const [pick, setPick] = useState(false)
   const [q, setQ] = useState('')
   const [muscle, setMuscle] = useState<Muscle | 'all'>('all')
+  // ضربان قلب زنده از سنسور بلوتوث در طول تمرین
+  const [bpm, setBpm] = useState<number>()
+  const hrSamples = useRef<number[]>([])
+  const hrConn = useRef<{ disconnect: () => void }>(undefined)
+  useEffect(() => () => hrConn.current?.disconnect(), [])
+  const startHr = async () => {
+    try {
+      const c = await connectHeartRate((b) => { setBpm(b); hrSamples.current.push(b) }, () => { setBpm(undefined); hrConn.current = undefined })
+      hrConn.current = c
+      hrSamples.current = []
+      connectDevice('hr_monitor', c.name).catch(() => {})
+    } catch (e) {
+      if ((e as Error).name !== 'NotFoundError') toast.error((e as Error).message)
+    }
+  }
+  const hrSummary = () => {
+    const xs = hrSamples.current
+    return xs.length >= 5 ? { avg: Math.round(xs.reduce((a, b) => a + b, 0) / xs.length), max: Math.max(...xs) } : undefined
+  }
 
   // شروع تمرین از روی برنامه‌ی مربی
   useEffect(() => {
@@ -74,7 +95,7 @@ export default function Workouts() {
                 <div className="flex items-center gap-2">
                   <Dumbbell size={16} className="text-ink-400" />
                   <span className="text-sm font-semibold">{w.title}</span>
-                  <span className="text-[11px] text-ink-400">{faDate(w.day + 'T12:00')} · {num(w.durationMin)} دقیقه</span>
+                  <span className="text-[11px] text-ink-400">{faDate(w.day + 'T12:00')} · {num(w.durationMin)} دقیقه{w.hr ? ` · ❤ ${num(w.hr.avg)}/${num(w.hr.max)}` : ''}</span>
                   <button className="mr-auto text-ink-300 hover:text-coral-500" onClick={() => confirm('این تمرین حذف شود؟') && run(() => deleteWorkout(w.id))} aria-label="حذف"><Trash2 size={14} /></button>
                 </div>
                 <div className="mt-2 space-y-1 text-xs text-ink-500">
@@ -137,6 +158,13 @@ export default function Workouts() {
               <Field label="عنوان"><Input value={draft.title} onChange={(e) => up((d) => ({ ...d, title: e.target.value }))} placeholder="مثلاً پا و باسن" /></Field>
               <Field label="مدت (دقیقه)"><NumberInput value={draft.durationMin} onChange={(v) => up((d) => ({ ...d, durationMin: v }))} /></Field>
             </div>
+            {bluetoothSupported() && (
+              <div className="flex items-center gap-2 rounded-2xl bg-coral-400/10 p-3 text-xs">
+                <HeartPulse size={16} className="text-coral-500" />
+                {bpm ? <span><b className="font-display text-xl tabular-nums">{num(bpm)}</b> ضربان در دقیقه — میانگین و بیشینه با تمرین ذخیره می‌شود</span> : <span className="flex-1">سنسور ضربان قلب داری؟ وصلش کن.</span>}
+                {!bpm && <Button size="sm" variant="secondary" onClick={startHr}>اتصال</Button>}
+              </div>
+            )}
             {draft.exercises.map((ex, i) => (
               <div key={i} className="rounded-2xl bg-ink-900/[.03] p-3 dark:bg-white/[.04]">
                 <div className="mb-2 flex items-center justify-between text-sm font-medium">
@@ -161,7 +189,7 @@ export default function Workouts() {
               className="w-full"
               size="lg"
               onClick={async () => {
-                if (await runOk(() => logWorkout({ day: dayKey(), title: draft.title || 'تمرین', durationMin: draft.durationMin, exercises: draft.exercises, program: draft.program }), 'تمرین ثبت شد؛ +۲۵ امتیاز')) setDraft(null)
+                if (await runOk(() => logWorkout({ day: dayKey(), title: draft.title || 'تمرین', durationMin: draft.durationMin, exercises: draft.exercises, program: draft.program, hr: hrSummary() }), 'تمرین ثبت شد؛ +۲۵ امتیاز')) setDraft(null)
               }}
             >
               پایان و ثبت تمرین

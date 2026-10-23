@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { CARE_KINDS } from '@/core/config'
 import { FileText, Plus, ShieldCheck, Trash2 } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { faDate, num, toman } from '@/core/format'
@@ -25,6 +27,16 @@ export default function Insurance() {
   const [claim, setClaim] = useState(false)
   const [f, setF] = useState({ day: localDay(), sport: '', description: '', amount: 0, docs: [] as string[] })
   const used = policy ? usedCover(policy.id, s) : 0
+  const [params, setParams] = useSearchParams()
+  // پیش‌پر کردن پرونده از نوبت فیزیوتراپی/پزشک
+  useEffect(() => {
+    const a = s.appointments.find((x) => x.id === params.get('from') && x.userId === me.id && x.status === 'done')
+    if (!a || !policy) return
+    const kind = s.doctors.find((d) => d.userId === a.doctorId)?.kind ?? 'doctor'
+    setF((x) => ({ ...x, day: a.at.slice(0, 10) > localDay() ? localDay() : a.at.slice(0, 10), description: `${CARE_KINDS[kind].label}: ${a.reason}${a.prescription ? `\nنظر درمانگر: ${a.prescription}` : ''}`.slice(0, 1400), amount: a.price }))
+    setClaim(true)
+    setParams({}, { replace: true })
+  }, [params.get('from'), !!policy]) // eslint-disable-line react-hooks/exhaustive-deps
   const canCancel = policy && Date.now() - new Date(policy.startAt).getTime() < 14 * 86_400_000 && !claims.some((c) => c.policyId === policy.id)
 
   return (

@@ -21,6 +21,9 @@ import { autoProgress } from './challenges'
 import { toman } from '../format'
 import { GRADIENTS, VENUE_KINDS } from '../config'
 import { trainTogetherBonus } from './teams'
+import { campaignOffer } from './members'
+import { classEligibility } from './family'
+import type { FamilyMember } from '../types'
 
 const HOUR = 3_600_000
 /** حداقل فاصله تا شروع کلاس برای لغو با بازگشت وجه */
@@ -94,7 +97,7 @@ const endOfDay = (d = new Date()) => {
   return e
 }
 
-function assertGymAccess(gym: Gym | undefined, user: User) {
+function assertGymAccess(gym: Gym | undefined, user: Pick<User, 'gender'>) {
   if (!gym || !gym.approved) throw new AppError('باشگاه در دسترس نیست')
   if (gym.gender !== 'mixed' && user.gender && user.gender !== gym.gender) throw new AppError(gym.gender === 'female' ? 'این باشگاه ویژه‌ی بانوان است' : 'این باشگاه ویژه‌ی آقایان است')
 }
@@ -104,10 +107,14 @@ function issueTicket(
   d: DBState,
   user: User,
   gym: Gym,
-  o: { prefer: 'subscription' | 'wallet'; cls?: GymClass; slotAt?: string; viaReception?: boolean },
+  o: { prefer: 'subscription' | 'wallet'; cls?: GymClass; slotAt?: string; viaReception?: boolean; member?: FamilyMember },
 ): CheckIn {
   const at = new Date()
-  const { price, offPeak } = o.cls ? { price: classPrice(gym, o.cls), offPeak: false } : priceAt(gym, at)
+  const base = o.cls ? { price: classPrice(gym, o.cls), offPeak: false } : priceAt(gym, at)
+  // تخفیف کمپین باشگاه (هزینه‌اش با خود باشگاه است)
+  const offer = campaignOffer(d, user.id, gym.id, at)
+  const price = offer ? Math.round((base.price * (100 - offer.pct!)) / 100 / 1000) * 1000 : base.price
+  const offPeak = base.offPeak
   const sub = d.subscriptions.find((s) => s.userId === user.id && new Date(s.expiresAt) > at)
   const useSub = o.prefer === 'subscription' && !!sub && sub.credit >= price
   if (o.prefer === 'subscription' && !useSub && (d.wallets[user.id] ?? 0) < price)
@@ -121,13 +128,15 @@ function issueTicket(
     amount: price,
     module: 'fityab',
     refId: id,
-    description: `${o.cls ? `کلاس ${o.cls.title}` : 'ورود'} ${user.name} — ${gym.name}${offPeak ? ' (ساعت خلوت)' : ''}`,
+    description: `${o.cls ? `کلاس ${o.cls.title}` : 'ورود'} ${o.member ? o.member.name : user.name} — ${gym.name}${offPeak ? ' (ساعت خلوت)' : ''}${offer ? ` (تخفیف ${offer.pct}٪ باشگاه)` : ''}`,
   })
   const validUntil = o.cls && o.slotAt ? new Date(new Date(o.slotAt).getTime() + (o.cls.durationMin + 30) * 60_000) : endOfDay(at)
   const t: CheckIn = {
     id, userId: user.id, gymId: gym.id, price: gym.sessionPrice, paid: price, code: entryCode(), paidWith: useSub ? 'subscription' : 'wallet',
     status: 'active', classId: o.cls?.id, slotAt: o.slotAt, validUntil: validUntil.toISOString(), offPeak, viaReception: o.viaReception, txId: tx.id, createdAt: now(),
+    memberId: o.member?.id, memberName: o.member?.name, campaignId: offer?.id,
   }
+  if (offer) d.campaigns.find((c) => c.id === offer.id)!.usedBy.push(user.id)
   d.checkins.unshift(t)
   addXP(d, user.id, 30)
   return t
@@ -224,25 +233,30 @@ export const checkIn = svc('fityab.checkIn', (gymId: string, prefer: 'subscripti
 })
 
 /** رزرو یک نوبت کلاس گروهی */
-export const bookClass = svc('fityab.bookClass', (gymId: string, classId: string, slotAt: string, prefer: 'subscription' | 'wallet' = 'subscription'): CheckIn => {
+export const bookClass = svc('fityab.bookClass', (gymId: string, classId: string, slotAt: string, prefer: 'subscription' | 'wallet' = 'subscription', memberId?: string): CheckIn => {
   const userId = currentUserId()
   const gym = db().gyms.find((g) => g.id === gymId)
   const user = db().users.find((u) => u.id === userId)!
-  assertGymAccess(gym, user)
+  const member = memberId ? user.family?.find((m) => m.id === memberId) : undefined
+  if (memberId && !member) throw new AppError('عضو خانواده یافت نشد')
+  // محدودیت جنسیتی باشگاه برای خود شرکت‌کننده بررسی می‌شود
+  assertGymAccess(gym, member ?? user)
   const cls = gym!.classes?.find((c) => c.id === classId)
   if (!cls) throw new AppError('کلاس یافت نشد')
+  const notOk = classEligibility(cls, member)
+  if (notOk) throw new AppError(notOk)
   const at = new Date(slotAt)
   if (isNaN(at.getTime())) throw new AppError('زمان کلاس معتبر نیست')
   const valid = upcomingClasses(gym!, 8).some((x) => x.cls.id === classId && x.at.getTime() === at.getTime())
   if (!valid) throw new AppError('این نوبت کلاس در دسترس نیست')
   const key = at.toISOString()
-  if (db().checkins.some((t) => t.userId === userId && t.classId === classId && t.slotAt === key && isLive(t))) throw new AppError('این کلاس را قبلاً رزرو کرده‌اید')
+  if (db().checkins.some((t) => t.userId === userId && t.classId === classId && t.slotAt === key && t.memberId === member?.id && isLive(t))) throw new AppError(member ? `این کلاس را قبلاً برای ${member.name} رزرو کرده‌اید` : 'این کلاس را قبلاً رزرو کرده‌اید')
   if (bookedCount(classId, key) >= cls.capacity) throw new AppError('ظرفیت این کلاس تکمیل است')
   let created!: CheckIn
   mutate((d) => {
     if (bookedCount(classId, key, d) >= cls.capacity) throw new AppError('ظرفیت این کلاس تکمیل است')
-    created = issueTicket(d, user, gym!, { prefer: prefer === 'wallet' ? 'wallet' : 'subscription', cls, slotAt: key })
-    notify(d, gym!.ownerId, 'رزرو کلاس جدید', `${user.name} کلاس «${cls.title}» را رزرو کرد.`, '', '/panel/gym/checkins')
+    created = issueTicket(d, user, gym!, { prefer: prefer === 'wallet' ? 'wallet' : 'subscription', cls, slotAt: key, member })
+    notify(d, gym!.ownerId, 'رزرو کلاس جدید', `${member ? `${member.name} (${user.name})` : user.name} کلاس «${cls.title}» را رزرو کرد.`, '', '/panel/gym/checkins')
   })
   return created
 })
@@ -301,7 +315,8 @@ export const verifyEntry = svc(
     })
     const u = db().users.find((x) => x.id === ci.userId)
     const gym = db().gyms.find((g) => g.id === ci.gymId)!
-    return { ticketId: ci.id, userName: u?.name ?? '', avatar: u?.avatar, gymName: gym.name, className: gym.classes?.find((c) => c.id === ci.classId)?.title, paid: ci.paid ?? ci.price }
+    const member = ci.memberId ? u?.family?.find((m) => m.id === ci.memberId) : undefined
+    return { ticketId: ci.id, userId: ci.userId, userName: u?.name ?? '', avatar: u?.avatar, gymName: gym.name, className: gym.classes?.find((c) => c.id === ci.classId)?.title, paid: ci.paid ?? ci.price, memberName: ci.memberName, memberNotes: member?.notes }
   },
   { roles: ['gym'] },
 )
@@ -397,7 +412,12 @@ function cleanGym(input: Partial<Gym>) {
       if (!/^\d{2}:\d{2}$/.test(c.time)) throw new AppError(`ساعت کلاس «${c.title}» معتبر نیست`)
       if (!(c.weekday >= 0 && c.weekday <= 6)) throw new AppError('روز کلاس معتبر نیست')
       if (!(c.capacity >= 1)) throw new AppError(`ظرفیت کلاس «${c.title}» را وارد کنید`)
-      return { id: c.id || uid('k-'), title: c.title.trim(), sport: c.sport || c.title.trim(), coachName: c.coachName ?? '', weekday: c.weekday, time: c.time, durationMin: c.durationMin || 60, capacity: c.capacity, price: c.price || undefined }
+      const kids = c.audience === 'kids'
+      if (kids && c.ageMin && c.ageMax && c.ageMin > c.ageMax) throw new AppError(`بازه‌ی سنی کلاس «${c.title}» معتبر نیست`)
+      return {
+        id: c.id || uid('k-'), title: c.title.trim(), sport: c.sport || c.title.trim(), coachName: c.coachName ?? '', weekday: c.weekday, time: c.time, durationMin: c.durationMin || 60, capacity: c.capacity, price: c.price || undefined,
+        audience: kids ? ('kids' as const) : undefined, ageMin: kids ? Math.max(2, Math.round(c.ageMin || 4)) : undefined, ageMax: kids ? Math.min(18, Math.round(c.ageMax || 12)) : undefined,
+      }
     })
   }
   return out

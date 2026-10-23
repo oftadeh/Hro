@@ -2,7 +2,7 @@
 import type {
   Appointment, CartItem, Challenge, CheckIn, CoachProfile, CycleProfile, DailyLog, DoctorProfile, Food, Gym, ID, Notification,
   Order, Payout, PlanOrder, PlatformSettings, Post, Product, Restaurant, Story, Subscription, Thread,
-  Transaction, User, EntryRequest, Review, Report, Ticket, WorkoutSession, MealLog, BodyEntry, Org, GiftCard, Coupon, Team, InsurancePlan, InsurancePolicy, InsuranceClaim,
+  Transaction, User, EntryRequest, Review, Report, Ticket, WorkoutSession, MealLog, BodyEntry, Org, GiftCard, Coupon, Team, InsurancePlan, InsurancePolicy, InsuranceClaim, LiveClass, GymCampaign, SportEvent, Listing,
 } from './types'
 
 export interface AIChatMessage {
@@ -53,5 +53,9 @@ export interface DBState {
   insurancePlans: InsurancePlan[]
   policies: InsurancePolicy[]
   claims: InsuranceClaim[]
+  liveClasses: LiveClass[]
+  campaigns: GymCampaign[]
+  events: SportEvent[]
+  listings: Listing[]
   settings: PlatformSettings
 }

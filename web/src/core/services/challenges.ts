@@ -23,7 +23,7 @@ export type NewChallenge = Pick<
 /** سقف ثبت روزانه برای هر معیار */
 export const DAILY_CAP: Record<ChallengeMetric, number> = { steps: 60_000, workouts: 3, minutes: 300, km: 60, weight_loss: 2, custom: 1_000_000 }
 export const VERIFICATION_LABEL: Record<NonNullable<Challenge['verification']>, string> = {
-  auto: 'خودکار از ورود به باشگاه و تمرین ثبت‌شده',
+  auto: 'خودکار از ورود به باشگاه، تمرین ثبت‌شده و ساعت هوشمند',
   proof: 'ثبت با عکس مدرک و تأیید سازنده',
   none: 'ثبت آزاد (بدون جایزه‌ی نقدی)',
 }
@@ -61,7 +61,7 @@ export const createChallenge = svc('challenge.create', (input: NewChallenge) => 
   const cash = input.entryFee > 0 || input.sponsorPrize > 0
   let verification = input.verification ?? (cash ? 'proof' : 'none')
   if (cash && verification === 'none') throw new AppError('چالش‌های جایزه‌دار باید روش تأیید امتیاز داشته باشند')
-  if (verification === 'auto' && !['workouts', 'minutes'].includes(input.metric)) verification = 'proof'
+  if (verification === 'auto' && !['workouts', 'minutes', 'steps'].includes(input.metric)) verification = 'proof'
   if (input.orgId) {
     const org = db().orgs.find((o) => o.id === input.orgId)
     if (!org || org.adminId !== me) throw new AppError('فقط مدیر سازمان می‌تواند چالش سازمانی بسازد')
@@ -170,7 +170,7 @@ export const reviewChallengeLog = svc('challenge.reviewLog', (challengeId: strin
  * پیشرفت خودکار از داده‌های تأییدشده‌ی اپ (داخل mutate صدا زده می‌شود).
  * workouts: هر ورود اسکن‌شده یا تمرین ثبت‌شده = ۱؛ minutes: مدت تمرین ثبت‌شده.
  */
-export function autoProgress(d: DBState, userId: ID, metric: ChallengeMetric, value: number, source: 'checkin' | 'workout') {
+export function autoProgress(d: DBState, userId: ID, metric: ChallengeMetric, value: number, source: 'checkin' | 'workout' | 'device') {
   const at = new Date()
   for (const c of d.challenges) {
     if (c.status !== 'active' || new Date(c.endAt) < at || c.metric !== metric) continue
@@ -179,7 +179,7 @@ export function autoProgress(d: DBState, userId: ID, metric: ChallengeMetric, va
     const cap = DAILY_CAP[metric]
     const v = Math.min(value, Math.max(0, cap - todayTotal(p.logs)))
     if (v <= 0) continue
-    p.logs.push({ id: uid('l-'), at: now(), value: v, source, status: 'ok', note: source === 'checkin' ? 'ورود تأییدشده به باشگاه' : 'تمرین ثبت‌شده' })
+    p.logs.push({ id: uid('l-'), at: now(), value: v, source, status: 'ok', note: source === 'checkin' ? 'ورود تأییدشده به باشگاه' : source === 'device' ? 'قدم‌شمار ساعت/گوشی' : 'تمرین ثبت‌شده' })
     recompute(d, c, userId)
   }
 }

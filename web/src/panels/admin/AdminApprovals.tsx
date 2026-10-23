@@ -1,6 +1,10 @@
 import { BadgeCheck, X } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { setVerification } from '@/core/services/admin'
+import { approveEvent } from '@/core/services/events'
+import { careKind } from '@/core/services/doctor'
+import { CARE_KINDS, EVENT_KINDS } from '@/core/config'
+import { faDateTime, toman } from '@/core/format'
 import { Avatar, Badge, Button, Card, Empty, PageHeader, SectionTitle } from '@/ui/kit'
 import { useUserMap } from '@/ui/hooks'
 import { run } from '@/ui/toast'
@@ -10,6 +14,8 @@ export default function AdminApprovals() {
   const doctors = useDB((s) => s.doctors)
   const coaches = useDB((s) => s.coaches)
   const restaurants = useDB((s) => s.restaurants)
+  const events = useDB((s) => s.events)
+  const pendingEvents = events.filter((e) => !e.approved && e.status !== 'cancelled')
   const users = useUserMap()
   const row = (key: string, name: string, info: string, ok: boolean | undefined, onOk: () => void, onNo: () => void, avatar?: string) => (
     <Card key={key} className="flex items-center gap-3">
@@ -29,12 +35,27 @@ export default function AdminApprovals() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="تأیید مدارک" subtitle="پزشک فقط پس از استعلام کد نظام پزشکی در سامانه‌ی نظام پزشکی به بیماران نمایش داده می‌شود" />
-      <SectionTitle title="پزشکان" />
+      <SectionTitle title="رویدادهای ورزشی" />
+      <div className="space-y-2">
+        {pendingEvents.length === 0 && <Empty title="رویدادی در انتظار تأیید نیست" />}
+        {pendingEvents.map((e) => (
+          <Card key={e.id} className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold">{e.title}</div>
+              <div className="truncate text-[11px] text-ink-500">{EVENT_KINDS[e.kind]} · {faDateTime(e.at)} · {e.location} · ورودی {e.fee ? toman(e.fee) : 'رایگان'} · برگزارکننده: {users[e.organizerId]?.name}</div>
+            </div>
+            <Button size="sm" variant="ghost" className="text-coral-500" icon={<X size={14} />} onClick={() => run(() => approveEvent(e.id, false))}>رد</Button>
+            <Button size="sm" icon={<BadgeCheck size={14} />} onClick={() => run(() => approveEvent(e.id, true), 'رویداد منتشر شد')}>انتشار</Button>
+          </Card>
+        ))}
+      </div>
+      <SectionTitle title="پزشکان و درمانگران" />
       <div className="space-y-2">
         {doctors.length === 0 && <Empty title="موردی نیست" />}
-        {doctors.map((d) =>
-          row(d.userId, users[d.userId]?.name ?? '', `${d.specialty} · کد نظام پزشکی: ${d.medicalCode || 'وارد نشده'}`, d.verified, () => run(() => setVerification('doctor', d.userId, true), 'پزشک تأیید شد'), () => run(() => setVerification('doctor', d.userId, false)), users[d.userId]?.avatar),
-        )}
+        {doctors.map((d) => {
+          const meta = CARE_KINDS[careKind(d)]
+          return row(d.userId, users[d.userId]?.name ?? '', `${meta.label} · ${d.specialty} · ${meta.license}: ${d.medicalCode || 'وارد نشده'}`, d.verified, () => run(() => setVerification('doctor', d.userId, true), `${meta.label} تأیید شد`), () => run(() => setVerification('doctor', d.userId, false)), users[d.userId]?.avatar)
+        })}
       </div>
       <SectionTitle title="مربیان" />
       <div className="space-y-2">
