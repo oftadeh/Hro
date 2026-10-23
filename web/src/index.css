@@ -1,0 +1,197 @@
+@import '@fontsource/vazirmatn/200.css';
+@import '@fontsource/vazirmatn/300.css';
+@import '@fontsource/vazirmatn/400.css';
+@import '@fontsource/vazirmatn/500.css';
+@import '@fontsource/vazirmatn/600.css';
+@import '@fontsource/vazirmatn/700.css';
+@import '@fontsource/vazirmatn/800.css';
+@import '@fontsource/markazi-text/400.css';
+@import '@fontsource/markazi-text/500.css';
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply min-h-dvh bg-ink-50 font-sans text-ink-900 antialiased dark:bg-ink-950 dark:text-ink-100;
+    font-feature-settings: 'ss01';
+    background-image: radial-gradient(70rem 40rem at 50% 120%, rgb(167 139 250 / 0.12), transparent 60%);
+    background-attachment: fixed;
+  }
+  .dark body {
+    background-image:
+      radial-gradient(60rem 40rem at 50% 110%, rgb(124 58 237 / 0.22), transparent 60%),
+      radial-gradient(40rem 30rem at 100% 0%, rgb(124 58 237 / 0.10), transparent 60%);
+  }
+  ::selection {
+    @apply bg-brand-300/50;
+  }
+}
+
+@layer utilities {
+  .hairline {
+    @apply border-ink-200/70 dark:border-white/[.06];
+  }
+  .font-display {
+    font-feature-settings: normal;
+    letter-spacing: 0;
+  }
+  /* گرادیان‌های پاستلی مرجع */
+  .grad-lavender { background-image: linear-gradient(120deg, #a78bfa 0%, #d8b4fe 45%, #f5c2f0 100%); }
+  .grad-mint { background-image: linear-gradient(120deg, #6ee7c8 0%, #a7f3e0 50%, #86efac 100%); }
+  .grad-peach { background-image: linear-gradient(120deg, #fcd679 0%, #fbb6ce 55%, #e9a8f5 100%); }
+  .grad-pink { background-image: linear-gradient(120deg, #f2a3e2 0%, #e879d0 50%, #c4b5fd 100%); }
+  .grad-violet { background-image: linear-gradient(120deg, #8b5cf6 0%, #a78bfa 50%, #e879d0 100%); }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+  .glass {
+    @apply bg-ink-50/75 backdrop-blur-xl dark:bg-ink-950/70;
+  }
+}
+
+.leaflet-container {
+  font-family: inherit;
+  z-index: 0;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 1rem;
+}
+.keyfit-marker {
+  background: none;
+  border: none;
+}
+
+/* نقشه در حالت تیره کمی تیره‌تر و آبی‌تر دیده شود */
+.dark .leaflet-container {
+  background: #17141d;
+}
+
+/* ───────────── انیمیشن‌های تصویرسازی‌ها و رابط ───────────── */
+@keyframes kf-swing { from { transform: rotate(-28deg) } to { transform: rotate(28deg) } }
+@keyframes kf-swing-sm { from { transform: rotate(-14deg) } to { transform: rotate(14deg) } }
+@keyframes kf-bob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
+@keyframes kf-float { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+@keyframes kf-squat-up { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(7px) } }
+@keyframes kf-squat-legs { 0%, 100% { transform: scaleY(1) } 50% { transform: scaleY(.9) } }
+@keyframes kf-lift { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-12px) } }
+@keyframes kf-spin { to { transform: rotate(360deg) } }
+@keyframes kf-wave { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+@keyframes kf-beat { 0%, 100% { transform: scale(1) } 14% { transform: scale(1.14) } 28% { transform: scale(1) } 42% { transform: scale(1.08) } 70% { transform: scale(1) } }
+@keyframes kf-dash { to { stroke-dashoffset: -240 } }
+@keyframes kf-twinkle { 0%, 100% { opacity: .15; transform: scale(.5) } 50% { opacity: 1; transform: scale(1) } }
+@keyframes kf-flicker { 0%, 100% { transform: scaleY(1) skewX(0) } 25% { transform: scaleY(1.1) skewX(3deg) } 50% { transform: scaleY(.94) skewX(-3deg) } 75% { transform: scaleY(1.06) skewX(1deg) } }
+@keyframes kf-steam { 0% { opacity: 0; transform: translateY(6px) scaleX(.8) } 40% { opacity: .85 } 100% { opacity: 0; transform: translateY(-22px) scaleX(1.2) } }
+@keyframes kf-confetti { 0% { opacity: 0; transform: translateY(-14px) rotate(0) } 15% { opacity: 1 } 100% { opacity: 0; transform: translateY(70px) rotate(300deg) } }
+@keyframes kf-coin { 0% { opacity: 0; transform: translateY(-34px) } 25% { opacity: 1 } 60% { transform: translateY(0) } 85% { opacity: 1; transform: translateY(0) } 100% { opacity: 0; transform: translateY(0) } }
+@keyframes kf-bubble { 0%, 8% { opacity: 0; transform: scale(.2) } 22%, 78% { opacity: 1; transform: scale(1) } 100% { opacity: 0; transform: scale(.9) } }
+@keyframes kf-breathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.05) } }
+@keyframes kf-ripple { 0% { opacity: .7; transform: scale(.3) } 100% { opacity: 0; transform: scale(1.7) } }
+@keyframes kf-blink { 0%, 90%, 100% { transform: scaleY(1) } 94% { transform: scaleY(.1) } }
+@keyframes kf-needle { 0%, 100% { transform: rotate(-35deg) } 50% { transform: rotate(30deg) } }
+@keyframes kf-hand { 0%, 100% { transform: rotate(0) } 50% { transform: rotate(-30deg) } }
+@keyframes kf-rise { 0% { opacity: 0; transform: translateY(0) } 20% { opacity: .9 } 100% { opacity: 0; transform: translateY(-40px) } }
+@keyframes kf-drift { 0% { transform: translate(0, 0) scale(1) } 50% { transform: translate(6%, -5%) scale(1.08) } 100% { transform: translate(-4%, 4%) scale(.95) } }
+@keyframes kf-grow-y { from { transform: scaleY(0) } to { transform: scaleY(1) } }
+@keyframes kf-speed { from { stroke-dashoffset: 0 } to { stroke-dashoffset: 40 } }
+@keyframes kf-stagger { from { opacity: 0; transform: translateY(14px) scale(.98) } to { opacity: 1; transform: none } }
+
+.kf { transform-box: view-box; }
+.kf-swing { animation: kf-swing .55s ease-in-out infinite alternate; transform-box: view-box; }
+.kf-swing-rev { animation: kf-swing .55s ease-in-out infinite alternate-reverse; transform-box: view-box; }
+.kf-swing-sm { animation: kf-swing-sm .5s ease-in-out infinite alternate; transform-box: view-box; }
+.kf-swing-sm-rev { animation: kf-swing-sm .5s ease-in-out infinite alternate-reverse; transform-box: view-box; }
+.kf-bob { animation: kf-bob .55s ease-in-out infinite; }
+.kf-float { animation: kf-float 3.2s ease-in-out infinite; }
+.kf-squat-up { animation: kf-squat-up 1.8s ease-in-out infinite; }
+.kf-squat-legs { animation: kf-squat-legs 1.8s ease-in-out infinite; transform-box: view-box; }
+.kf-lift { animation: kf-lift 1.8s ease-in-out infinite; }
+.kf-spin { animation: kf-spin 1s linear infinite; transform-box: view-box; }
+.kf-spin-slow { animation: kf-spin 8s linear infinite; transform-box: view-box; }
+.kf-wave { animation: kf-wave 2.4s linear infinite; }
+.kf-beat { animation: kf-beat 1.2s ease-in-out infinite; transform-box: view-box; }
+.kf-dash { stroke-dasharray: 120 120; animation: kf-dash 2s linear infinite; }
+.kf-twinkle { animation: kf-twinkle 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-flicker { animation: kf-flicker 1.1s ease-in-out infinite; transform-box: view-box; }
+.kf-steam { animation: kf-steam 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-confetti { animation: kf-confetti 2.6s ease-in infinite; transform-box: fill-box; transform-origin: center; }
+.kf-coin { animation: kf-coin 2.4s ease-in-out infinite; }
+.kf-bubble { animation: kf-bubble 3.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-breathe { animation: kf-breathe 4s ease-in-out infinite; transform-box: view-box; }
+.kf-ripple { animation: kf-ripple 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-blink { animation: kf-blink 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-needle { animation: kf-needle 2.6s ease-in-out infinite; transform-box: view-box; }
+.kf-hand { animation: kf-hand .9s ease-in-out infinite; transform-box: view-box; }
+.kf-rise { animation: kf-rise 2.2s ease-out infinite; }
+.kf-drift { animation: kf-drift 14s ease-in-out infinite alternate; }
+.kf-speed { stroke-dasharray: 10 10; animation: kf-speed .5s linear infinite; }
+
+/* سبک «نور شفق»: کشیده‌شدن خطوط، نوری که روی خط حرکت می‌کند، ذرات و حرکت‌های آرام */
+@keyframes kf-draw { from { stroke-dashoffset: 1 } to { stroke-dashoffset: 0 } }
+@keyframes kf-shimmer { from { stroke-dashoffset: 1.1 } to { stroke-dashoffset: -0.1 } }
+@keyframes kf-flow { from { stroke-dashoffset: 0 } to { stroke-dashoffset: -1 } }
+@keyframes kf-glide { 0%, 100% { transform: translate(0, 0) } 50% { transform: translate(3px, -4px) } }
+@keyframes kf-press { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+@keyframes kf-orbit { to { transform: rotate(360deg) } }
+@keyframes kf-pulse { 0% { opacity: .65; transform: scale(.6) } 100% { opacity: 0; transform: scale(1.5) } }
+@keyframes kf-glow { 0%, 100% { opacity: .35 } 50% { opacity: .75 } }
+@keyframes kf-stream { 0% { opacity: 0; transform: translateX(0) } 20% { opacity: 1 } 100% { opacity: 0; transform: translateX(-46px) } }
+@keyframes kf-up { 0% { opacity: 0; transform: translateY(0) scale(.6) } 25% { opacity: 1 } 100% { opacity: 0; transform: translateY(-48px) scale(1) } }
+@keyframes kf-sweep { 0% { transform: translateX(-120%) skewX(-18deg) } 60%, 100% { transform: translateX(220%) skewX(-18deg) } }
+@keyframes kf-gauge { 0%, 100% { stroke-dashoffset: .55 } 50% { stroke-dashoffset: .18 } }
+@keyframes kf-needle2 { 0%, 100% { transform: rotate(-55deg) } 50% { transform: rotate(40deg) } }
+@keyframes kf-heart { 0%, 100% { transform: scale(1) } 12% { transform: scale(1.07) } 24% { transform: scale(.98) } 36% { transform: scale(1.04) } 60% { transform: scale(1) } }
+@keyframes kf-sway { 0%, 100% { transform: rotate(-2.5deg) } 50% { transform: rotate(2.5deg) } }
+@keyframes kf-blob { 0%, 100% { transform: translate(0, 0) scale(1) } 33% { transform: translate(4px, -5px) scale(1.08) } 66% { transform: translate(-4px, 3px) scale(.94) } }
+@keyframes kf-type { 0%, 60%, 100% { opacity: .25; transform: translateY(0) } 30% { opacity: 1; transform: translateY(-3px) } }
+
+.kf-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: kf-draw 1.6s cubic-bezier(.65, 0, .35, 1) forwards; }
+.kf-shimmer { stroke-dasharray: .07 1.1; stroke-dashoffset: 1.1; animation: kf-shimmer 3.2s cubic-bezier(.45, 0, .55, 1) infinite; }
+.kf-flow { stroke-dasharray: .25 .15; animation: kf-flow 2.6s linear infinite; }
+.kf-glide { animation: kf-glide 3.6s ease-in-out infinite; }
+.kf-press { animation: kf-press 3s ease-in-out infinite; }
+.kf-orbit { animation: kf-orbit 9s linear infinite; transform-box: view-box; }
+.kf-orbit-rev { animation: kf-orbit 13s linear infinite reverse; transform-box: view-box; }
+.kf-pulse { animation: kf-pulse 2.8s cubic-bezier(.2, .7, .3, 1) infinite; transform-box: fill-box; transform-origin: center; }
+.kf-glow { animation: kf-glow 3.4s ease-in-out infinite; }
+.kf-stream { animation: kf-stream 2.2s ease-out infinite; }
+.kf-up { animation: kf-up 3.2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-sweep { animation: kf-sweep 4.5s ease-in-out infinite; }
+.kf-gauge { stroke-dasharray: 1; animation: kf-gauge 4.5s ease-in-out infinite; }
+.kf-needle2 { animation: kf-needle2 4.5s ease-in-out infinite; transform-box: view-box; }
+.kf-heart { animation: kf-heart 1.6s ease-in-out infinite; transform-box: view-box; }
+.kf-sway { animation: kf-sway 5s ease-in-out infinite; transform-box: view-box; }
+.kf-blob { animation: kf-blob 7s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.kf-type { animation: kf-type 1.4s ease-in-out infinite; }
+
+/* ورود پله‌ای فرزندان */
+.stagger > * { animation: kf-stagger .55s cubic-bezier(.2, .8, .2, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: .02s }
+.stagger > *:nth-child(2) { animation-delay: .08s }
+.stagger > *:nth-child(3) { animation-delay: .14s }
+.stagger > *:nth-child(4) { animation-delay: .2s }
+.stagger > *:nth-child(5) { animation-delay: .26s }
+.stagger > *:nth-child(6) { animation-delay: .32s }
+.stagger > *:nth-child(7) { animation-delay: .38s }
+.stagger > *:nth-child(8) { animation-delay: .44s }
+.stagger > *:nth-child(n + 9) { animation-delay: .5s }
+
+.lift-hover { transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .35s; }
+.lift-hover:hover { transform: translateY(-4px); }
+.lift-hover:hover svg[data-art] { transform: scale(1.06) rotate(-2deg); }
+svg[data-art] { transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  [class*='kf-'], .stagger > *, .animate-fade-up, .animate-sheet-up, .animate-pop { animation: none !important; }
+}

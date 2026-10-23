@@ -1,0 +1,11 @@
+{
+  "name": "کی‌فیت | KeyFit",
+  "short_name": "KeyFit",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#100e14",
+  "theme_color": "#100e14",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
