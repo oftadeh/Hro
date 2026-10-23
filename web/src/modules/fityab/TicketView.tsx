@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Navigation, Undo2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { faDateTime, toman } from '@/core/format'
-import { cancelTicket, CLASS_CANCEL_HOURS, ticketStatus } from '@/core/services/fityab'
+import { cancelTicket, CLASS_CANCEL_HOURS, RENTAL_CANCEL_HOURS, ticketStatus } from '@/core/services/fityab'
 import type { CheckIn, Gym } from '@/core/types'
 import { Badge, Button, Sheet } from '@/ui/kit'
 import { runOk } from '@/ui/toast'
@@ -19,9 +19,10 @@ export const TICKET_STATUS: Record<CheckIn['status'], { label: string; color: 'e
 export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckIn; gym?: Gym; onClose: () => void; onShare?: () => void }) {
   const cls = ticket?.classId ? gym?.classes?.find((c) => c.id === ticket.classId) : undefined
   const st = ticket ? ticketStatus(ticket) : 'active'
-  const lateCancel = !!ticket?.slotAt && new Date(ticket.slotAt).getTime() - Date.now() < CLASS_CANCEL_HOURS * 3_600_000
+  const win = ticket?.rentalEnd ? RENTAL_CANCEL_HOURS : CLASS_CANCEL_HOURS
+  const lateCancel = !!ticket?.slotAt && new Date(ticket.slotAt).getTime() - Date.now() < win * 3_600_000
   return (
-    <Sheet open={!!ticket} onClose={onClose} title={cls ? `بلیت کلاس ${cls.title}` : 'بلیت ورود'}>
+    <Sheet open={!!ticket} onClose={onClose} title={cls ? `بلیت کلاس ${cls.title}` : ticket?.rentalEnd ? 'رزرو اجاره' : 'بلیت ورود'}>
       {ticket && gym && (
         <div className="text-center">
           <div className="mb-3 flex justify-center">
@@ -43,6 +44,7 @@ export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckI
           )}
           <div className="mt-3 space-y-1 rounded-2xl bg-ink-900/[.04] p-3 text-xs leading-6 text-ink-500 dark:bg-white/[.05]">
             {cls && ticket.slotAt && <div>زمان کلاس: <b className="text-ink-900 dark:text-white">{faDateTime(ticket.slotAt)}</b> · مربی: {cls.coachName}</div>}
+            {ticket.rentalEnd && ticket.slotAt && <div>از <b className="text-ink-900 dark:text-white">{faDateTime(ticket.slotAt)}</b> تا {faDateTime(ticket.rentalEnd)}</div>}
             <div>
               مبلغ: {toman(ticket.paid ?? ticket.price)} از {ticket.paidWith === 'subscription' ? 'اعتبار اشتراک' : 'کیف پول'}
               {ticket.offPeak && <span className="text-aqua-600 dark:text-aqua-300"> (تخفیف ساعت خلوت)</span>}
@@ -66,7 +68,7 @@ export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckI
                   if (await runOk(() => cancelTicket(ticket.id), 'بلیت لغو شد و مبلغ برگشت داده شد')) onClose()
                 }}
               >
-                {lateCancel ? `لغو کلاس تا ${CLASS_CANCEL_HOURS} ساعت قبل از شروع ممکن است` : 'لغو و بازگشت وجه'}
+                {lateCancel ? `لغو تا ${win} ساعت قبل از شروع ممکن است` : 'لغو و بازگشت وجه'}
               </Button>
             </>
           )}

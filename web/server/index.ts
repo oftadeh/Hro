@@ -35,6 +35,8 @@ import '../src/core/services/health'
 import '../src/core/services/org'
 import '../src/core/services/support'
 import '../src/core/services/wallet'
+import '../src/core/services/teams'
+import '../src/core/services/insurance'
 import { assertCanLogin, createUser, isValidPhone, normalizePhone, type ProfileInput } from '../src/core/services/auth'
 import { creditTopUp } from '../src/core/services/wallet'
 import { env } from './env'
@@ -242,6 +244,37 @@ async function api(req: Req, res: Res, url: URL) {
     return json(res, 200, { url: `/uploads/${name}` })
   }
 
+  if (p === '/api/upload-video' && req.method === 'POST') {
+    const uid = requireUser(req, url)
+    limit('vid:' + uid, 10, 3_600_000)
+    const type = String(req.headers['content-type'] ?? '')
+    const ext = type === 'video/mp4' ? 'mp4' : type === 'video/webm' ? 'webm' : type === 'video/quicktime' ? 'mov' : ''
+    if (!ext) throw new HttpError(400, 'فقط ویدیوی MP4، WebM یا MOV')
+    const max = 40 * 1024 * 1024
+    if (Number(req.headers['content-length'] ?? 0) > max) throw new HttpError(413, 'حداکثر حجم ویدیو ۴۰ مگابایت است')
+    const name = `${crypto.randomUUID()}.${ext}`
+    const file = path.join(env.dataDir, 'uploads', name)
+    const out = fs.createWriteStream(file)
+    let size = 0
+    try {
+      for await (const c of req) {
+        size += (c as Buffer).length
+        if (size > max) throw new HttpError(413, 'حداکثر حجم ویدیو ۴۰ مگابایت است')
+        if (!out.write(c)) await new Promise<void>((r) => out.once('drain', () => r()))
+      }
+      await new Promise<void>((r, j) => out.end((e?: Error | null) => (e ? j(e) : r())))
+    } catch (e) {
+      out.destroy()
+      fs.rmSync(file, { force: true })
+      throw e
+    }
+    if (size < 1000) {
+      fs.rmSync(file, { force: true })
+      throw new HttpError(400, 'فایل ویدیو خالی است')
+    }
+    return json(res, 200, { url: `/uploads/${name}` })
+  }
+
   if (p === '/api/pay/start' && req.method === 'POST') {
     const uid = requireUser(req, url)
     limit('pay:' + uid, 20, 600_000)
@@ -293,20 +326,35 @@ async function api(req: Req, res: Res, url: URL) {
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg',
-  '.webp': 'image/webp', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ico': 'image/x-icon', '.mp4': 'video/mp4',
+  '.webp': 'image/webp', '.webm': 'video/webm', '.mov': 'video/quicktime', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ico': 'image/x-icon', '.mp4': 'video/mp4',
 }
 
-function serveFile(res: Res, file: string, cache: string) {
-  const stream = fs.createReadStream(file)
-  res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] ?? 'application/octet-stream', 'Cache-Control': cache })
-  stream.pipe(res)
+/** ارسال فایل با پشتیبانی از Range (برای جلو/عقب بردن ویدیو) */
+function serveFile(res: Res, file: string, cache: string, range?: string) {
+  const type = MIME[path.extname(file)] ?? 'application/octet-stream'
+  const size = fs.statSync(file).size
+  const m = range?.match(/^bytes=(\d*)-(\d*)$/)
+  if (m && (m[1] || m[2])) {
+    let start = m[1] ? Number(m[1]) : size - Number(m[2])
+    let end = m[1] && m[2] ? Number(m[2]) : size - 1
+    start = Math.max(0, start)
+    end = Math.min(size - 1, end)
+    if (start > end) {
+      res.writeHead(416, { 'Content-Range': `bytes */${size}` })
+      return res.end()
+    }
+    res.writeHead(206, { 'Content-Type': type, 'Cache-Control': cache, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': end - start + 1 })
+    return fs.createReadStream(file, { start, end }).pipe(res)
+  }
+  res.writeHead(200, { 'Content-Type': type, 'Cache-Control': cache, 'Accept-Ranges': 'bytes', 'Content-Length': size })
+  fs.createReadStream(file).pipe(res)
 }
 
 function statics(req: Req, res: Res, url: URL) {
   const p = decodeURIComponent(url.pathname)
   if (p.startsWith('/uploads/')) {
     const f = path.join(env.dataDir, 'uploads', path.basename(p))
-    if (fs.existsSync(f)) return serveFile(res, f, 'public, max-age=31536000, immutable')
+    if (fs.existsSync(f)) return serveFile(res, f, 'public, max-age=31536000, immutable', req.headers.range)
     res.writeHead(404)
     return res.end()
   }

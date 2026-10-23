@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { BadgeCheck, BarChart3, Building2, ClipboardList, Cog, FileText, Flag, LifeBuoy, Package, QrCode, Stethoscope, Trophy, UserCog, Users, UtensilsCrossed, Wallet, Briefcase, Star } from 'lucide-react'
+import { BadgeCheck, BarChart3, Building2, ClipboardList, Cog, FileText, Flag, LifeBuoy, Package, QrCode, Stethoscope, Trophy, UserCog, Users, UtensilsCrossed, Wallet, Briefcase, Star, ShieldPlus } from 'lucide-react'
 import { useSession } from '@/core/db'
 import { touchDaily } from '@/core/services/engagement'
 import { expireTickets } from '@/core/services/fityab'
@@ -32,6 +32,9 @@ const Workouts = lazy(() => import('@/modules/health/Workouts'))
 const Nutrition = lazy(() => import('@/modules/health/Nutrition'))
 const Progress = lazy(() => import('@/modules/health/Progress'))
 const ProgramView = lazy(() => import('@/modules/fityar/ProgramView'))
+const Teams = lazy(() => import('@/modules/teams/Teams'))
+const TeamDetail = lazy(() => import('@/modules/teams/TeamDetail'))
+const Insurance = lazy(() => import('@/pages/Insurance'))
 
 const FitYab = lazy(() => import('@/modules/fityab/FitYab'))
 const GymDetail = lazy(() => import('@/modules/fityab/GymDetail'))
@@ -69,6 +72,7 @@ const AdminSettings = lazy(() => import('@/panels/admin/AdminSettings'))
 const AdminApprovals = lazy(() => import('@/panels/admin/AdminApprovals'))
 const AdminModeration = lazy(() => import('@/panels/admin/AdminModeration'))
 const AdminSupport = lazy(() => import('@/panels/admin/AdminSupport'))
+const AdminInsurance = lazy(() => import('@/panels/admin/AdminInsurance'))
 const GymReviews = lazy(() => import('@/panels/gym/GymReviews'))
 const CompanyPanel = lazy(() => import('@/panels/company/CompanyPanel'))
 
@@ -111,6 +115,7 @@ const PANELS: Record<Exclude<Role, 'user'>, PanelLink[]> = {
     { to: 'approvals', label: 'تأیید مدارک', icon: BadgeCheck },
     { to: 'moderation', label: 'گزارش تخلف', icon: Flag },
     { to: 'support', label: 'پشتیبانی', icon: LifeBuoy },
+    { to: 'insurance', label: 'بیمه و خسارت', icon: ShieldPlus },
     { to: 'finance', label: 'مالی و تسویه', icon: FileText },
     { to: 'challenges', label: 'چالش‌ها', icon: Trophy },
     { to: 'settings', label: 'کمیسیون و تنظیمات', icon: Cog },
@@ -199,6 +204,9 @@ export default function App() {
           <Route path="org" element={<OrgPage />} />
           <Route path="program/:id" element={<ProgramView />} />
           <Route path="client/:id" element={<ClientHealth />} />
+          <Route path="teams" element={<Teams />} />
+          <Route path="teams/:id" element={<TeamDetail />} />
+          <Route path="insurance" element={<Insurance />} />
         </Route>
 
         <Route path="/panel/gym" element={panel('gym')}>
@@ -243,6 +251,7 @@ export default function App() {
           <Route path="approvals" element={<AdminApprovals />} />
           <Route path="moderation" element={<AdminModeration />} />
           <Route path="support" element={<AdminSupport />} />
+          <Route path="insurance" element={<AdminInsurance />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

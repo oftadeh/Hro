@@ -19,6 +19,7 @@ import { Runner, Scale, Yoga } from '@/ui/art'
 import { useMe } from '@/ui/hooks'
 import { run, runOk, toast } from '@/ui/toast'
 import { CycleCard, CycleHistory } from '@/modules/health/Cycle'
+import { IntroVideoCard } from '@/modules/profile/IntroVideo'
 import { Achievements, BmiGauge, ProfileHero, StatRow, achievementsOf } from '@/modules/profile/parts'
 
 const PRO_ROLES: Exclude<Role, 'admin' | 'user'>[] = ['gym', 'coach', 'seller', 'doctor', 'restaurant']
@@ -86,6 +87,7 @@ export default function Profile() {
         }
       />
       <StatRow items={[['پست', posts], ['دنبال‌کننده', followers], ['دنبال‌شونده', me.following.length], ['ورود به باشگاه', checkins]]} />
+      <IntroVideoCard user={me} self />
 
       {comp.pct < 1 && (
         <Card className="mt-3 flex items-center gap-4">
@@ -275,6 +277,8 @@ export default function Profile() {
             {[
               ['/tickets', 'بلیت‌های باشگاه'],
               ['/medical', 'پرونده‌ی پزشکی'],
+              ['/teams', 'هم‌تیمی‌ها'],
+              ['/insurance', 'بیمه‌ی ورزشی'],
               ['/invite', 'دعوت و هدیه'],
               ['/org', 'اشتراک سازمانی'],
               ['/league', 'لیگ هفتگی'],

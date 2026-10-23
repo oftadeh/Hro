@@ -9,6 +9,7 @@ import { Button, Card, Empty, PageHeader, SectionTitle } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 import { PostCard } from '@/modules/fitzone/PostCard'
+import { IntroVideoCard } from '@/modules/profile/IntroVideo'
 import { Achievements, ProfileHero, StatRow, achievementsOf } from '@/modules/profile/parts'
 
 /** پروفایل عمومی؛ اطلاعات سلامت و چرخه‌ی قاعدگی هرگز اینجا نمایش داده نمی‌شود */
@@ -66,6 +67,7 @@ export default function UserProfile() {
         }
       />
       <StatRow items={[['پست', theirPosts.length], ['دنبال‌کننده', followers], ['ورود به باشگاه', visible ? checkins : 0], ['امتیاز', user.xp]]} />
+      {visible && <IntroVideoCard user={user} />}
 
       {!visible ? (
         <Card className="mt-6 flex flex-col items-center gap-2 py-10 text-center">

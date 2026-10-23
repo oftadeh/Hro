@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Users } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { timeAgo } from '@/core/format'
 import { Avatar, Badge, Card, Empty, PageHeader } from '@/ui/kit'
@@ -17,15 +18,16 @@ export default function Messages() {
           {mine.map((t) => {
             const other = users[t.members.find((m) => m !== me.id)!]
             const last = t.messages[t.messages.length - 1]
+            const team = t.context === 'team'
             return (
               <Link key={t.id} to={`/messages/${t.id}`} className="flex items-center gap-3 p-4 hover:bg-ink-50 dark:hover:bg-white/5">
-                <Avatar name={other?.name ?? '?'} src={other?.avatar} size={48} />
+                {team ? <span className="flex h-12 w-12 items-center justify-center rounded-full grad-mint text-ink-950"><Users size={20} /></span> : <Avatar name={other?.name ?? '?'} src={other?.avatar} size={48} />}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">{other?.name}</span>
-                    <Badge color={t.context === 'doctor' ? 'sky' : t.context === 'coach' ? 'violet' : 'slate'}>{t.context === 'doctor' ? 'پزشک' : t.context === 'coach' ? 'مربی' : 'دوست'}</Badge>
+                    <span className="font-semibold">{team ? t.title : other?.name}</span>
+                    <Badge color={t.context === 'doctor' ? 'sky' : t.context === 'coach' ? 'violet' : team ? 'emerald' : 'slate'}>{t.context === 'doctor' ? 'پزشک' : t.context === 'coach' ? 'مربی' : team ? 'تیم' : 'دوست'}</Badge>
                   </div>
-                  <div className="truncate text-xs text-ink-500">{last?.text ?? 'گفتگو را شروع کنید'}</div>
+                  <div className="truncate text-xs text-ink-500">{last ? `${team && last.from !== me.id ? `${users[last.from]?.name ?? ''}: ` : ''}${last.text}` : 'گفتگو را شروع کنید'}</div>
                 </div>
                 <span className="text-[11px] text-ink-400">{timeAgo(t.updatedAt)}</span>
               </Link>

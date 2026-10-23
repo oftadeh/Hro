@@ -1,6 +1,7 @@
 /** عملیات مدیر سامانه — همه روی سرور فقط برای نقش admin مجازند */
 import { AppError, mutate, db, svc, currentUserId } from '../store'
-import type { Coupon, RevenueModule } from '../types'
+import type { Coupon, RevenueModule, VenueKind } from '../types'
+import { VENUE_KINDS } from '../config'
 import { notify } from './ledger'
 import { uid, now } from '../id'
 import { toman, dayKey } from '../format'
@@ -25,6 +26,19 @@ export const setPlatformSetting = svc(
     if (!['challengeCreationFee', 'minWithdraw', 'shippingFee', 'freeShippingOver', 'referralReward', 'orgDiscountPct'].includes(key)) throw new AppError('تنظیم معتبر نیست')
     mutate((d) => {
       d.settings[key] = key === 'orgDiscountPct' ? Math.min(50, Math.max(0, value)) : Math.max(0, Math.round(value))
+    })
+  },
+  A,
+)
+
+/** فعال‌سازی انواع مجموعه‌ها در فیت‌یاب (فازهای توسعه) */
+export const setVenueKinds = svc(
+  'admin.venueKinds',
+  (kinds: VenueKind[]) => {
+    const clean = [...new Set(kinds)].filter((k) => k in VENUE_KINDS)
+    if (!clean.length) throw new AppError('حداقل یک نوع مجموعه باید فعال باشد')
+    mutate((d) => {
+      d.settings.venueKinds = clean
     })
   },
   A,

@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Upload } from 'lucide-react'
+import { uploadVideo } from '@/core/client/remote'
+import { VENUE_KINDS } from '@/core/config'
+import type { VenueKind } from '@/core/types'
 import { weekdayLabel } from '@/core/services/fityab'
 import { uid } from '@/core/id'
 import { useDB } from '@/core/db'
 import { saveGym } from '@/core/services/fityab'
 import type { Gym, GymClass, Media } from '@/core/types'
 import { Button, Card, Field, ImagePicker, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
-import { run } from '@/ui/toast'
+import { run, toast } from '@/ui/toast'
 import { LocationPicker } from '../shared/LocationPicker'
 
 const split = (s: string) => s.split(/[،,]/).map((x) => x.trim()).filter(Boolean)
@@ -22,6 +25,9 @@ export default function GymEditor() {
   const [facilities, setFacilities] = useState((existing?.facilities ?? []).join('، '))
   const [sports, setSports] = useState((existing?.sports ?? []).join('، '))
   const [video, setVideo] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const kind = (f.kind ?? 'gym') as VenueKind
+  const rentalKind = VENUE_KINDS[kind].booking === 'rental'
   const set = <K extends keyof Gym>(k: K, v: Gym[K]) => setF((s) => ({ ...s, [k]: v }))
   const media = f.media ?? []
   const classes = f.classes ?? []
@@ -36,11 +42,25 @@ export default function GymEditor() {
       <PageHeader back="/panel/gym" title={existing ? `ویرایش ${existing.name}` : 'معرفی باشگاه جدید'} subtitle="اطلاعات، عکس، فیلم و موقعیت باشگاه برای نمایش در فیت‌یاب" />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="space-y-4">
-          <Field label="نام باشگاه"><Input value={f.name} onChange={(e) => set('name', e.target.value)} /></Field>
+          <Field label="نوع مجموعه">
+            <Select value={kind} onChange={(e) => { const k = e.target.value as VenueKind; set('kind', k); if (VENUE_KINDS[k].booking === 'rental' && !f.rental) set('rental', { hourlyPrice: 800_000, openFrom: 8, openTo: 24, maxHours: 2 }) }}>
+              {(Object.keys(VENUE_KINDS) as VenueKind[]).map((k) => <option key={k} value={k}>{VENUE_KINDS[k].label} — {VENUE_KINDS[k].desc}</option>)}
+            </Select>
+          </Field>
+          <Field label="نام مجموعه"><Input value={f.name} onChange={(e) => set('name', e.target.value)} /></Field>
           <Field label="شعار کوتاه"><Input value={f.tagline} onChange={(e) => set('tagline', e.target.value)} placeholder="مثلاً: بدنسازی حرفه‌ای با تجهیزات روز" /></Field>
           <Field label="معرفی کامل"><Textarea value={f.description} onChange={(e) => set('description', e.target.value)} /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="هزینه‌ی هر سانس (تومان)"><NumberInput value={f.sessionPrice ?? 0} onChange={(v) => set('sessionPrice', v)} /></Field>
+            {rentalKind ? (
+              <>
+                <Field label="اجاره‌ی هر ساعت (تومان)"><NumberInput value={f.rental?.hourlyPrice ?? 0} onChange={(v) => set('rental', { ...(f.rental ?? { openFrom: 8, openTo: 24, maxHours: 2 }), hourlyPrice: v })} /></Field>
+                <Field label="حداکثر ساعت هر رزرو"><NumberInput value={f.rental?.maxHours ?? 2} onChange={(v) => set('rental', { ...(f.rental ?? { hourlyPrice: 0, openFrom: 8, openTo: 24 }), maxHours: v })} /></Field>
+                <Field label="شروع ساعت کاری"><NumberInput value={f.rental?.openFrom ?? 8} onChange={(v) => set('rental', { ...(f.rental ?? { hourlyPrice: 0, openTo: 24, maxHours: 2 }), openFrom: v })} /></Field>
+                <Field label="پایان ساعت کاری"><NumberInput value={f.rental?.openTo ?? 24} onChange={(v) => set('rental', { ...(f.rental ?? { hourlyPrice: 0, openFrom: 8, maxHours: 2 }), openTo: v })} /></Field>
+              </>
+            ) : (
+              <Field label="هزینه‌ی هر سانس (تومان)"><NumberInput value={f.sessionPrice ?? 0} onChange={(v) => set('sessionPrice', v)} /></Field>
+            )}
             <Field label="ساعات کاری"><Input value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
             <Field label="تلفن"><Input value={f.phone} onChange={(e) => set('phone', e.target.value)} dir="ltr" className="text-left" /></Field>
             <Field label="جنسیت">
@@ -115,6 +135,25 @@ export default function GymEditor() {
               <Input value={video} onChange={(e) => setVideo(e.target.value)} placeholder="لینک فیلم (mp4)" dir="ltr" className="text-left" />
               <Button variant="secondary" onClick={() => { if (video.startsWith('http')) { set('media', [...media, { type: 'video', url: video }]); setVideo('') } }}>افزودن</Button>
             </div>
+            <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-ink-200 py-3 text-xs text-ink-500 dark:border-white/15">
+              <Upload size={15} /> {uploading ? 'در حال بارگذاری…' : 'بارگذاری فیلم معرفی از گوشی/کامپیوتر'}
+              <input
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                hidden
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  setUploading(true)
+                  const url = await run(() => uploadVideo(file))
+                  setUploading(false)
+                  if (url) {
+                    set('media', [...media, { type: 'video', url }])
+                    toast.success('فیلم اضافه شد؛ ذخیره را بزنید')
+                  }
+                }}
+              />
+            </label>
           </Card>
           <Button size="lg" className="w-full" onClick={save}>{existing ? 'ذخیره‌ی تغییرات' : 'ثبت باشگاه'}</Button>
         </div>

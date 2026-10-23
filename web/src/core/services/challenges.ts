@@ -18,7 +18,7 @@ import { GRADIENTS } from '../config'
 export type NewChallenge = Pick<
   Challenge,
   'title' | 'description' | 'metric' | 'unit' | 'goal' | 'entryFee' | 'sponsorPrize' | 'extraReward' | 'prizes' | 'xpReward' | 'gradient' | 'emoji' | 'maxParticipants'
-> & { days: number; verification?: Challenge['verification']; orgId?: ID }
+> & { days: number; verification?: Challenge['verification']; orgId?: ID; teamId?: ID }
 
 /** سقف ثبت روزانه برای هر معیار */
 export const DAILY_CAP: Record<ChallengeMetric, number> = { steps: 60_000, workouts: 3, minutes: 300, km: 60, weight_loss: 2, custom: 1_000_000 }
@@ -66,11 +66,16 @@ export const createChallenge = svc('challenge.create', (input: NewChallenge) => 
     const org = db().orgs.find((o) => o.id === input.orgId)
     if (!org || org.adminId !== me) throw new AppError('فقط مدیر سازمان می‌تواند چالش سازمانی بسازد')
   }
-  const fee = db().settings.challengeCreationFee
+  if (input.teamId) {
+    const team = db().teams.find((t) => t.id === input.teamId)
+    if (!team || !team.members.includes(me)) throw new AppError('فقط اعضای تیم می‌توانند چالش تیمی بسازند')
+  }
+  // چالش‌های تیمی بدون جایزه‌ی نقدی رایگان‌اند
+  const fee = input.teamId && !cash ? 0 : db().settings.challengeCreationFee
   let id = ''
   mutate((d) => {
     id = uid('ch-')
-    applyPayment(d, { type: 'challenge_create', from: me, to: 'platform', amount: fee, module: 'challenge', refId: id, description: `هزینه‌ی ایجاد چالش «${title}»` })
+    if (fee > 0) applyPayment(d, { type: 'challenge_create', from: me, to: 'platform', amount: fee, module: 'challenge', refId: id, description: `هزینه‌ی ایجاد چالش «${title}»` })
     if (input.sponsorPrize > 0)
       applyPayment(d, { type: 'challenge_entry', from: me, to: 'escrow', amount: input.sponsorPrize, commissionPct: 0, refId: id, description: `جایزه‌ی نقدی چالش «${title}»` })
     const start = new Date()
@@ -78,11 +83,15 @@ export const createChallenge = svc('challenge.create', (input: NewChallenge) => 
       id, creatorId: me, title, description: String(input.description ?? '').slice(0, 1000), metric: input.metric, unit: String(input.unit ?? ''), goal: input.goal,
       entryFee: Math.round(input.entryFee), sponsorPrize: Math.round(input.sponsorPrize), extraReward: String(input.extraReward ?? '').slice(0, 120), prizes,
       xpReward: Math.min(1000, Math.max(0, Math.round(input.xpReward || 0))), gradient: GRADIENTS.includes(input.gradient) ? input.gradient : GRADIENTS[0], emoji: '',
-      maxParticipants: Math.round(input.maxParticipants), verification, orgId: input.orgId,
+      maxParticipants: Math.round(input.maxParticipants), verification, orgId: input.orgId, teamId: input.teamId,
       creationFee: fee, pool: Math.round(input.sponsorPrize), participants: [], status: 'active',
       startAt: start.toISOString(), endAt: new Date(start.getTime() + input.days * 86_400_000).toISOString(), createdAt: now(),
     })
     addXP(d, me, 80)
+    if (input.teamId) {
+      const t = d.teams.find((x) => x.id === input.teamId)!
+      t.members.filter((m) => m !== me).forEach((m) => notify(d, m, `چالش تیمی ${t.name}`, `«${title}» شروع شد؛ بپیوند!`, '', `/challenges/${id}`))
+    }
   })
   return id
 })
@@ -95,6 +104,7 @@ export const joinChallenge = svc('challenge.join', (challengeId: string) => {
   if (ch.participants.some((p) => p.userId === me)) throw new AppError('قبلاً در این چالش شرکت کرده‌اید')
   if (ch.participants.length >= ch.maxParticipants) throw new AppError('ظرفیت چالش تکمیل است')
   if (ch.orgId && db().users.find((u) => u.id === me)?.orgId !== ch.orgId) throw new AppError('این چالش مخصوص اعضای سازمان است')
+  if (ch.teamId && !db().teams.find((t) => t.id === ch.teamId)?.members.includes(me)) throw new AppError('این چالش مخصوص اعضای تیم است')
   mutate((d) => {
     const c = d.challenges.find((x) => x.id === challengeId)!
     if (c.entryFee > 0) {

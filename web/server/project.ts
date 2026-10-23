@@ -20,7 +20,7 @@ export function project(s: DBState, uid: string): DBState {
     const showBody = shared || admin || !!u.privacy?.showBody
     return {
       id: u.id, name: u.name, avatar: u.avatar, bio: u.bio, city: u.city, roles: u.roles, xp: u.xp, streak: u.streak, following: u.following,
-      createdAt: u.createdAt, gender: u.gender, privacy: u.privacy, weekXp: u.weekXp,
+      createdAt: u.createdAt, gender: u.gender, privacy: u.privacy, weekXp: u.weekXp, introVideo: u.introVideo,
       orgId: u.orgId && (u.orgId === me?.orgId || admin) ? u.orgId : undefined,
       heightCm: showBody ? u.heightCm : undefined, weightKg: showBody ? u.weightKg : undefined, goal: showBody ? u.goal : undefined,
       activityLevel: showBody ? u.activityLevel : undefined, birthYear: shared ? u.birthYear : undefined,
@@ -34,10 +34,10 @@ export function project(s: DBState, uid: string): DBState {
   }
 
   // بلیت‌های دیگران فقط به‌صورت بی‌نام و بدون کد (برای ظرفیت کلاس و شلوغی)
-  const anonTicket = (c: CheckIn): CheckIn => ({ id: c.id, userId: 'anon', gymId: c.gymId, price: 0, code: '', paidWith: c.paidWith, status: c.status, classId: c.classId, slotAt: c.slotAt, usedAt: c.usedAt, createdAt: c.createdAt })
+  const anonTicket = (c: CheckIn): CheckIn => ({ id: c.id, userId: 'anon', gymId: c.gymId, price: 0, code: '', paidWith: c.paidWith, status: c.status, classId: c.classId, slotAt: c.slotAt, rentalEnd: c.rentalEnd, usedAt: c.usedAt, createdAt: c.createdAt })
   const checkins = s.checkins.flatMap((c) => {
     if (admin || c.userId === uid || myGyms.has(c.gymId)) return [c]
-    const relevant = (c.classId && c.slotAt && new Date(c.slotAt).getTime() > now - DAY) || (c.status === 'used' && c.usedAt && now - new Date(c.usedAt).getTime() < 3 * 3_600_000)
+    const relevant = ((c.classId || c.rentalEnd) && c.slotAt && new Date(c.slotAt).getTime() > now - DAY) || (c.status === 'used' && c.usedAt && now - new Date(c.usedAt).getTime() < 3 * 3_600_000)
     return relevant && (c.status === 'active' || c.status === 'used') ? [anonTicket(c)] : []
   })
 
@@ -77,5 +77,8 @@ export function project(s: DBState, uid: string): DBState {
     orgs: admin ? s.orgs : s.orgs.filter((o) => o.id === me?.orgId || o.adminId === uid),
     giftCards: admin ? s.giftCards : s.giftCards.filter((g) => g.fromId === uid || g.redeemedBy === uid || (me && g.toPhone === me.phone)),
     coupons: admin ? s.coupons : [],
+    teams: s.teams.filter((t) => t.members.includes(uid) || admin),
+    policies: admin ? s.policies : s.policies.filter((x) => x.userId === uid),
+    claims: admin ? s.claims : s.claims.filter((x) => x.userId === uid),
   }
 }

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useDB } from '@/core/db'
 import { MODULE_LABEL } from '@/core/config'
-import { broadcast, saveCoupon, setCommission, setPlatformSetting } from '@/core/services/admin'
+import { broadcast, saveCoupon, setCommission, setPlatformSetting, setVenueKinds } from '@/core/services/admin'
+import { VENUE_KINDS } from '@/core/config'
+import type { VenueKind } from '@/core/types'
 import type { Coupon } from '@/core/types'
 import { faDate, num } from '@/core/format'
 import type { RevenueModule } from '@/core/types'
@@ -62,6 +64,23 @@ export default function AdminSettings() {
           </Card>
         </div>
       </div>
+
+      <SectionTitle title="انواع مجموعه‌های فعال در فیت‌یاب (فازبندی)" />
+      <Card className="flex flex-wrap gap-2 p-4">
+        {(Object.keys(VENUE_KINDS) as VenueKind[]).map((k) => {
+          const on = (settings.venueKinds ?? ['gym']).includes(k)
+          return (
+            <button
+              key={k}
+              onClick={() => run(() => setVenueKinds(on ? (settings.venueKinds ?? ['gym']).filter((x) => x !== k) : [...(settings.venueKinds ?? ['gym']), k]), `${VENUE_KINDS[k].plural} ${on ? 'غیرفعال' : 'فعال'} شد`)}
+              className={`rounded-full px-4 py-2 text-xs transition ${on ? 'grad-mint font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-500 dark:bg-white/[.06]'}`}
+            >
+              {VENUE_KINDS[k].plural}
+            </button>
+          )
+        })}
+        <p className="w-full text-[11px] text-ink-400">مجموعه‌های نوع غیرفعال ثبت و تأیید می‌شوند اما تا فعال‌سازی، به ورزشکاران نمایش داده نمی‌شوند.</p>
+      </Card>
 
       <SectionTitle title="کدهای تخفیف" />
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">

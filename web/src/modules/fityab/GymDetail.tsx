@@ -14,6 +14,8 @@ import { GymMap } from './GymMap'
 import { GENDER_LABEL } from './GymCard'
 import { directionsUrl, neshanUrl, wazeUrl } from './nav'
 import { PaySheet, TicketSheet } from './TicketView'
+import { RentalBox } from './RentalBox'
+import { isRental } from '@/core/services/fityab'
 import { PostCard } from '@/modules/fitzone/PostCard'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
 
@@ -234,6 +236,10 @@ export default function GymDetail() {
         {/* کارت ورود */}
         <div>
           <Card className="sticky top-20">
+            {isRental(gym) ? (
+              <RentalBox gym={gym} onBooked={setTicketId} />
+            ) : (
+            <>
             <div className="flex items-center justify-between">
               <div className="text-xs text-ink-500">سانس آزاد · همین الان</div>
               {now.offPeak && <Badge color="emerald">ساعت خلوت</Badge>}
@@ -273,6 +279,8 @@ export default function GymDetail() {
               <Button className="mt-4 w-full" size="lg" icon={<Ticket size={18} />} onClick={() => setConfirm(true)} disabled={!gym.approved}>
                 خرید بلیت امروز
               </Button>
+            )}
+            </>
             )}
             {myClasses.length > 0 && (
               <div className="mt-3 space-y-1.5">

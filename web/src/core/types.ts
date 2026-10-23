@@ -10,7 +10,7 @@ export type ISODate = string
 export type Role = 'user' | 'gym' | 'coach' | 'seller' | 'doctor' | 'restaurant' | 'company' | 'admin'
 
 /** ماژول‌هایی که درآمد کمیسیونی دارند */
-export type RevenueModule = 'fityab' | 'fityar' | 'shop' | 'doctor' | 'buffet' | 'challenge'
+export type RevenueModule = 'fityab' | 'fityar' | 'shop' | 'doctor' | 'buffet' | 'challenge' | 'insurance'
 
 export interface User {
   id: ID
@@ -41,6 +41,8 @@ export interface User {
   referralRewarded?: boolean
   /** عضویت سازمانی */
   orgId?: ID
+  /** ویدیوی معرفی پروفایل (مربی، باشگاه‌دار، کاربران برتر و ویژه) */
+  introVideo?: string
   /** امتیاز هفته‌ی جاری برای لیگ */
   weekXp?: { week: string; xp: number }
   xp: number
@@ -122,6 +124,9 @@ export type TxType =
   | 'reward'
   | 'gift'
   | 'org_seats'
+  | 'insurance'
+  | 'claim_payout'
+  | 'rental'
 
 /** هر جابجایی پول یک سطر در دفتر کل (Ledger) است */
 export interface Transaction {
@@ -177,12 +182,18 @@ export interface Gym {
   reviews: number
   approved: boolean
   createdAt: ISODate
+  /** نوع مجموعه: باشگاه، استخر، باشگاه سوارکاری، سالن ورزشی، چمن مصنوعی */
+  kind?: VenueKind
+  /** اجاره‌ی ساعتی کل زمین/سالن (سالن ورزشی و چمن مصنوعی) */
+  rental?: { hourlyPrice: number; openFrom: number; openTo: number; maxHours: number }
   /** ظرفیت هم‌زمان سالن (برای نمایش شلوغی) */
   capacity?: number
   classes?: GymClass[]
   /** تخفیف ساعات خلوت: از ساعت from تا to (۰ تا ۲۴) */
   offPeak?: { from: number; to: number; discountPct: number }
 }
+
+export type VenueKind = 'gym' | 'pool' | 'equestrian' | 'hall' | 'turf'
 
 /** کلاس گروهی هفتگی */
 export interface GymClass {
@@ -217,6 +228,10 @@ export interface CheckIn {
   validUntil?: ISODate
   usedAt?: ISODate
   offPeak?: boolean
+  /** اجاره‌ی ساعتی: پایان رزرو */
+  rentalEnd?: ISODate
+  /** تیمی که رزرو برایش انجام شده */
+  teamId?: ID
   /** ورود از طریق درخواست پذیرش */
   viaReception?: boolean
   txId?: ID
@@ -307,7 +322,10 @@ export interface Message {
 export interface Thread {
   id: ID
   members: ID[]
-  context: 'coach' | 'doctor' | 'direct'
+  context: 'coach' | 'doctor' | 'direct' | 'team'
+  /** عنوان گفتگوی گروهی */
+  title?: string
+  teamId?: ID
   messages: Message[]
   updatedAt: ISODate
 }
@@ -538,6 +556,8 @@ export interface Challenge {
   verification?: 'auto' | 'proof' | 'none'
   /** چالش سازمانی */
   orgId?: ID
+  /** چالش داخلی تیم هم‌تمرینی */
+  teamId?: ID
   createdAt: ISODate
 }
 
@@ -575,6 +595,8 @@ export interface PlatformSettings {
   referralReward?: number
   /** تخفیف خرید سازمانی (درصد) */
   orgDiscountPct?: number
+  /** انواع مجموعه‌های فعال در فیت‌یاب (فازبندی توسعه) */
+  venueKinds?: VenueKind[]
 }
 
 /* ───────── نظرها، گزارش‌ها و پشتیبانی ───────── */
@@ -686,4 +708,77 @@ export interface GiftCard {
   message?: string
   redeemedBy?: ID
   createdAt: ISODate
+}
+
+/* ───────── هم‌تیمی‌ها ───────── */
+
+export interface TeamSession {
+  id: ID
+  title: string
+  at: ISODate
+  gymId?: ID
+  note?: string
+  createdBy: ID
+  going: ID[]
+  notGoing: ID[]
+}
+
+export interface Team {
+  id: ID
+  name: string
+  ownerId: ID
+  members: ID[]
+  /** کد دعوت */
+  code: string
+  threadId: ID
+  goal?: string
+  sessions: TeamSession[]
+  createdAt: ISODate
+}
+
+/* ───────── بیمه‌ی ورزشی ───────── */
+
+export interface InsurancePlan {
+  id: ID
+  name: string
+  provider: string
+  /** حق بیمه‌ی سالانه (تومان) */
+  price: number
+  /** سقف پوشش هزینه‌ی درمان حادثه‌ی ورزشی */
+  medicalCover: number
+  /** غرامت نقص عضو/فوت ناشی از حادثه */
+  accidentCover: number
+  /** فرانشیز (درصد سهم بیمه‌شده) */
+  deductiblePct: number
+  sports: string[]
+  perks: string[]
+  active: boolean
+}
+
+export interface InsurancePolicy {
+  id: ID
+  userId: ID
+  planId: ID
+  number: string
+  nationalId: string
+  startAt: ISODate
+  endAt: ISODate
+  status: 'active' | 'expired' | 'cancelled'
+  createdAt: ISODate
+}
+
+export interface InsuranceClaim {
+  id: ID
+  policyId: ID
+  userId: ID
+  incidentAt: ISODate
+  sport: string
+  description: string
+  amount: number
+  documents: string[]
+  status: 'submitted' | 'reviewing' | 'approved' | 'rejected' | 'paid'
+  approvedAmount?: number
+  note?: string
+  createdAt: ISODate
+  updatedAt: ISODate
 }

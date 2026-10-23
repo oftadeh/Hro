@@ -14,16 +14,18 @@
 import { AppError, mutate, currentUserId, db, svc } from '../store'
 import type { DBState } from '../state'
 import { uid, now, entryCode } from '../id'
-import type { CheckIn, Gym, GymClass, User } from '../types'
+import type { CheckIn, Gym, GymClass, ID, User } from '../types'
 import { applyPayment, notify, reversePayment } from './ledger'
 import { addXP, completeMission } from './engagement'
 import { autoProgress } from './challenges'
 import { toman } from '../format'
-import { GRADIENTS } from '../config'
+import { GRADIENTS, VENUE_KINDS } from '../config'
+import { trainTogetherBonus } from './teams'
 
 const HOUR = 3_600_000
 /** حداقل فاصله تا شروع کلاس برای لغو با بازگشت وجه */
 export const CLASS_CANCEL_HOURS = 2
+export const RENTAL_CANCEL_HOURS = 12
 /** پذیرش کلاس از این مقدار دقیقه قبل از شروع ممکن است */
 const CLASS_EARLY_MIN = 45
 const WEEKDAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه']
@@ -131,12 +133,86 @@ function issueTicket(
   return t
 }
 
+export const venueKind = (g: Gym) => g.kind ?? 'gym'
+export const isRental = (g: Gym) => VENUE_KINDS[venueKind(g)].booking === 'rental' && !!g.rental
+
+/** نوبت‌های آزاد اجاره‌ی یک روز (شروع هر ساعت) */
+export function rentalSlots(gym: Gym, day: Date, s: Pick<DBState, 'checkins'> = db()) {
+  if (!gym.rental) return []
+  const taken = s.checkins.filter((c) => c.gymId === gym.id && c.rentalEnd && c.slotAt && (c.status === 'active' || c.status === 'used'))
+  const out: { start: Date; free: boolean }[] = []
+  for (let h = gym.rental.openFrom; h < gym.rental.openTo; h++) {
+    const start = new Date(day)
+    start.setHours(h, 0, 0, 0)
+    const end = start.getTime() + 3_600_000
+    const busy = taken.some((c) => new Date(c.slotAt!).getTime() < end && new Date(c.rentalEnd!).getTime() > start.getTime())
+    out.push({ start, free: !busy && start.getTime() > Date.now() })
+  }
+  return out
+}
+
+export const rentalPrice = (gym: Gym, start: Date, hours: number) => {
+  const op = gym.offPeak
+  let total = 0
+  for (let i = 0; i < hours; i++) {
+    const h = start.getHours() + i
+    const off = !!op && op.discountPct > 0 && h >= op.from && h < op.to
+    total += off ? Math.round((gym.rental!.hourlyPrice * (100 - op!.discountPct)) / 100 / 1000) * 1000 : gym.rental!.hourlyPrice
+  }
+  return total
+}
+
+/** اجاره‌ی ساعتی سالن یا زمین (اختیاری برای یک تیم هم‌تمرینی) */
+export const bookRental = svc('fityab.rent', (gymId: string, startAt: string, hours: number, prefer: 'subscription' | 'wallet' = 'wallet', teamId?: ID): CheckIn => {
+  const userId = currentUserId()
+  const gym = db().gyms.find((g) => g.id === gymId)
+  const user = db().users.find((u) => u.id === userId)!
+  assertGymAccess(gym, user)
+  if (!isRental(gym!)) throw new AppError('این مجموعه اجاره‌ی ساعتی ندارد')
+  const r = gym!.rental!
+  const start = new Date(startAt)
+  if (isNaN(start.getTime()) || start.getMinutes() !== 0) throw new AppError('ساعت شروع معتبر نیست')
+  if (start.getTime() < Date.now()) throw new AppError('زمان انتخاب‌شده گذشته است')
+  if (start.getTime() - Date.now() > 14 * 86_400_000) throw new AppError('رزرو حداکثر تا ۱۴ روز آینده ممکن است')
+  if (!(Number.isInteger(hours) && hours >= 1 && hours <= r.maxHours)) throw new AppError(`مدت اجاره بین ۱ تا ${r.maxHours} ساعت است`)
+  if (start.getHours() < r.openFrom || start.getHours() + hours > r.openTo) throw new AppError('خارج از ساعات کاری مجموعه است')
+  const end = new Date(start.getTime() + hours * 3_600_000)
+  const overlap = (d: Pick<DBState, 'checkins'>) => d.checkins.some((c) => c.gymId === gymId && c.rentalEnd && c.slotAt && (c.status === 'active' || c.status === 'used') && new Date(c.slotAt) < end && new Date(c.rentalEnd) > start)
+  if (overlap(db())) throw new AppError('این بازه قبلاً رزرو شده است')
+  const team = teamId ? db().teams.find((t) => t.id === teamId && t.members.includes(userId)) : undefined
+  if (teamId && !team) throw new AppError('تیم یافت نشد')
+  const price = rentalPrice(gym!, start, hours)
+  let created!: CheckIn
+  mutate((d) => {
+    if (overlap(d)) throw new AppError('این بازه قبلاً رزرو شده است')
+    const sub = d.subscriptions.find((x) => x.userId === userId && new Date(x.expiresAt) > new Date())
+    const useSub = prefer === 'subscription' && !!sub && sub.credit >= price
+    const id = uid('ci-')
+    const tx = applyPayment(d, { type: 'rental', from: useSub ? 'subscription' : userId, payerId: userId, to: gym!.ownerId, amount: price, module: 'fityab', refId: id, description: `اجاره‌ی ${gym!.name} — ${hours} ساعت` })
+    created = {
+      id, userId, gymId, price, paid: price, code: entryCode(), paidWith: useSub ? 'subscription' : 'wallet', status: 'active',
+      slotAt: start.toISOString(), rentalEnd: end.toISOString(), validUntil: end.toISOString(), teamId: team?.id, txId: tx.id, createdAt: now(),
+    }
+    d.checkins.unshift(created)
+    addXP(d, userId, 30)
+    notify(d, gym!.ownerId, 'رزرو اجاره‌ی جدید', `${user.name}: ${hours} ساعت از ${start.toLocaleString('fa-IR', { weekday: 'long', hour: '2-digit', minute: '2-digit' })}`, '', '/panel/gym/checkins')
+    if (team) {
+      const t = d.teams.find((x) => x.id === team.id)!
+      t.sessions.push({ id: uid('ts-'), title: `${VENUE_KINDS[venueKind(gym!)].label} — ${gym!.name}`, at: start.toISOString(), gymId, note: `${hours} ساعت (رزرو شده)`, createdBy: userId, going: [userId], notGoing: [] })
+      t.sessions.sort((a, b) => a.at.localeCompare(b.at))
+      t.members.filter((m) => m !== userId).forEach((m) => notify(d, m, `${t.name}: زمین رزرو شد`, `${user.name} ${gym!.name} را برای تیم رزرو کرد.`, '', `/teams/${t.id}`))
+    }
+  })
+  return created
+})
+
 /** خرید سانس آزاد (معتبر تا پایان امروز) */
 export const checkIn = svc('fityab.checkIn', (gymId: string, prefer: 'subscription' | 'wallet' = 'subscription'): CheckIn => {
   const userId = currentUserId()
   const gym = db().gyms.find((g) => g.id === gymId)
   const user = db().users.find((u) => u.id === userId)!
   assertGymAccess(gym, user)
+  if (isRental(gym!)) throw new AppError('این مجموعه به‌صورت اجاره‌ی ساعتی رزرو می‌شود')
   const open = db().checkins.find((t) => t.userId === userId && t.gymId === gymId && !t.classId && ticketStatus(t) === 'active')
   if (open) throw new AppError('برای امروز بلیت فعال این باشگاه را دارید')
   let created!: CheckIn
@@ -177,7 +253,8 @@ export const cancelTicket = svc('fityab.cancel', (ticketId: string) => {
   const t = db().checkins.find((x) => x.id === ticketId && x.userId === me)
   if (!t) throw new AppError('بلیت یافت نشد')
   if (ticketStatus(t) !== 'active') throw new AppError('فقط بلیت‌های فعال قابل لغو هستند')
-  if (t.slotAt && new Date(t.slotAt).getTime() - Date.now() < CLASS_CANCEL_HOURS * HOUR) throw new AppError(`لغو کلاس فقط تا ${CLASS_CANCEL_HOURS} ساعت پیش از شروع امکان‌پذیر است`)
+  const window = t.rentalEnd ? RENTAL_CANCEL_HOURS : CLASS_CANCEL_HOURS
+  if (t.slotAt && new Date(t.slotAt).getTime() - Date.now() < window * HOUR) throw new AppError(`لغو ${t.rentalEnd ? 'اجاره' : 'کلاس'} فقط تا ${window} ساعت پیش از شروع امکان‌پذیر است`)
   let refunded = 0
   mutate((d) => {
     const x = d.checkins.find((c) => c.id === ticketId)!
@@ -218,6 +295,7 @@ export const verifyEntry = svc(
       x.usedAt = now()
       completeMission(d, x.userId, 'workout')
       autoProgress(d, x.userId, 'workouts', 1, 'checkin')
+      trainTogetherBonus(d, x.userId, x.gymId)
       const gym = d.gyms.find((g) => g.id === x.gymId)!
       notify(d, x.userId, `ورود به ${gym.name} ثبت شد`, 'تمرین خوبی داشته باشی! بعد از تمرین نظرت را ثبت کن.', '', '/tickets')
     })
@@ -279,6 +357,7 @@ export const answerEntryRequest = svc('fityab.answerRequest', (requestId: string
     t.usedAt = now()
     completeMission(d, me, 'workout')
     autoProgress(d, me, 'workouts', 1, 'checkin')
+    trainTogetherBonus(d, me, gym!.id)
     notify(d, gym!.ownerId, 'ورود تأیید شد', `${user.name} ورود را تأیید و پرداخت کرد (${toman(t.paid ?? t.price)}).`, '', '/panel/gym/checkins')
   })
 })
@@ -294,12 +373,19 @@ export function expireTickets() {
   })
 }
 
-const GYM_FIELDS = ['name', 'tagline', 'description', 'address', 'city', 'lat', 'lng', 'phone', 'sessionPrice', 'facilities', 'sports', 'hours', 'gender', 'media', 'capacity', 'classes', 'offPeak'] as const
+const GYM_FIELDS = ['name', 'tagline', 'description', 'address', 'city', 'lat', 'lng', 'phone', 'sessionPrice', 'facilities', 'sports', 'hours', 'gender', 'media', 'capacity', 'classes', 'offPeak', 'kind', 'rental'] as const
 
 function cleanGym(input: Partial<Gym>) {
   const out: Partial<Gym> = {}
   for (const k of GYM_FIELDS) if (k in input) (out as Record<string, unknown>)[k] = input[k]
   if (out.capacity !== undefined && (out.capacity < 1 || out.capacity > 2000)) throw new AppError('ظرفیت سالن معتبر نیست')
+  if (out.kind !== undefined && !(out.kind in VENUE_KINDS)) throw new AppError('نوع مجموعه معتبر نیست')
+  if (out.rental) {
+    const r = out.rental
+    if (!(r.hourlyPrice >= 50_000)) throw new AppError('اجاره‌ی هر ساعت را وارد کنید')
+    if (!(r.openFrom >= 0 && r.openTo <= 24 && r.openFrom < r.openTo)) throw new AppError('ساعات کاری اجاره معتبر نیست')
+    out.rental = { hourlyPrice: Math.round(r.hourlyPrice), openFrom: Math.round(r.openFrom), openTo: Math.round(r.openTo), maxHours: Math.min(6, Math.max(1, Math.round(r.maxHours || 2))) }
+  }
   if (out.offPeak) {
     const { from, to, discountPct } = out.offPeak
     if (!(from >= 0 && to <= 24 && from < to)) throw new AppError('بازه‌ی ساعات خلوت معتبر نیست')
@@ -322,7 +408,9 @@ export const saveGym = svc(
   (input: Partial<Gym> & { id?: string }) => {
     const ownerId = currentUserId()
     if (!input.name?.trim()) throw new AppError('نام باشگاه الزامی است')
-    if (!input.sessionPrice || input.sessionPrice < 10_000) throw new AppError('هزینه‌ی هر سانس را وارد کنید')
+    const rentalKind = VENUE_KINDS[(input.kind ?? 'gym') as keyof typeof VENUE_KINDS]?.booking === 'rental'
+    if (rentalKind && !input.rental) throw new AppError('اجاره‌ی ساعتی را تنظیم کنید')
+    if (!rentalKind && (!input.sessionPrice || input.sessionPrice < 10_000)) throw new AppError('هزینه‌ی هر سانس را وارد کنید')
     const data = cleanGym(input)
     let id = input.id
     mutate((d) => {

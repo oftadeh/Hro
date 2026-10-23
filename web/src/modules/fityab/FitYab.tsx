@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Crosshair, List, Map as MapIcon, Navigation, Search, X } from 'lucide-react'
 import { useDB } from '@/core/db'
-import { DEFAULT_CENTER } from '@/core/config'
+import { DEFAULT_CENTER, VENUE_KINDS } from '@/core/config'
+import type { VenueKind } from '@/core/types'
 import { dec, distanceKm, num } from '@/core/format'
 import { Button, Chips, Cover, Input, PageHeader, Tabs } from '@/ui/kit'
 import { toast } from '@/ui/toast'
@@ -19,6 +20,9 @@ export default function FitYab() {
   const [params] = useSearchParams()
   const [sport, setSport] = useState(params.get('sport') ?? 'all')
   const [womenOnly, setWomenOnly] = useState(false)
+  const enabled = useDB((s) => s.settings.venueKinds) ?? ['gym']
+  const [kind, setKind] = useState<VenueKind | 'all'>((params.get('kind') as VenueKind) ?? 'all')
+  const visibleGyms = useMemo(() => gyms.filter((g) => enabled.includes(g.kind ?? 'gym')), [gyms, enabled])
   const [sort, setSort] = useState<'near' | 'price' | 'rating'>('near')
   const [user, setUser] = useState<[number, number]>()
   const [center, setCenter] = useState<[number, number]>(DEFAULT_CENTER)
@@ -26,20 +30,21 @@ export default function FitYab() {
 
   const origin = user ?? DEFAULT_CENTER
   const sports = useMemo(() => {
-    const all = [...new Set(gyms.filter((g) => g.approved).flatMap((g) => g.sports))].slice(0, 10)
+    const all = [...new Set(visibleGyms.filter((g) => g.approved && (kind === 'all' || (g.kind ?? 'gym') === kind)).flatMap((g) => g.sports))].slice(0, 10)
     return sport !== 'all' && !all.includes(sport) ? [sport, ...all] : all
-  }, [gyms, sport])
+  }, [visibleGyms, sport, kind])
   const list = useMemo(() => {
-    const l = gyms
+    const l = visibleGyms
       .filter((g) => g.approved)
+      .filter((g) => kind === 'all' || (g.kind ?? 'gym') === kind)
       // باشگاه‌های تک‌جنسیتی فقط به همان جنسیت نمایش داده می‌شوند
       .filter((g) => g.gender === 'mixed' || !me?.gender || g.gender === me.gender)
       .filter((g) => !womenOnly || g.gender === 'female')
       .filter((g) => sport === 'all' || g.sports.includes(sport))
       .filter((g) => !q || g.name.includes(q) || g.address.includes(q) || g.sports.some((s) => s.includes(q)))
       .map((g) => ({ g, d: distanceKm(origin, [g.lat, g.lng]) }))
-    return l.sort((a, b) => (sort === 'near' ? a.d - b.d : sort === 'price' ? a.g.sessionPrice - b.g.sessionPrice : b.g.rating - a.g.rating))
-  }, [gyms, sport, q, sort, origin, me?.gender, womenOnly])
+    return l.sort((a, b) => (sort === 'near' ? a.d - b.d : sort === 'price' ? (a.g.rental?.hourlyPrice ?? a.g.sessionPrice) - (b.g.rental?.hourlyPrice ?? b.g.sessionPrice) : b.g.rating - a.g.rating))
+  }, [visibleGyms, kind, sport, q, sort, origin, me?.gender, womenOnly])
 
   const sel = list.find((x) => x.g.id === selected)
 
@@ -80,6 +85,11 @@ export default function FitYab() {
         </div>
         <Button variant="outline" onClick={locate} icon={<Crosshair size={18} />} aria-label="موقعیت من" />
       </div>
+      {enabled.length > 1 && (
+        <div className="mb-2">
+          <Chips value={kind} onChange={(k) => { setKind(k); setSport('all') }} items={[{ value: 'all' as const, label: 'همه' }, ...enabled.map((k) => ({ value: k, label: VENUE_KINDS[k].plural }))]} />
+        </div>
+      )}
       {me?.gender === 'female' && (
         <button onClick={() => setWomenOnly((v) => !v)} className={`mb-2 rounded-full px-4 py-2 text-xs transition ${womenOnly ? 'grad-pink font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300'}`}>
           فقط باشگاه‌های ویژه‌ی بانوان

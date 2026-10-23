@@ -1,6 +1,9 @@
 import { AppError, mutate, db, currentUserId, svc } from '../store'
 import { uid, now } from '../id'
 import type { Role, User } from '../types'
+import type { DBState } from '../state'
+import { levelOf } from './engagement'
+import { hasBadge } from './perks'
 import { notify } from './ledger'
 import { faDigitsToEn } from '../format'
 import { ROLE_META } from '../config'
@@ -110,5 +113,26 @@ export const updateProfile = svc('auth.updateProfile', (input: Partial<User>) =>
     const u = d.users.find((x) => x.id === me)! as unknown as Record<string, unknown>
     // فقط فیلدهای مجاز قابل تغییرند (نقش، امتیاز، شماره و... از این مسیر تغییر نمی‌کنند)
     for (const k of PROFILE_FIELDS) if (k in input) u[k] = (input as Record<string, unknown>)[k]
+  })
+})
+
+/** چه کسی می‌تواند ویدیوی معرفی بگذارد: مربی، باشگاه‌دار، پزشک، کاربران برتر (سطح ۴ به بالا) و دارندگان اشتراک ویژه */
+export function canHaveIntroVideo(u: User, s: Pick<DBState, 'subscriptions'> = db()) {
+  if (u.roles.some((r) => r === 'coach' || r === 'gym' || r === 'doctor' || r === 'admin')) return true
+  if (levelOf(u.xp).level >= 4) return true
+  return hasBadge(u.id, s)
+}
+
+export const setIntroVideo = svc('auth.introVideo', (url: string | null) => {
+  const me = currentUserId()
+  const u = db().users.find((x) => x.id === me)!
+  if (url !== null) {
+    if (!canHaveIntroVideo(u)) throw new AppError('ویدیوی معرفی برای مربیان، باشگاه‌داران، کاربران سطح ۴ به بالا و اشتراک‌های طلایی و الماس فعال است')
+    const ok = /^\/uploads\/[\w-]+\.(mp4|webm|mov)$/.test(url) || /^https:\/\/[^\s]+$/.test(url) || url.startsWith('data:video/')
+    if (!ok) throw new AppError('نشانی ویدیو معتبر نیست')
+    if (url.length > 6_000_000) throw new AppError('حجم ویدیو زیاد است')
+  }
+  mutate((d) => {
+    d.users.find((x) => x.id === me)!.introVideo = url ?? undefined
   })
 })

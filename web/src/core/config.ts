@@ -1,4 +1,4 @@
-import type { Role, SubscriptionPlan, RevenueModule } from './types'
+import type { InsurancePlan, Role, SubscriptionPlan, RevenueModule, VenueKind } from './types'
 
 export const APP_NAME = 'کی‌فیت'
 
@@ -20,6 +20,7 @@ export const MODULE_LABEL: Record<RevenueModule, string> = {
   doctor: 'پزشک',
   buffet: 'بوفه',
   challenge: 'چالش‌ها',
+  insurance: 'بیمه‌ی ورزشی',
 }
 
 export const DEFAULT_COMMISSIONS: Record<RevenueModule, number> = {
@@ -29,6 +30,7 @@ export const DEFAULT_COMMISSIONS: Record<RevenueModule, number> = {
   doctor: 15,
   buffet: 12,
   challenge: 20,
+  insurance: 10,
 }
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
@@ -98,3 +100,24 @@ export const GRADIENTS = [
 
 /** مرکز پیش‌فرض نقشه: تهران */
 export const DEFAULT_CENTER: [number, number] = [35.7219, 51.3347]
+
+/** انواع مجموعه‌های ورزشی فیت‌یاب؛ با پیشرفت فازها، مدیر انواع جدید را فعال می‌کند */
+export const VENUE_KINDS: Record<VenueKind, { label: string; plural: string; booking: 'session' | 'rental'; desc: string }> = {
+  gym: { label: 'باشگاه', plural: 'باشگاه‌ها', booking: 'session', desc: 'ورود با سانس آزاد یا کلاس گروهی' },
+  pool: { label: 'استخر', plural: 'استخرها', booking: 'session', desc: 'سانس شنا و کلاس آموزش' },
+  equestrian: { label: 'سوارکاری', plural: 'باشگاه‌های سوارکاری', booking: 'session', desc: 'جلسه‌ی آموزش و سواری با مربی' },
+  hall: { label: 'سالن ورزشی', plural: 'سالن‌های ورزشی', booking: 'rental', desc: 'اجاره‌ی ساعتی سالن برای فوتسال، والیبال، بسکتبال' },
+  turf: { label: 'چمن مصنوعی', plural: 'زمین‌های چمن', booking: 'rental', desc: 'اجاره‌ی ساعتی زمین فوتبال' },
+}
+
+/** پلن‌های پیش‌فرض بیمه‌ی ورزشی (با همکاری بیمه‌گر طرف قرارداد) */
+export const DEFAULT_INSURANCE_PLANS: InsurancePlan[] = [
+  {
+    id: 'ins-basic', name: 'پایه', provider: 'بیمه‌گر طرف قرارداد', price: 390_000, medicalCover: 50_000_000, accidentCover: 200_000_000, deductiblePct: 20,
+    sports: ['بدنسازی', 'فیتنس', 'یوگا', 'پیلاتس', 'دویدن', 'شنا'], perks: ['هزینه‌ی درمان حادثه‌ی ورزشی تا ۵۰ میلیون', 'غرامت نقص عضو تا ۲۰۰ میلیون', 'پرداخت خسارت در کیف پول کی‌فیت'], active: true,
+  },
+  {
+    id: 'ins-pro', name: 'حرفه‌ای', provider: 'بیمه‌گر طرف قرارداد', price: 890_000, medicalCover: 150_000_000, accidentCover: 500_000_000, deductiblePct: 10,
+    sports: ['همه‌ی رشته‌های فیت‌یاب', 'کراس‌فیت', 'رزمی', 'فوتبال', 'سوارکاری'], perks: ['هزینه‌ی درمان تا ۱۵۰ میلیون', 'فیزیوتراپی تا ۱۰ جلسه', 'غرامت نقص عضو تا ۵۰۰ میلیون', 'فرانشیز ۱۰٪'], active: true,
+  },
+]

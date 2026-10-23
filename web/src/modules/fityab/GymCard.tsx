@@ -3,6 +3,7 @@ import type { Gym } from '@/core/types'
 import { dec, toman } from '@/core/format'
 import { Cover, Stars } from '@/ui/kit'
 import { SportArt } from '@/ui/art'
+import { VENUE_KINDS } from '@/core/config'
 
 export const GENDER_LABEL = { male: 'آقایان', female: 'بانوان', mixed: 'بانوان و آقایان' } as const
 
@@ -17,6 +18,9 @@ export function GymCard({ gym, distance, compact }: { gym: Gym; distance?: numbe
           <h3 className="font-display text-[1.8rem] leading-[1.1]">{gym.name.replace('باشگاه ', '')}</h3>
           <div className="mt-1 text-[11px] text-white/75">{gym.sports.slice(0, 2).join(' · ')}</div>
         </div>
+        {(gym.kind ?? 'gym') !== 'gym' && (
+          <span className="absolute bottom-[4.6rem] right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-ink-950 backdrop-blur">{VENUE_KINDS[gym.kind!].label}</span>
+        )}
         {gym.gender !== 'mixed' && (
           <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-medium text-ink-950 ${gym.gender === 'female' ? 'grad-pink' : 'grad-mint'}`}>ویژه‌ی {GENDER_LABEL[gym.gender]}</span>
         )}
@@ -26,7 +30,7 @@ export function GymCard({ gym, distance, compact }: { gym: Gym; distance?: numbe
       </Cover>
       <div className="flex items-center justify-between gap-2 px-4 py-3">
         <div className="text-xs tabular-nums">
-          {toman(gym.sessionPrice)} <span className="text-ink-400">/ جلسه</span>
+          {gym.rental ? <>{toman(gym.rental.hourlyPrice)} <span className="text-ink-400">/ ساعت</span></> : <>{toman(gym.sessionPrice)} <span className="text-ink-400">/ جلسه</span></>}
         </div>
         <Stars value={gym.rating} />
       </div>

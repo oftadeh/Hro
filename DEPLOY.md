@@ -208,7 +208,7 @@ systemctl daemon-reload && systemctl enable --now keyfit
 ```nginx
 server {
     server_name keyfit.ir www.keyfit.ir;
-    client_max_body_size 5m;
+    client_max_body_size 45m;     # ویدیوی معرفی تا ۴۰ مگابایت
     location / {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;

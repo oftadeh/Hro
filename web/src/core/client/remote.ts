@@ -105,3 +105,23 @@ export async function uploadImage(dataUrl: string): Promise<string> {
   const r = await api<{ url: string }>('/upload', { dataUrl })
   return r.url
 }
+
+/** بارگذاری ویدیو (در حالت نمایشی فقط فایل‌های کوچک به‌صورت محلی نگه داشته می‌شوند) */
+export async function uploadVideo(file: File): Promise<string> {
+  if (!/^video\/(mp4|webm|quicktime)$/.test(file.type)) throw new AppError('فقط ویدیوی MP4، WebM یا MOV')
+  if (!REMOTE) {
+    if (file.size > 4 * 1024 * 1024) throw new AppError('در نسخه‌ی نمایشی حداکثر ۴ مگابایت؛ در نسخه‌ی سرور تا ۴۰ مگابایت')
+    return new Promise((res, rej) => {
+      const r = new FileReader()
+      r.onload = () => res(String(r.result))
+      r.onerror = () => rej(new AppError('خواندن فایل ممکن نشد'))
+      r.readAsDataURL(file)
+    })
+  }
+  if (file.size > 40 * 1024 * 1024) throw new AppError('حداکثر حجم ویدیو ۴۰ مگابایت است')
+  const token = getToken()
+  const res = await fetch(`${BASE}/api/upload-video`, { method: 'POST', headers: { 'Content-Type': file.type, ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: file })
+  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+  if (!res.ok || !data.url) throw new AppError(data.error || 'بارگذاری ویدیو ناموفق بود')
+  return data.url
+}

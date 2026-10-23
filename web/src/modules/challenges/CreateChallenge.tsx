@@ -27,20 +27,23 @@ const PRIZE_PRESETS: Record<string, Prize[]> = {
 
 export default function CreateChallenge() {
   const me = useMe()!
+  const teamParam = new URLSearchParams(location.search).get('team') ?? undefined
+  const team = useDB((s) => s.teams.find((t) => t.id === teamParam && t.members.includes(me.id)))
   const nav = useNavigate()
-  const fee = useDB((s) => s.settings.challengeCreationFee)
+  const baseFee = useDB((s) => s.settings.challengeCreationFee)
   const commission = useDB((s) => s.settings.commissions.challenge)
   const bal = useBalance(me.id)
   const [f, setF] = useState<NewChallenge & { preset: string }>({
-    title: '', description: '', metric: 'steps', unit: 'قدم', goal: 100_000, entryFee: 50_000, sponsorPrize: 0, extraReward: '',
-    prizes: PRIZE_PRESETS.top3, xpReward: 200, gradient: GRADIENTS[0], emoji: '', maxParticipants: 200, days: 30, preset: 'top3', verification: 'proof',
+    title: '', description: '', metric: 'steps', unit: 'قدم', goal: 100_000, entryFee: teamParam ? 0 : 50_000, sponsorPrize: 0, extraReward: '',
+    prizes: PRIZE_PRESETS.top3, xpReward: 200, gradient: GRADIENTS[0], emoji: '', days: 30, preset: 'top3', verification: teamParam ? 'none' : 'proof', teamId: teamParam, maxParticipants: teamParam ? 8 : 200,
   })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((s) => ({ ...s, [k]: v }))
+  const fee = team && !f.entryFee && !f.sponsorPrize ? 0 : baseFee
   const total = fee + f.sponsorPrize
 
   return (
     <div className="animate-fade-up">
-      <PageHeader back="/challenges" title="ساخت چالش جدید" subtitle="چالش خودت رو بساز و درآمد ورودی‌ها رو به جایزه تبدیل کن" />
+      <PageHeader back="/challenges" title="ساخت چالش جدید" subtitle={team ? `چالش داخلی تیم «${team.name}» — بدون جایزه‌ی نقدی رایگان است` : 'چالش خودت رو بساز و درآمد ورودی‌ها رو به جایزه تبدیل کن'} />
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <Card className="space-y-4">
           <Field label="عنوان چالش">

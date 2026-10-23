@@ -1,7 +1,7 @@
 import type {
   Challenge, CoachProfile, GymClass, Review, WorkoutSession, MealLog, BodyEntry, DoctorProfile, Food, Gym, Post, Product, Restaurant, Story, User, Thread, DailyLog,
 } from './types'
-import { DEFAULT_COMMISSIONS } from './config'
+import { DEFAULT_COMMISSIONS, DEFAULT_INSURANCE_PLANS } from './config'
 import type { DBState } from './state'
 import { dayKey } from './format'
 
@@ -51,11 +51,14 @@ export function createSeed(): DBState {
   const gyms: Gym[] = [
     { ...gymBase, offPeak: { from: 10, to: 16, discountPct: 25 }, classes: [cl('k-i1', 'بدنسازی مبتدی', 'بدنسازی', 'مهدی کریمی', 0, '18:00', 60, 15), cl('k-i2', 'فانکشنال', 'فیتنس', 'مهدی کریمی', 2, '19:00', 60, 15)], id: 'g-iron', name: 'باشگاه آیرون‌من', tagline: 'بدنسازی حرفه‌ای با تجهیزات روز', description: 'سالن ۸۰۰ متری با دستگاه‌های Technogym، سونا، جکوزی و مربیان مجرب. مناسب بدنسازی، فیتنس و کراس‌فیت.', address: 'ونک، خیابان ملاصدرا', lat: 35.7575, lng: 51.4085, sessionPrice: 120_000, facilities: ['سونا', 'جکوزی', 'پارکینگ', 'کمد اختصاصی', 'بوفه'], sports: ['بدنسازی', 'فیتنس', 'کراس‌فیت'], hours: '۶ صبح تا ۱۲ شب', gender: 'mixed', cover: 'from-ink-800 via-ink-800 to-ink-900', rating: 4.8, reviews: 312, media: [{ type: 'video', url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4' }] },
     { ...gymBase, offPeak: { from: 11, to: 16, discountPct: 20 }, classes: [cl('k-p1', 'اسپینینگ', 'اسپینینگ', 'سحر مرادی', 0, '08:00', 45, 20), cl('k-p2', 'زومبا', 'زومبا', 'سحر مرادی', 1, '18:30', 60, 25), cl('k-p3', 'HIIT', 'HIIT', 'امیر شاکری', 3, '19:00', 45, 18), cl('k-p4', 'TRX', 'TRX', 'امیر شاکری', 5, '10:00', 50, 12)], id: 'g-pulse', name: 'فیتنس پالس', tagline: 'کلاس‌های گروهی پرانرژی', description: 'اسپینینگ، زومبا، HIIT و TRX با بهترین مربیان. فضای شاد و صمیمی.', address: 'سعادت‌آباد، میدان کاج', lat: 35.7797, lng: 51.3740, sessionPrice: 95_000, facilities: ['کلاس گروهی', 'دوش', 'پارکینگ'], sports: ['اسپینینگ', 'زومبا', 'HIIT', 'TRX'], hours: '۷ صبح تا ۱۱ شب', gender: 'mixed', cover: 'from-ink-700 via-ink-800 to-ink-900', rating: 4.6, reviews: 188 },
-    { ...gymBase, ownerId: 'u-ali', id: 'g-aqua', name: 'مجموعه آبی آکوا', tagline: 'استخر، سونا و ماساژ', description: 'استخر نیمه‌المپیک، سونای خشک و بخار، جکوزی و ماساژ. سانس‌های بانوان و آقایان جدا.', address: 'جردن، خیابان طاهری', lat: 35.7700, lng: 51.4170, sessionPrice: 180_000, facilities: ['استخر', 'سونا خشک', 'سونا بخار', 'جکوزی', 'ماساژ'], sports: ['شنا', 'آکوا ایروبیک'], hours: '۸ صبح تا ۱۰ شب', gender: 'mixed', cover: 'from-ink-700 via-ink-800 to-ink-900', rating: 4.7, reviews: 421 },
+    { ...gymBase, kind: 'pool', ownerId: 'u-ali', id: 'g-aqua', name: 'مجموعه آبی آکوا', tagline: 'استخر، سونا و ماساژ', description: 'استخر نیمه‌المپیک، سونای خشک و بخار، جکوزی و ماساژ. سانس‌های بانوان و آقایان جدا.', address: 'جردن، خیابان طاهری', lat: 35.7700, lng: 51.4170, sessionPrice: 180_000, facilities: ['استخر', 'سونا خشک', 'سونا بخار', 'جکوزی', 'ماساژ'], sports: ['شنا', 'آکوا ایروبیک'], hours: '۸ صبح تا ۱۰ شب', gender: 'mixed', cover: 'from-ink-700 via-ink-800 to-ink-900', rating: 4.7, reviews: 421 },
     { ...gymBase, classes: [cl('k-l1', 'یوگای صبحگاهی', 'یوگا', 'نگار احمدی', 1, '09:00', 60, 14), cl('k-l2', 'پیلاتس', 'پیلاتس', 'نگار احمدی', 3, '10:30', 55, 12), cl('k-l3', 'ایروبیک', 'ایروبیک', 'مریم فلاحی', 5, '17:00', 60, 20)], id: 'g-lady', name: 'باشگاه بانوان رز', tagline: 'ویژه‌ی بانوان', description: 'یوگا، پیلاتس، ایروبیک و بدنسازی بانوان با محیطی آرام و امن.', address: 'پونک، بلوار عدل', lat: 35.7608, lng: 51.3290, sessionPrice: 85_000, facilities: ['یوگا', 'پیلاتس', 'مهدکودک', 'دوش'], sports: ['یوگا', 'پیلاتس', 'ایروبیک'], hours: '۸ صبح تا ۹ شب', gender: 'female', cover: 'from-ink-700 via-ink-800 to-ink-800', rating: 4.9, reviews: 256 },
     { ...gymBase, id: 'g-fight', name: 'آکادمی رزمی شیر', tagline: 'بوکس، کیک‌بوکسینگ، MMA', description: 'رینگ استاندارد، کیسه‌های حرفه‌ای و مربیان قهرمان ملی.', address: 'انقلاب، خیابان وصال', lat: 35.7010, lng: 51.3960, sessionPrice: 110_000, facilities: ['رینگ', 'دوش', 'کمد'], sports: ['بوکس', 'کیک‌بوکسینگ', 'MMA'], hours: '۹ صبح تا ۱۱ شب', gender: 'male', cover: 'from-ink-900 via-ink-900 to-black', rating: 4.5, reviews: 97 },
     { ...gymBase, classes: [cl('k-c1', 'WOD صبح', 'کراس‌فیت', 'کاوه نیک‌نام', 0, '07:00', 60, 16), cl('k-c2', 'WOD عصر', 'کراس‌فیت', 'کاوه نیک‌نام', 2, '19:30', 60, 16), cl('k-c3', 'وزنه‌برداری المپیک', 'وزنه‌برداری', 'کاوه نیک‌نام', 4, '18:00', 75, 10)], id: 'g-cross', name: 'کراس‌فیت باکس ۲۱', tagline: 'WOD هر روز، جامعه‌ای پرانگیزه', description: 'باکس تخصصی کراس‌فیت با برنامه‌ی روزانه و رقابت‌های ماهانه.', address: 'شهرک غرب، فلامک', lat: 35.7570, lng: 51.3700, sessionPrice: 130_000, facilities: ['وزنه المپیک', 'Rig', 'روئینگ', 'پارکینگ'], sports: ['کراس‌فیت', 'وزنه‌برداری'], hours: '۶ صبح تا ۱۰ شب', gender: 'mixed', cover: 'from-ink-700 via-ink-800 to-ink-900', rating: 4.8, reviews: 143 },
     { ...gymBase, offPeak: { from: 12, to: 17, discountPct: 30 }, classes: [cl('k-y1', 'هاتا یوگا', 'یوگا', 'لیلا امینی', 0, '08:00', 75, 12, 120_000), cl('k-y2', 'وینیاسا', 'یوگا', 'لیلا امینی', 2, '18:00', 60, 12), cl('k-y3', 'مدیتیشن', 'مدیتیشن', 'لیلا امینی', 4, '20:00', 40, 15, 80_000)], id: 'g-yoga', name: 'استودیو یوگا نیلوفر', tagline: 'آرامش ذهن و بدن', description: 'یوگای هاتا، وینیاسا و مدیتیشن در فضایی دنج و نورگیر.', address: 'زعفرانیه، خیابان آصف', lat: 35.8040, lng: 51.4130, sessionPrice: 100_000, facilities: ['مت و تجهیزات', 'چای‌خانه'], sports: ['یوگا', 'مدیتیشن'], hours: '۷ صبح تا ۹ شب', gender: 'mixed', cover: 'from-ink-700 via-brand-500 to-ink-900', rating: 4.9, reviews: 77 },
+    { ...gymBase, kind: 'turf', id: 'v-turf', name: 'چمن مصنوعی آزادی', tagline: 'زمین استاندارد فوتبال ۷ نفره', description: 'زمین چمن مصنوعی نسل جدید با نورپردازی شب، رختکن و دوش. اجاره‌ی ساعتی برای تیم‌ها.', address: 'شهرک غرب، بلوار دادمان', lat: 35.7620, lng: 51.3640, sessionPrice: 0, facilities: ['نورپردازی', 'رختکن', 'دوش', 'پارکینگ'], sports: ['فوتبال'], hours: '۸ صبح تا ۱ بامداد', gender: 'mixed', cover: 'from-ink-700 via-ink-800 to-ink-900', rating: 4.6, reviews: 58, rental: { hourlyPrice: 1_200_000, openFrom: 8, openTo: 24, maxHours: 3 } },
+    { ...gymBase, kind: 'hall', id: 'v-hall', name: 'سالن چندمنظوره‌ی پارس', tagline: 'فوتسال، والیبال و بسکتبال', description: 'سالن سرپوشیده با کفپوش استاندارد و سکوی تماشاگر.', address: 'نارمک، میدان هفت حوض', lat: 35.7380, lng: 51.5030, sessionPrice: 0, facilities: ['رختکن', 'دوش', 'سکوی تماشاگر'], sports: ['فوتسال', 'والیبال', 'بسکتبال'], hours: '۸ صبح تا ۱۲ شب', gender: 'mixed', cover: 'from-ink-800 via-ink-800 to-ink-900', rating: 4.4, reviews: 33, rental: { hourlyPrice: 900_000, openFrom: 8, openTo: 24, maxHours: 3 } },
+    { ...gymBase, kind: 'equestrian', id: 'v-horse', name: 'باشگاه سوارکاری نسیم', tagline: 'آموزش سوارکاری از مقدماتی تا پرش', description: 'مربیان فدراسیون، اسب‌های آرام برای مبتدی‌ها و میدان سرپوشیده.', address: 'کرج، محمدشهر', lat: 35.7700, lng: 50.9500, sessionPrice: 650_000, facilities: ['میدان سرپوشیده', 'کلاه و تجهیزات ایمنی', 'پارکینگ'], sports: ['سوارکاری'], hours: '۸ صبح تا غروب', gender: 'mixed', cover: 'from-ink-700 via-ink-800 to-ink-900', rating: 4.9, reviews: 41, classes: [cl('k-h1', 'آموزش مقدماتی', 'سوارکاری', 'مربی فدراسیون', 1, '09:00', 60, 4), cl('k-h2', 'سواری آزاد با مربی', 'سوارکاری', 'مربی فدراسیون', 4, '16:00', 60, 6)] },
     { ...gymBase, id: 'g-new', name: 'باشگاه انرژی', tagline: 'باشگاه جدید در انتظار تایید', description: 'باشگاه نوساز در تهرانپارس.', address: 'تهرانپارس، فلکه اول', lat: 35.7310, lng: 51.5370, sessionPrice: 70_000, facilities: ['پارکینگ'], sports: ['بدنسازی'], hours: '۸ صبح تا ۱۰ شب', gender: 'mixed', cover: 'from-ink-800 via-ink-900 to-ink-900', rating: 0, reviews: 0, approved: false },
   ]
 
@@ -130,6 +133,10 @@ export function createSeed(): DBState {
   ]
 
   const threads: Thread[] = [
+    { id: 't-team1', members: ['u-mina', 'u-sara', 'u-reza'], context: 'team', title: 'صبح‌خیزها', teamId: 'tm-1', updatedAt: ago(5), messages: [
+      { id: 'tm1', from: 'u-mina', text: 'بچه‌ها پنجشنبه ساعت ۷ کراس‌فیت باکس ۲۱، کی میاد؟', at: ago(6) },
+      { id: 'tm2', from: 'u-reza', text: 'من هستم', at: ago(5) },
+    ] },
     { id: 't-1', members: ['u-sara', 'u-coach1'], context: 'coach', updatedAt: ago(2), messages: [
       { id: 'm1', from: 'u-sara', text: 'سلام آقای کریمی، برای چربی‌سوزی شکمی چه پیشنهادی دارید؟', at: ago(3) },
       { id: 'm2', from: 'u-coach1', text: 'سلام سارا جان چربی‌سوزی موضعی نداریم؛ ترکیب تمرین مقاومتی + کسری کالری جواب میده. اگه بخوای برنامه‌ی اختصاصی برات می‌نویسم.', at: ago(2) },
@@ -241,7 +248,14 @@ export function createSeed(): DBState {
       { id: 'cp-k20', code: 'KEYFIT20', pct: 20, maxAmount: 300_000, module: 'all', maxUses: 500, usedBy: [], expiresAt: ahead(24 * 60), active: true },
       { id: 'cp-wel', code: 'WELCOME', pct: 10, maxAmount: 200_000, module: 'subscription', maxUses: 1000, usedBy: [], expiresAt: ahead(24 * 90), active: true },
     ],
-    settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000, shippingFee: 60_000, freeShippingOver: 2_000_000, referralReward: 100_000, orgDiscountPct: 15 },
+    teams: [
+      { id: 'tm-1', name: 'صبح‌خیزها', ownerId: 'u-mina', members: ['u-mina', 'u-sara', 'u-reza'], code: 'SOBH42', threadId: 't-team1', goal: 'هفته‌ای ۳ جلسه تمرین با هم', createdAt: ago(24 * 9),
+        sessions: [{ id: 'ts-1', title: 'کراس‌فیت صبح پنجشنبه', at: ahead(30), gymId: 'g-cross', createdBy: 'u-mina', going: ['u-mina', 'u-reza'], notGoing: [] }] },
+    ],
+    insurancePlans: DEFAULT_INSURANCE_PLANS.map((p) => ({ ...p })),
+    policies: [{ id: 'pol-1', userId: 'u-reza', planId: 'ins-pro', number: 'KF-140508-0001', nationalId: '0012345678', startAt: ago(24 * 40), endAt: ahead(24 * 325), status: 'active', createdAt: ago(24 * 40) }],
+    claims: [{ id: 'cl-1', policyId: 'pol-1', userId: 'u-reza', incidentAt: ago(24 * 6), sport: 'دویدن', description: 'پیچ‌خوردگی مچ پا هنگام دویدن در پارک؛ ویزیت ارتوپد و فیزیوتراپی.', amount: 4_800_000, documents: [], status: 'submitted', createdAt: ago(24 * 4), updatedAt: ago(24 * 4) }],
+    settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000, shippingFee: 60_000, freeShippingOver: 2_000_000, referralReward: 100_000, orgDiscountPct: 15, venueKinds: ['gym', 'pool', 'equestrian', 'hall', 'turf'] },
   }
 }
 
@@ -252,6 +266,7 @@ export function createEmpty(): DBState {
     planOrders: [], threads: [], products: [], orders: [], doctors: [], appointments: [], restaurants: [], foods: [], posts: [], stories: [],
     challenges: [], notifications: [], dailyLogs: [], cycles: [], carts: {}, aiChats: {}, entryRequests: [], reviews: [], reports: [], tickets: [],
     workouts: [], meals: [], bodyEntries: [], orgs: [], giftCards: [], coupons: [],
-    settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000, shippingFee: 60_000, freeShippingOver: 2_000_000, referralReward: 100_000, orgDiscountPct: 15 },
+    teams: [], insurancePlans: DEFAULT_INSURANCE_PLANS.map((p) => ({ ...p })), policies: [], claims: [],
+    settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000, shippingFee: 60_000, freeShippingOver: 2_000_000, referralReward: 100_000, orgDiscountPct: 15, venueKinds: ['gym'] },
   }
 }

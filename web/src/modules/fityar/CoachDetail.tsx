@@ -7,6 +7,7 @@ import { bookCall, buyCoachPlan, openThread } from '@/core/services/fityar'
 import { toggleFollow } from '@/core/services/fitzone'
 import { PerkPrice } from '@/ui/PerkPrice'
 import type { CoachPlan } from '@/core/types'
+import { VideoPlayer } from '@/modules/profile/IntroVideo'
 import { Avatar, Badge, Button, Card, Empty, Field, PageHeader, SectionTitle, Sheet, Stars, Textarea } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
@@ -57,6 +58,7 @@ export default function CoachDetail() {
             {coach.online && <Badge color="emerald">آنلاین</Badge>}
           </div>
           <p className="mt-3 max-w-lg text-sm leading-7 text-ink-600 dark:text-ink-300">{coach.bio}</p>
+          {user.introVideo && <VideoPlayer src={user.introVideo} className="mt-4 aspect-video w-full max-w-lg rounded-3xl bg-black object-contain" />}
           <div className="mt-3 flex flex-wrap justify-center gap-1.5">
             {coach.specialties.map((s) => <Badge key={s} color="sky">{s}</Badge>)}
           </div>
