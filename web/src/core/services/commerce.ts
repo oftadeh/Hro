@@ -80,6 +80,9 @@ export function couponDiscount(code: string | undefined, module: Coupon['module'
   return { discount: Math.min(c.maxAmount, Math.round((amount * c.pct) / 100)), coupon: c }
 }
 
+/** بررسی کد تخفیف روی سرور (فهرست کدها هرگز به مرورگر ارسال نمی‌شود) */
+export const previewCoupon = svc('shop.couponPreview', (code: string, module: Coupon['module'], amount: number) => couponDiscount(code, module, Math.max(0, amount), currentUserId()).discount)
+
 /** پیش‌نمایش مبالغ سبد */
 export function quote(userId: ID, kind: CartItem['kind'], code?: string, s: DBState = db()) {
   const lines = cartLines(userId, kind, s)

@@ -1,0 +1,55 @@
+/** کارهای زمان‌بندی‌شده: انقضای بلیت‌ها، یادآورها، پشتیبان روزانه */
+import { AsyncLocalStorage } from 'node:async_hooks'
+import { getState, kv, dailyBackup, sql } from './storage'
+import { mutate } from '../src/core/store'
+import { expireTickets } from '../src/core/services/fityab'
+import { cycleStatusIn } from '../src/core/services/cycle'
+import { notify } from '../src/core/services/ledger'
+import { dayKey } from '../src/core/format'
+
+export function startCron(ctx: AsyncLocalStorage<{ userId: string | null }>) {
+  const tick = () => {
+    ctx.run({ userId: null }, () => {
+      try {
+        expireTickets()
+        reminders()
+        dailyBackup()
+        sql.prepare("DELETE FROM kv WHERE key LIKE 'rem:%' AND key NOT LIKE ?").run(`%${dayKey()}%`)
+      } catch (e) {
+        console.error('cron', e)
+      }
+    })
+  }
+  setInterval(tick, 60_000)
+  setTimeout(tick, 5_000)
+}
+
+/** هر یادآور در هر روز فقط یک بار ارسال می‌شود */
+function once(key: string) {
+  if (kv.get(key)) return false
+  kv.set(key, '1')
+  return true
+}
+
+function reminders() {
+  const now = new Date()
+  const h = now.getHours()
+  const hm = `${String(h).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const today = dayKey()
+  const s = getState()
+  const due: { userId: string; title: string; body: string; link: string }[] = []
+  for (const u of s.users) {
+    if (u.blocked) continue
+    const r = u.reminders ?? { water: true, workout: true, period: true, workoutTime: '18:00' }
+    const log = s.dailyLogs.find((l) => l.userId === u.id && l.day === today)
+    if (r.water && [11, 15, 19].includes(h) && (log?.water ?? 0) < Math.round((h - 7) / 2) && once(`rem:${u.id}:water:${today}:${h}`))
+      due.push({ userId: u.id, title: 'وقت یک لیوان آب است', body: `امروز ${log?.water ?? 0} لیوان نوشیده‌ای؛ هدف ۸ لیوان.`, link: '/' })
+    if (r.workout && hm >= r.workoutTime && (log?.workoutMinutes ?? 0) < 10 && once(`rem:${u.id}:workout:${today}`))
+      due.push({ userId: u.id, title: 'تمرین امروز منتظر توست', body: 'یک سانس در باشگاه‌های اطراف رزرو کن یا تمرین خانگی‌ات را ثبت کن.', link: '/fityab' })
+    if (r.period && u.gender === 'female' && h === 10) {
+      const st = cycleStatusIn(s, u.id)
+      if (st && st.daysToNext === 2 && once(`rem:${u.id}:period:${today}`)) due.push({ userId: u.id, title: 'یادآور چرخه', body: 'حدود ۲ روز تا شروع پریود بعدی؛ برنامه‌ی تمرینت را سبک‌تر بچین.', link: '/profile?tab=health' })
+    }
+  }
+  if (due.length) mutate((d) => due.forEach((x) => notify(d, x.userId, x.title, x.body, '', x.link)))
+}

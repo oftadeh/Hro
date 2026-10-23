@@ -5,7 +5,6 @@ import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
 import { SUBSCRIPTION_PLANS } from '@/core/config'
 import { addSeats, createOrg, orgLeaderboard, removeMember, renewOrg, seatPrice } from '@/core/services/org'
-import { healthScore } from '@/core/services/health'
 import { Avatar, Button, Card, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Stat } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run, runOk, toast } from '@/ui/toast'
@@ -42,7 +41,7 @@ export default function CompanyPanel() {
 
   const plan = SUBSCRIPTION_PLANS.find((p) => p.id === org.planId)!
   const board = orgLeaderboard(org.id, state)
-  const avgScore = board.length ? Math.round(board.reduce((a, x) => a + healthScore(x.user.id, undefined, state).score, 0) / board.length) : 0
+  const weekXp = board.reduce((a, x) => a + x.xp, 0)
   const activeWeek = board.filter((x) => x.xp > 0).length
   return (
     <div className="animate-fade-up">
@@ -50,7 +49,7 @@ export default function CompanyPanel() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="اعضا" value={`${num(org.members.length)}/${num(org.seats)}`} icon={<Users size={18} />} />
         <Stat label="فعال این هفته" value={num(activeWeek)} icon={<Trophy size={18} />} tone="emerald" />
-        <Stat label="میانگین نمره‌ی سلامت" value={num(avgScore)} tone="violet" />
+        <Stat label="امتیاز فعالیت تیم (هفته)" value={num(weekXp)} tone="violet" />
         <Stat label="موجودی کیف پول" value={toman(bal)} tone="amber" />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">

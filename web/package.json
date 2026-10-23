@@ -7,9 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:server": "tsc -p tsconfig.server.json && esbuild server/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist-server/index.mjs",
+    "start": "node dist-server/index.mjs",
+    "build:remote": "tsc -b && vite build --mode remote"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.1.0",
     "@fontsource/markazi-text": "^5.3.0",
     "@fontsource/vazirmatn": "^5.3.0",
     "clsx": "^2.1.1",
@@ -22,6 +26,7 @@
     "react-dom": "^19.3.1",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.18.4",
+    "web-push": "^3.6.7",
     "zustand": "^5.0.16"
   },
   "devDependencies": {
@@ -29,8 +34,10 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.1.2",
     "autoprefixer": "^10.6.1",
+    "esbuild": "^0.28.2",
     "oxlint": "^1.88.0",
     "postcss": "^8.5.31",
     "tailwindcss": "^3.4.19",

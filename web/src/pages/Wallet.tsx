@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { REMOTE, api } from '@/core/client/remote'
-import { couponDiscount } from '@/core/services/commerce'
+import { previewCoupon } from '@/core/services/commerce'
 import { Input } from '@/ui/kit'
 import { toast } from '@/ui/toast'
 import { ArrowDownLeft, ArrowUpRight, Check, CreditCard, Plus, Ticket } from 'lucide-react'
@@ -13,7 +13,7 @@ import { activeSubscription, buySubscription, topUp } from '@/core/services/wall
 import { Badge, Button, Card, Field, HeroHeader, MetricRow, Money, NumberInput, PageHeader, SectionTitle, Sheet } from '@/ui/kit'
 import { KeyCard } from '@/ui/KeyCard'
 import { useMe, useBalance } from '@/ui/hooks'
-import { runOk } from '@/ui/toast'
+import { run, runOk } from '@/ui/toast'
 import { TxList } from './TxList'
 import { WalletCoins } from '@/ui/art'
 
@@ -30,6 +30,7 @@ export default function WalletPage() {
   const [busy, setBusy] = useState(false)
   const [buy, setBuy] = useState<string>()
   const [coupon, setCoupon] = useState('')
+  const [couponAmt, setCouponAmt] = useState(0)
   const [params, setParams] = useSearchParams()
   // بازگشت از درگاه بانکی
   useEffect(() => {
@@ -167,19 +168,13 @@ export default function WalletPage() {
             <div className="space-y-3">
               <p className="text-sm text-ink-500">اشتراک {p.name} — {toman(p.price)} از کیف پول کسر و {toman(p.credit)} اعتبار ورود دریافت می‌کنید.</p>
               <div className="flex gap-2">
-                <Input value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="کد تخفیف (اختیاری)" dir="ltr" className="text-left" />
+                <Input value={coupon} onChange={(e) => { setCoupon(e.target.value.toUpperCase()); setCouponAmt(0) }} placeholder="کد تخفیف (اختیاری)" dir="ltr" className="text-left" />
+                <Button variant="secondary" onClick={async () => setCouponAmt((await run(() => previewCoupon(coupon, 'subscription', p.price))) ?? 0)}>اعمال</Button>
               </div>
-              {(() => {
-                try {
-                  const d = coupon ? couponDiscount(coupon, 'subscription', p.price, me.id).discount : 0
-                  return d ? <div className="text-xs text-emerald-600 dark:text-emerald-400">تخفیف کد: {toman(d)} — مبلغ نهایی {toman(p.price - d)}</div> : null
-                } catch (e) {
-                  return <div className="text-xs text-coral-500">{(e as Error).message}</div>
-                }
-              })()}
+              {couponAmt > 0 && <div className="text-xs text-emerald-600 dark:text-emerald-400">تخفیف کد: {toman(couponAmt)} — مبلغ نهایی {toman(p.price - couponAmt)}</div>}
               <div className="text-xs text-ink-400">موجودی: {toman(bal)}</div>
               <Button className="w-full" size="lg" onClick={async () => {
-                const ok = await runOk(() => buySubscription(p.id, coupon || undefined), `اشتراک ${p.name} فعال شد`)
+                const ok = await runOk(() => buySubscription(p.id, couponAmt ? coupon : undefined), `اشتراک ${p.name} فعال شد`)
                 if (ok) {
                   setBuy(undefined)
                   setCoupon('')
