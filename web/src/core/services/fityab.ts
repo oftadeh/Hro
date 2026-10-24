@@ -12,6 +12,7 @@
  *  ۵. پس از ورود، کاربر می‌تواند به باشگاه امتیاز و نظر بدهد.
  */
 import { AppError, mutate, currentUserId, db, svc } from '../store'
+import { findByVerifiedPhone } from './auth'
 import type { DBState } from '../state'
 import { uid, now, entryCode } from '../id'
 import type { CheckIn, Gym, GymClass, ID, User } from '../types'
@@ -386,8 +387,8 @@ export const requestEntry = svc(
     if (!gym) throw new AppError('باشگاه یافت نشد')
     if (!gym.approved) throw new AppError('باشگاه هنوز تأیید نشده است')
     const p = phone.replace(/\D/g, '').replace(/^98/, '0').replace(/^9/, '09')
-    const user = db().users.find((u) => u.phone === p)
-    if (!user) throw new AppError('کاربری با این شماره در کی‌فیت ثبت‌نام نکرده است')
+    const user = findByVerifiedPhone(db().users, p)
+    if (!user) throw new AppError('کاربری با این شماره‌ی تأییدشده در کی‌فیت نیست')
     assertGymAccess(gym, user)
     const id = uid('er-')
     mutate((d) => {

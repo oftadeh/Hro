@@ -17,6 +17,13 @@ export function normalizePhone(raw: string) {
 
 export const isValidPhone = (phone: string) => /^09\d{9}$/.test(phone)
 
+export const normalizeEmail = (raw: string) => faDigitsToEn(String(raw ?? '')).trim().toLowerCase()
+
+export const isValidEmail = (email: string) => email.length <= 120 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)
+
+/** شماره‌ای که می‌شود به آن هدیه، انتقال یا درخواست ورود فرستاد (فقط شماره‌ی تأییدشده) */
+export const findByVerifiedPhone = (users: User[], phone: string) => users.find((u) => u.phone === phone && u.phoneVerified !== false)
+
 export interface ProfileInput {
   name: string
   gender: 'male' | 'female' | ''
@@ -30,6 +37,14 @@ export interface ProfileInput {
   referral?: string
   /** اگر پر باشد، حساب کسب‌وکار از این نوع ساخته می‌شود (به‌جای حساب ورزشکار) */
   accountType?: BusinessRole
+  /** فقط در ثبت‌نام با ایمیل: شماره‌ی موبایل (هنوز تأییدنشده) */
+  phone?: string
+}
+
+/** ورود با ایمیل: ایمیل تأییدشده و شماره‌ای که هنوز با پیامک تأیید نشده */
+export interface IdentityExtra {
+  email?: string
+  phoneVerified?: boolean
 }
 
 /** ساخت پروفایل اولیه‌ی ماژول برای نقش کسب‌وکار */
@@ -41,14 +56,17 @@ function initRoleProfile(d: DBState, userId: string, role: BusinessRole) {
 }
 
 /** ساخت کاربر جدید پس از تأیید شماره؛ هم در حالت نمایشی و هم روی سرور استفاده می‌شود */
-export function createUser(phone: string, input: ProfileInput): User {
+export function createUser(phone: string, input: ProfileInput, extra: IdentityExtra = {}): User {
   if (!isValidPhone(phone)) throw new AppError('شماره موبایل معتبر نیست')
-  if (db().users.some((u) => u.phone === phone)) throw new AppError('این شماره قبلاً ثبت‌نام کرده است')
+  // ثبت‌نام با ایمیل: شماره نباید تکراری باشد. ثبت‌نام با پیامک: فقط شماره‌ی تأییدشده‌ی دیگران مانع است
+  const clash = db().users.find((u) => u.phone === phone)
+  if (clash && (extra.phoneVerified === false || clash.phoneVerified !== false)) throw new AppError('این شماره قبلاً ثبت‌نام کرده است؛ با همان حساب وارد شوید یا به پشتیبانی پیام دهید')
+  if (extra.email && db().users.some((u) => u.email === extra.email)) throw new AppError('با این ایمیل قبلاً حساب ساخته شده است')
   const business = input.accountType
   if (business !== undefined && !isBusinessRole(business)) throw new AppError('نوع حساب معتبر نیست')
   const name = String(input.name ?? '').trim()
   if (name.length < 2) throw new AppError(business ? 'نام کسب‌وکار را وارد کنید' : 'نام و نام خانوادگی را وارد کنید')
-  if (business) return createBusinessUser(phone, name, business)
+  if (business) return createBusinessUser(phone, name, business, extra)
   if (input.gender !== 'male' && input.gender !== 'female') throw new AppError('لطفاً جنسیت خود را انتخاب کنید')
   if (input.birthYear && (input.birthYear < 1300 || input.birthYear > 1400)) throw new AppError('سال تولد معتبر نیست')
   if (input.heightCm && (input.heightCm < 100 || input.heightCm > 230)) throw new AppError('قد معتبر نیست')
@@ -63,6 +81,7 @@ export function createUser(phone: string, input: ProfileInput): User {
     referredBy: referrer?.id,
     name,
     phone,
+    ...identity(extra),
     city: 'اصفهان',
     gender: input.gender,
     birthYear: input.birthYear || undefined,
@@ -92,14 +111,20 @@ export function createUser(phone: string, input: ProfileInput): User {
   return created
 }
 
+const identity = (extra: IdentityExtra): Partial<User> => ({
+  ...(extra.email ? { email: extra.email } : {}),
+  ...(extra.phoneVerified === false ? { phoneVerified: false } : {}),
+})
+
 /** حساب کسب‌وکار: فقط پنل ماژول خودش + فیت‌زون و چالش‌ها */
-function createBusinessUser(phone: string, name: string, role: BusinessRole): User {
+function createBusinessUser(phone: string, name: string, role: BusinessRole, extra: IdentityExtra): User {
   const id = uid('u-')
   const created: User = {
     id,
     referralCode: id.slice(-5).toUpperCase() + Math.floor(10 + Math.random() * 90),
     name,
     phone,
+    ...identity(extra),
     city: 'اصفهان',
     privacy: { publicProfile: true, showBody: false },
     roles: [role],

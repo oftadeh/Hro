@@ -1,4 +1,5 @@
 import { AppError, mutate, currentUserId, db, svc } from '../store'
+import { findByVerifiedPhone } from './auth'
 import type { DBState } from '../state'
 import { SUBSCRIPTION_PLANS } from '../config'
 import { uid, now } from '../id'
@@ -85,7 +86,7 @@ export const giftSubscription = svc('wallet.gift', (planId: string, toPhone: str
     applyPayment(d, { type: 'gift', from: me, to: 'platform', amount: plan.price, description: `اشتراک هدیه ${plan.name} برای ${phone}` })
     d.giftCards.unshift({ id: uid('gc-'), code, planId, fromId: me, toPhone: phone, message: message?.slice(0, 200), createdAt: now() })
     const sender = d.users.find((u) => u.id === me)!
-    const to = d.users.find((u) => u.phone === phone)
+    const to = findByVerifiedPhone(d.users, phone)
     if (to) notify(d, to.id, `${sender.name} برای شما اشتراک هدیه خرید!`, `کد هدیه: ${code} — از کیف پول فعالش کنید.`, '', `/wallet?gift=${code}`)
   })
   return code

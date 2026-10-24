@@ -4,7 +4,7 @@
 import { AppError, db } from '../store'
 import { useDB, useSession, resetDemo } from '../db'
 import type { Role } from '../types'
-import { createUser, isValidPhone, normalizePhone, assertCanLogin, type ProfileInput } from '../services/auth'
+import { createUser, isValidEmail, isValidPhone, normalizeEmail, normalizePhone, assertCanLogin, type ProfileInput } from '../services/auth'
 import { touchDaily } from '../services/engagement'
 import { expireTickets } from '../services/fityab'
 import { faDigitsToEn } from '../format'
@@ -13,7 +13,10 @@ import { REMOTE, api, connectEvents, disconnect, setToken, syncState } from './r
 export const DEMO_OTP = '1234'
 export { REMOTE }
 
-let pending: { phone: string; signupToken?: string } | null = null
+let pending: { phone?: string; email?: string; signupToken?: string } | null = null
+
+/** ثبت‌نام با ایمیل در جریان است (فرم شماره‌ی موبایل را نشان بده) */
+export const pendingByEmail = () => !!pending?.email
 
 /** ارسال کد تأیید؛ در حالت نمایشی کد ثابت است */
 export async function requestOtp(raw: string): Promise<{ demo: boolean; devCode?: string }> {
@@ -48,15 +51,53 @@ export async function verifyOtp(raw: string, otp: string): Promise<{ exists: boo
   return { exists: false }
 }
 
+/** ارسال کد ورود به ایمیل */
+export async function requestEmailOtp(raw: string): Promise<{ demo: boolean; devCode?: string }> {
+  const email = normalizeEmail(raw)
+  if (!isValidEmail(email)) throw new AppError('ایمیل معتبر نیست')
+  if (!REMOTE) return { demo: true }
+  return api<{ demo: boolean; devCode?: string }>('/auth/email/otp', { email })
+}
+
+/** تأیید کد ایمیل؛ اگر حسابی با این ایمیل باشد وارد می‌شود وگرنه ثبت‌نام */
+export async function verifyEmailOtp(raw: string, otp: string): Promise<{ exists: boolean }> {
+  const email = normalizeEmail(raw)
+  if (!isValidEmail(email)) throw new AppError('ایمیل معتبر نیست')
+  const code = faDigitsToEn(otp).trim()
+  if (REMOTE) {
+    const r = await api<{ exists: boolean; token?: string; signupToken?: string; userId?: string }>('/auth/email/verify', { email, code })
+    if (r.token) {
+      await afterRemoteLogin(r.token, r.userId!)
+      return { exists: true }
+    }
+    pending = { email, signupToken: r.signupToken }
+    return { exists: false }
+  }
+  if (code !== DEMO_OTP) throw new AppError('کد تایید اشتباه است')
+  const user = db().users.find((u) => u.email === email)
+  if (user) {
+    assertCanLogin(user.id)
+    loginLocal(user.id, 'user')
+    return { exists: true }
+  }
+  pending = { email }
+  return { exists: false }
+}
+
 export async function registerUser(input: ProfileInput) {
-  if (!pending) throw new AppError('ابتدا شماره موبایل را تأیید کنید')
+  if (!pending) throw new AppError('ابتدا شماره موبایل یا ایمیل را تأیید کنید')
+  if (pending.email) {
+    const phone = normalizePhone(String(input.phone ?? ''))
+    if (!isValidPhone(phone)) throw new AppError('شماره موبایل معتبر نیست')
+    input = { ...input, phone }
+  }
   if (REMOTE) {
     const r = await api<{ token: string; userId: string }>('/auth/register', { signupToken: pending.signupToken, profile: input })
     pending = null
     await afterRemoteLogin(r.token, r.userId)
     return
   }
-  const u = createUser(pending.phone, input)
+  const u = pending.email ? createUser(input.phone!, input, { email: pending.email, phoneVerified: false }) : createUser(pending.phone!, input)
   pending = null
   loginLocal(u.id, 'user')
 }

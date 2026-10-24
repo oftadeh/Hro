@@ -81,6 +81,8 @@ nano .env
 | `DOMAIN` | دامنه بدون https، مثلاً `keyfit.ir` |
 | `APP_SECRET` | یک رشته‌ی تصادفی طولانی. ساخت: `openssl rand -hex 32` |
 | `ADMIN_PHONE` | شماره‌ی موبایل شما؛ با این شماره وارد شوید تا پنل مدیر کل فعال باشد |
+| `ADMIN_EMAIL` | ایمیل شما؛ تا وقتی پیامک فعال نیست، مدیر کل با این ایمیل وارد می‌شود |
+| `SMTP_HOST`، `SMTP_PORT`، `SMTP_USER`، `SMTP_PASS` | ارسال کد ورود به ایمیل. با Gmail: `smtp.gmail.com`، پورت `465`، آدرس جیمیل و یک App Password (نه رمز اصلی) |
 | `DEMO_MODE` | `0` برای نسخه‌ی واقعی. `1` فقط برای ارائه است: داده‌ی نمونه، کد ثابت ۱۲۳۴ و ورود سریع |
 | `KAVENEGAR_API_KEY`، `KAVENEGAR_TEMPLATE` | کلید API و نام قالب Verify در پنل کاوه‌نگار. متن قالب مثلاً: «کد ورود کی‌فیت: %token» |
 | `ZARINPAL_MERCHANT_ID` | مرچنت زرین‌پال. برای تست اولیه `ZARINPAL_SANDBOX=1` بگذارید |

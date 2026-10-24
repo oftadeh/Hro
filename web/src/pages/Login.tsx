@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '@/layouts/Logo'
-import { ArrowLeft, Check, Lock } from 'lucide-react'
+import { ArrowLeft, Check, Lock, Mail, MessageSquare } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { ROLE_META } from '@/core/config'
-import { loginAs, verifyOtp, registerUser, requestOtp, DEMO_OTP, REMOTE } from '@/core/client/session'
+import { loginAs, verifyOtp, registerUser, requestOtp, requestEmailOtp, verifyEmailOtp, DEMO_OTP, REMOTE } from '@/core/client/session'
 import type { ProfileInput as RegisterInput } from '@/core/services/auth'
 import { api } from '@/core/client/remote'
 import { faDigitsToEn } from '@/core/format'
@@ -48,40 +48,60 @@ export default function Login() {
   const nav = useNavigate()
   const [step, setStep] = useState<'phone' | 'otp' | 'profile'>('phone')
   const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  // تا وقتی پیامک فعال نشده، ورود با ایمیل است
+  const [channels, setChannels] = useState({ sms: !REMOTE, email: true })
+  const [method, setMethod] = useState<'email' | 'sms'>('email')
+  const byEmail = method === 'email'
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [hint, setHint] = useState('')
   const [demoUsers, setDemoUsers] = useState<{ id: string; name: string }[] | null>(REMOTE ? null : [])
   useEffect(() => {
-    if (REMOTE) api<{ demo: boolean; demoUsers?: { id: string; name: string }[] }>('/config').then((c) => setDemoUsers(c.demo ? c.demoUsers ?? [] : null)).catch(() => setDemoUsers(null))
+    if (REMOTE)
+      api<{ demo: boolean; demoUsers?: { id: string; name: string }[]; sms?: boolean; email?: boolean }>('/config')
+        .then((c) => {
+          setDemoUsers(c.demo ? c.demoUsers ?? [] : null)
+          const ch = { sms: !!c.sms, email: c.email !== false }
+          setChannels(ch)
+          if (!ch.email && ch.sms) setMethod('sms')
+        })
+        .catch(() => setDemoUsers(null))
   }, [])
-  const [f, setF] = useState<Form>({ kind: 'athlete', referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
+  const [f, setF] = useState<Form>({ phone: '', kind: 'athlete', referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }))
   const n = (v: string) => Number(faDigitsToEn(v)) || undefined
 
   const submit = async () => {
     if (step === 'phone') {
-      if (phone.replace(/\D/g, '').length < 10 && !/[۰-۹]{10}/.test(phone)) return
+      if (byEmail ? !email.includes('@') : phone.replace(/\D/g, '').length < 10 && !/[۰-۹]{10}/.test(phone)) return
       setLoading(true)
-      const r = await run(() => requestOtp(phone))
+      const r = await run(() => (byEmail ? requestEmailOtp(email) : requestOtp(phone)))
       setLoading(false)
       if (!r) return
-      setHint(r.demo ? `در نسخه‌ی آزمایشی، کد ${DEMO_OTP} است.` : r.devCode ? `کد آزمایشی: ${r.devCode}` : 'کد ۴ رقمی به شماره‌ی شما پیامک شد.')
+      setOtp('')
+      setHint(
+        r.demo ? `در نسخه‌ی آزمایشی، کد ${DEMO_OTP} است.`
+          : r.devCode ? `کد آزمایشی: ${r.devCode}`
+            : byEmail ? 'کد ۶ رقمی به ایمیلتان فرستاده شد. اگر تا یک دقیقه نیامد، پوشه‌ی Spam را هم ببینید.'
+              : 'کد ۴ رقمی به شماره‌ی شما پیامک شد.',
+      )
       setStep('otp')
       return
     }
     setLoading(true)
     if (step === 'otp') {
-      const r = await run(() => verifyOtp(phone, otp))
+      const r = await run(() => (byEmail ? verifyEmailOtp(email, otp) : verifyOtp(phone, otp)))
       if (r && !r.exists) setStep('profile')
     } else {
+      const ph = byEmail ? { phone: f.phone } : {}
       if (f.kind !== 'athlete') {
-        await run(() => registerUser({ name: f.name, gender: '', accountType: f.kind as BusinessRole }))
+        await run(() => registerUser({ ...ph, name: f.name, gender: '', accountType: f.kind as BusinessRole }))
         setLoading(false)
         return
       }
       const cycle = f.gender === 'female' && f.track && f.ago !== '' ? { lastPeriodStart: daysAgoKey(n(f.ago) ?? 0), cycleLength: n(f.cycleLength) ?? 28, periodLength: n(f.periodLength) ?? 5 } : undefined
-      await run(() => registerUser({ referral: f.referral || undefined, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))
+      await run(() => registerUser({ ...ph, referral: f.referral || undefined, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))
     }
     setLoading(false)
   }
@@ -128,7 +148,7 @@ export default function Login() {
 
         <div className="animate-sheet-up rounded-[2.25rem] bg-ink-850/80 p-7 backdrop-blur-2xl lg:p-9">
           <h2 className="font-display text-[2.2rem] leading-none">{step === 'profile' ? 'ساخت پروفایل' : 'ورود یا ثبت‌نام'}</h2>
-          <p className="mt-1 text-[13px] text-white/45">{step === 'profile' ? 'برنامه‌ها، پیشنهادها و چیدمان اپ بر اساس این اطلاعات شخصی‌سازی می‌شود' : 'با شماره‌ی موبایل خود ادامه دهید'}</p>
+          <p className="mt-1 text-[13px] text-white/45">{step === 'profile' ? 'برنامه‌ها، پیشنهادها و چیدمان اپ بر اساس این اطلاعات شخصی‌سازی می‌شود' : byEmail ? 'با ایمیل خود ادامه دهید' : 'با شماره‌ی موبایل خود ادامه دهید'}</p>
           <form
             className="mt-8 space-y-4"
             onSubmit={(e) => {
@@ -138,27 +158,43 @@ export default function Login() {
           >
             {step === 'phone' ? (
               <>
-                <label className="block space-y-2">
-                  <span className="text-xs text-white/50">شماره موبایل</span>
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" dir="ltr" className={`${field} text-left tracking-wider`} inputMode="tel" autoFocus />
-                </label>
+                <div className="grid grid-cols-2 gap-1 rounded-full bg-white/[.06] p-1" role="tablist" aria-label="روش ورود">
+                  <button type="button" role="tab" aria-selected={byEmail} disabled={!channels.email} onClick={() => setMethod('email')} className={clsx('press flex h-10 items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold disabled:opacity-40', byEmail ? 'bg-white text-ink-950' : 'text-white/60')}>
+                    <Mail size={15} /> ایمیل
+                  </button>
+                  <button type="button" role="tab" aria-selected={!byEmail} disabled={!channels.sms} onClick={() => setMethod('sms')} className={clsx('press flex h-10 items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold disabled:cursor-not-allowed', !byEmail ? 'bg-white text-ink-950' : 'text-white/60', !channels.sms && 'opacity-60')}>
+                    <MessageSquare size={15} /> پیامک
+                    {!channels.sms && <span className="rounded-full bg-lime-400 px-1.5 py-0.5 text-[12px] font-bold leading-none text-ink-950">به‌زودی</span>}
+                  </button>
+                </div>
+                {byEmail ? (
+                  <label className="block space-y-2">
+                    <span className="text-xs text-white/50">ایمیل</span>
+                    <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@gmail.com" dir="ltr" type="email" autoComplete="email" className={`${field} text-left`} inputMode="email" autoFocus />
+                  </label>
+                ) : (
+                  <label className="block space-y-2">
+                    <span className="text-xs text-white/50">شماره موبایل</span>
+                    <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" dir="ltr" className={`${field} text-left tracking-wider`} inputMode="tel" autoFocus />
+                  </label>
+                )}
               </>
             ) : step === 'otp' ? (
               <label className="block space-y-2">
-                <span className="text-xs text-white/50">کد تأیید ارسال‌شده به {phone}</span>
-                <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="• • • •" dir="ltr" className={`${field} text-center text-xl tracking-[1em]`} inputMode="numeric" maxLength={4} autoFocus />
+                <span className="text-xs text-white/50">کد تأیید ارسال‌شده به <span dir="ltr">{byEmail ? email.trim() : phone}</span></span>
+                <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder={byEmail ? '• • • • • •' : '• • • •'} dir="ltr" autoComplete="one-time-code" className={`${field} text-center text-xl ${byEmail ? 'tracking-[.6em]' : 'tracking-[1em]'}`} inputMode="numeric" maxLength={byEmail ? 6 : 4} autoFocus />
                 <span className="block text-[12px] text-white/35">{hint}</span>
               </label>
             ) : (
-              <Onboarding f={f} set={set} />
+              <Onboarding f={f} set={set} needPhone={byEmail} />
             )}
-            <button type="submit" disabled={loading} className="card-violet flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-medium text-ink-950 shadow-glow transition hover:brightness-105 disabled:opacity-50">
+            <button type="submit" disabled={loading} className="card-lime press flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-medium text-ink-950 shadow-glow transition hover:brightness-105 disabled:opacity-50">
               {step === 'phone' ? 'دریافت کد تأیید' : step === 'otp' ? 'ورود' : 'ساخت حساب و شروع'}
               <ArrowLeft size={17} strokeWidth={1.5} />
             </button>
             {step !== 'phone' && (
               <button type="button" onClick={() => setStep('phone')} className="w-full text-center text-xs text-white/40 hover:text-white">
-                ویرایش شماره
+                {byEmail ? 'ویرایش ایمیل' : 'ویرایش شماره'}
               </button>
             )}
           </form>
@@ -192,6 +228,8 @@ export default function Login() {
 }
 
 type Form = {
+  /** شماره‌ی موبایل در ثبت‌نام با ایمیل */
+  phone: string
   /** نوع حساب: ورزشکار یا یکی از انواع کسب‌وکار */
   kind: 'athlete' | BusinessRole
   referral: string
@@ -241,11 +279,23 @@ function AccountKind({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v:
   )
 }
 
-function Onboarding({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void }) {
+/** شماره‌ی موبایل در ثبت‌نام با ایمیل (بعداً با پیامک تأیید می‌شود) */
+function PhoneField({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void }) {
+  return (
+    <label className="block space-y-2">
+      <span className="text-xs text-white/50">شماره موبایل <span className="text-coral-300">*</span></span>
+      <input value={f.phone} onChange={(e) => set('phone', e.target.value)} placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" dir="ltr" autoComplete="tel" className={`${field} text-left tracking-wider`} inputMode="tel" />
+      <span className="block text-[12px] leading-5 text-white/40">برای هماهنگی باشگاه‌ها و پشتیبانی. وقتی پیامک فعال شد، یک بار تأییدش می‌کنید.</span>
+    </label>
+  )
+}
+
+function Onboarding({ f, set, needPhone }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void; needPhone: boolean }) {
   if (f.kind !== 'athlete') {
     return (
       <div className="space-y-5 animate-fade-up">
         <AccountKind f={f} set={set} />
+        {needPhone && <PhoneField f={f} set={set} />}
         <label className="block space-y-2">
           <span className="text-xs text-white/50">نام {f.kind === 'company' ? 'سازمان' : 'مجموعه یا کسب‌وکار'}</span>
           <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً باشگاه آیرون‌من" className={field} autoFocus />
@@ -256,6 +306,7 @@ function Onboarding({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: 
   return (
     <div className="space-y-5 animate-fade-up">
       <AccountKind f={f} set={set} />
+      {needPhone && <PhoneField f={f} set={set} />}
       <label className="block space-y-2">
         <span className="text-xs text-white/50">نام و نام خانوادگی</span>
         <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً سارا محمدی" className={field} autoFocus />

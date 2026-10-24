@@ -16,6 +16,10 @@ export interface User {
   id: ID
   name: string
   phone: string
+  /** ایمیل ورود (یکتا، با حروف کوچک) */
+  email?: string
+  /** false یعنی شماره هنوز با پیامک تأیید نشده (ثبت‌نام با ایمیل)؛ نبودنش = تأییدشده */
+  phoneVerified?: boolean
   avatar?: string
   bio?: string
   city: string

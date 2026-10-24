@@ -10,6 +10,8 @@ export const env = {
   demo: bool(process.env.DEMO_MODE),
   /** شماره‌ی موبایل مدیر کل سامانه */
   adminPhone: process.env.ADMIN_PHONE ?? '',
+  /** ایمیل ورود مدیر کل (تا وقتی پیامک فعال نیست، مدیر با این ایمیل وارد می‌شود) */
+  adminEmail: (process.env.ADMIN_EMAIL ?? '').trim().toLowerCase(),
   /** کلید امضای توکن‌های موقت (حتماً مقدار تصادفی طولانی بگذارید) */
   secret: process.env.APP_SECRET ?? 'change-me-in-production',
   /** فقط برای تست بدون سرویس پیامک: کد تأیید در پاسخ برگردانده می‌شود (هرگز در نسخه‌ی واقعی فعال نکنید) */
@@ -17,6 +19,14 @@ export const env = {
   sms: {
     kavenegarKey: process.env.KAVENEGAR_API_KEY ?? '',
     kavenegarTemplate: process.env.KAVENEGAR_TEMPLATE ?? 'keyfit-otp',
+  },
+  /** ارسال ایمیل کد ورود با SMTP (مثلاً Gmail با App Password روی پورت ۴۶۵) */
+  mail: {
+    host: process.env.SMTP_HOST ?? '',
+    port: Number(process.env.SMTP_PORT ?? 465),
+    user: process.env.SMTP_USER ?? '',
+    pass: process.env.SMTP_PASS ?? '',
+    fromName: process.env.MAIL_FROM_NAME ?? 'کی‌فیت',
   },
   zarinpal: {
     merchant: process.env.ZARINPAL_MERCHANT_ID ?? '',

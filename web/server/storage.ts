@@ -83,14 +83,17 @@ export function dailyBackup() {
 
 /** مدیر کل سامانه با شماره‌ی ADMIN_PHONE ساخته یا ارتقا داده می‌شود */
 export function ensureAdmin() {
-  if (!env.adminPhone) return
+  if (!env.adminPhone && !env.adminEmail) return
   mutateState((d) => {
-    const u = d.users.find((x) => x.phone === env.adminPhone)
-    if (u) {
-      if (!u.roles.includes('admin')) u.roles.push('admin')
-      return
+    let u = d.users.find((x) => (env.adminPhone && x.phone === env.adminPhone) || (env.adminEmail && x.email === env.adminEmail))
+    if (!u && env.adminPhone) {
+      u = { id: 'u-admin-' + env.adminPhone.slice(-4), name: 'مدیر کی‌فیت', phone: env.adminPhone, city: 'اصفهان', roles: ['user', 'admin'], xp: 0, streak: 0, following: [], createdAt: new Date().toISOString() }
+      d.users.push(u)
     }
-    d.users.push({ id: 'u-admin-' + env.adminPhone.slice(-4), name: 'مدیر کی‌فیت', phone: env.adminPhone, city: 'تهران', roles: ['user', 'admin'], xp: 0, streak: 0, following: [], createdAt: new Date().toISOString() })
+    if (!u) return
+    if (!u.roles.includes('admin')) u.roles.push('admin')
+    // مدیر تا وقتی پیامک فعال نیست با ایمیل وارد می‌شود
+    if (env.adminEmail && !u.email && !d.users.some((x) => x.email === env.adminEmail)) u.email = env.adminEmail
   })
   saveNow()
 }

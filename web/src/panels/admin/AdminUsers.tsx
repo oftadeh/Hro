@@ -10,7 +10,7 @@ export default function AdminUsers() {
   const users = useDB((s) => s.users)
   const wallets = useDB((s) => s.wallets)
   const [q, setQ] = useState('')
-  const list = users.filter((u) => !q || u.name.includes(q) || u.phone.includes(q))
+  const list = users.filter((u) => !q || u.name.includes(q) || u.phone.includes(q) || !!u.email?.includes(q.toLowerCase()))
   return (
     <div className="animate-fade-up">
       <PageHeader title="کاربران و نقش‌ها" subtitle={`${num(users.length)} کاربر`} />

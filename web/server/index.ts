@@ -45,12 +45,13 @@ import '../src/core/services/family'
 import '../src/core/services/events'
 import '../src/core/services/market'
 import '../src/core/services/devices'
-import { assertCanLogin, createUser, isValidPhone, normalizePhone, type ProfileInput } from '../src/core/services/auth'
+import { assertCanLogin, createUser, isValidEmail, isValidPhone, normalizeEmail, normalizePhone, type ProfileInput } from '../src/core/services/auth'
 import { creditTopUp } from '../src/core/services/wallet'
 import { env } from './env'
 import { ensureAdmin, getState, getVersion, mutateState, saveNow } from './storage'
 import { project } from './project'
-import { HttpError, checkOtp, createSession, deleteSession, readSignupToken, requestOtp, sessionUser, signupToken } from './auth'
+import { HttpError, checkEmailOtp, checkOtp, createSession, deleteSession, readSignupToken, requestEmailOtp, requestOtp, sessionUser, signupToken } from './auth'
+import { mailEnabled } from './mail'
 import { startPayment, verifyPayment } from './pay'
 import { claudeProvider } from './ai'
 import { pushEnabled, pushTo, saveSubscription } from './push'
@@ -158,7 +159,7 @@ async function api(req: Req, res: Res, url: URL) {
 
   if (p === '/api/config') {
     const demoUsers = env.demo ? getState().users.slice(0, 14).map((u) => ({ id: u.id, name: u.name })) : undefined
-    return json(res, 200, { demo: env.demo, demoUsers, ai: !!env.ai.key, push: pushEnabled, payments: env.zarinpal.merchant ? 'zarinpal' : 'simulated' })
+    return json(res, 200, { demo: env.demo, demoUsers, ai: !!env.ai.key, push: pushEnabled, payments: env.zarinpal.merchant ? 'zarinpal' : 'simulated', sms: env.demo || !!env.sms.kavenegarKey, email: env.demo || mailEnabled() || env.otpEcho })
   }
 
   if (p === '/api/auth/otp' && req.method === 'POST') {
@@ -174,7 +175,8 @@ async function api(req: Req, res: Res, url: URL) {
     const ph = normalizePhone(String(phone ?? ''))
     limit('verify:' + ip, 20, 600_000)
     checkOtp(ph, String(code ?? '').trim())
-    const user = getState().users.find((u) => u.phone === ph)
+    // فقط شماره‌ی تأییدشده؛ شماره‌ای که با ایمیل ثبت شده هنوز مال کسی حساب نمی‌شود
+    const user = getState().users.find((u) => u.phone === ph && u.phoneVerified !== false)
     if (user) {
       await runAs(null, () => assertCanLogin(user.id))
       return json(res, 200, { exists: true, token: createSession(user.id), userId: user.id })
@@ -182,10 +184,37 @@ async function api(req: Req, res: Res, url: URL) {
     return json(res, 200, { exists: false, signupToken: signupToken(ph) })
   }
 
+  if (p === '/api/auth/email/otp' && req.method === 'POST') {
+    const { email } = await readBody(req)
+    const em = normalizeEmail(String(email ?? ''))
+    if (!isValidEmail(em)) throw new HttpError(400, 'ایمیل معتبر نیست')
+    limit('eotp:' + ip, 8, 3_600_000)
+    limit('eotp-to:' + em, 5, 3_600_000)
+    return json(res, 200, await requestEmailOtp(em))
+  }
+
+  if (p === '/api/auth/email/verify' && req.method === 'POST') {
+    const { email, code } = await readBody(req)
+    const em = normalizeEmail(String(email ?? ''))
+    if (!isValidEmail(em)) throw new HttpError(400, 'ایمیل معتبر نیست')
+    limit('everify:' + ip, 20, 600_000)
+    checkEmailOtp(em, String(code ?? '').trim())
+    const user = getState().users.find((u) => u.email === em)
+    if (user) {
+      await runAs(null, () => assertCanLogin(user.id))
+      return json(res, 200, { exists: true, token: createSession(user.id), userId: user.id })
+    }
+    return json(res, 200, { exists: false, signupToken: signupToken('', em) })
+  }
+
   if (p === '/api/auth/register' && req.method === 'POST') {
     const body = await readBody(req)
-    const phone = readSignupToken(String(body.signupToken ?? ''))
-    const user = await runAs(null, () => createUser(phone, (body.profile ?? {}) as ProfileInput))
+    const id = readSignupToken(String(body.signupToken ?? ''))
+    const profile = (body.profile ?? {}) as ProfileInput
+    limit('register:' + ip, 10, 3_600_000)
+    const user = id.email
+      ? await runAs(null, () => createUser(normalizePhone(String(profile.phone ?? '')), profile, { email: id.email, phoneVerified: false }))
+      : await runAs(null, () => createUser(id.phone!, profile))
     return json(res, 200, { token: createSession(user.id), userId: user.id })
   }
 
