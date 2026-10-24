@@ -66,7 +66,7 @@ function ActivityCard({ log }: { log: { steps: number; water: number; workoutMin
   }
 
   return (
-    <section aria-label="فعالیت امروز" className="relative overflow-hidden rounded-[32px] p-5 text-ink-950 shadow-soft">
+    <section aria-label="فعالیت امروز" className={clsx('relative overflow-hidden rounded-[32px] p-5 shadow-soft transition-colors duration-500', METRICS[i].tone === 'card-violet' ? 'text-white' : 'text-ink-950')}>
       {/* لایه‌های رنگ با محو شدن نرم بین شاخص‌ها */}
       {METRICS.map((x, j) => (
         <span key={x.k} aria-hidden className={clsx('absolute inset-0 transition-opacity duration-500', x.tone, j === i ? 'opacity-100' : 'opacity-0')} />

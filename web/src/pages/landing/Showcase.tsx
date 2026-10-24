@@ -49,7 +49,7 @@ function Finger({ p, s }: { p: Pt | null; s: number }) {
   )
 }
 
-const BURST = [LIME, '#7b5cff', '#ff5fa2', '#2ee6c9', '#ff7a2f']
+const BURST = [LIME, '#5b37f5', '#ff2f7d', '#00cfae', '#ff5a1f']
 function Burst({ x, y }: { x: number; y: number }) {
   return (
     <span aria-hidden className="pointer-events-none absolute z-30" style={{ left: x, top: y }}>
@@ -275,8 +275,8 @@ function FitYabScreen({ s }: { s: number }) {
             <Dumbbell size={13} />
           </span>
         ))}
-        <span className="absolute h-3.5 w-3.5 rounded-full bg-[#2ee6c9] ring-4 ring-[#2ee6c9]/30" style={{ left: 120, top: 150 }}>
-          <span className="sc-ping absolute inset-0 rounded-full bg-[#2ee6c9]" />
+        <span className="absolute h-3.5 w-3.5 rounded-full bg-[#00cfae] ring-4 ring-[#00cfae]/30" style={{ left: 120, top: 150 }}>
+          <span className="sc-ping absolute inset-0 rounded-full bg-[#00cfae]" />
         </span>
         <div className="absolute inset-x-0 bottom-0 rounded-t-[22px] bg-[#1d1a23] px-3 pb-3 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,.4)]">
           <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-white/20" />
@@ -307,7 +307,7 @@ function FitYabScreen({ s }: { s: number }) {
         <div className="px-3 pt-3">
           <div className="text-[17px] font-extrabold">باشگاه آیرون‌من</div>
           <div className="mt-0.5 flex items-center gap-1 text-[10px] text-white/55">
-            <Star size={11} className="fill-[#ff7a2f] text-[#ff7a2f]" /> ۴٫۸ · ۲۴۰ نظر · چهارباغ
+            <Star size={11} className="fill-[#ff5a1f] text-[#ff5a1f]" /> ۴٫۸ · ۲۴۰ نظر · چهارباغ
           </div>
           <div className="mt-2.5 flex gap-1.5">
             {['بدنسازی', 'کراس‌فیت', 'کاردیو'].map((x) => <span key={x} className="rounded-full bg-white/[.08] px-2.5 py-1 text-[10px]">{x}</span>)}
@@ -326,7 +326,7 @@ function FitYabScreen({ s }: { s: number }) {
       </Push>
       <Sheet on={s >= 6}>
         <div className="flex flex-col items-center text-center">
-          <span className="rounded-full bg-[#2ee6c9]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#2ee6c9]">فعال</span>
+          <span className="rounded-full bg-[#00cfae]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#00cfae]">فعال</span>
           <div className="mt-2 text-[13px] font-extrabold">بلیت ورود · باشگاه آیرون‌من</div>
           <div className="mt-3"><MiniQr size={112} /></div>
           <div className="mt-2 text-[22px] font-black tracking-widest">۵۶۳۶۵۳</div>
@@ -486,7 +486,7 @@ function ZoneScreen({ s }: { s: number }) {
         </div>
         <div className="mt-2 flex items-center gap-3 px-1 text-[11px] text-white/70">
           <span className="flex items-center gap-1">
-            <Heart size={16} className={clsx('transition-colors duration-300', liked ? 'sc-pop fill-[#ff5fa2] text-[#ff5fa2]' : '')} /> {liked ? '۱۲۹' : '۱۲۸'}
+            <Heart size={16} className={clsx('transition-colors duration-300', liked ? 'sc-pop fill-[#ff2f7d] text-[#ff2f7d]' : '')} /> {liked ? '۱۲۹' : '۱۲۸'}
           </span>
           <span className="flex items-center gap-1"><MessageCircle size={15} /> ۱۴</span>
         </div>
@@ -589,7 +589,7 @@ export function Showcase() {
         ))}
       </ol>
       <div className="order-1 mx-auto lg:order-2" aria-hidden>
-        <div className="relative h-[560px] w-[290px] rounded-[48px] bg-[#0b0a0e] p-3 shadow-[0_40px_120px_-30px_rgba(123,92,255,.6)] ring-1 ring-white/10">
+        <div className="relative h-[560px] w-[290px] rounded-[48px] bg-[#0b0a0e] p-3 shadow-[0_40px_120px_-30px_rgba(91,55,245,.6)] ring-1 ring-white/10">
           <div className="absolute left-1/2 top-4 z-50 h-6 w-24 -translate-x-1/2 rounded-full bg-black" />
           <div className="sport-bg relative h-full w-full overflow-hidden rounded-[38px] bg-[#131118] text-white">
             <div className="absolute inset-x-0 top-0 z-30 flex h-[34px] items-center justify-between px-6 pt-1 text-[10px] font-semibold text-white/70">

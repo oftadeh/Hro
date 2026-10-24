@@ -9,7 +9,7 @@ import { Showcase } from './landing/Showcase'
 /** کارت اشتراک: «کلید» ورود به باشگاه‌ها */
 function PassCard({ className }: { className?: string }) {
   return (
-    <div className={clsx('card-violet relative flex flex-col justify-between overflow-hidden rounded-[30px] p-5 text-ink-950 shadow-[0_30px_80px_-30px_rgba(123,92,255,.8)]', className)}>
+    <div className={clsx('card-violet relative flex flex-col justify-between overflow-hidden rounded-[30px] p-5 text-ink-950 shadow-[0_30px_80px_-30px_rgba(91,55,245,.8)]', className)}>
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[13px] font-bold opacity-70">اشتراک کی‌فیت</div>
@@ -97,7 +97,7 @@ function ZoneMini({ className }: { className?: string }) {
         {['card-violet', 'card-pink', 'card-peach', 'card-mint'].map((t) => <span key={t} className={clsx('h-[58px] w-[46px] rounded-[16px] p-[2px]', t)}><span className="block h-full w-full rounded-[14px] bg-ink-900/70" /></span>)}
       </div>
       <div className="card-pink mt-3 flex flex-1 items-center justify-center rounded-[22px] p-4 text-center text-[18px] font-extrabold text-ink-950">امروز ۵ کیلومتر کنار زاینده‌رود دویدم!</div>
-      <div className="mt-2 flex items-center gap-4 px-1 text-[13px] text-white/70"><Heart size={18} className="fill-[#ff5fa2] text-[#ff5fa2]" /> ۱۲۸ <MessageCircle size={17} /> ۱۴</div>
+      <div className="mt-2 flex items-center gap-4 px-1 text-[13px] text-white/70"><Heart size={18} className="fill-[#ff2f7d] text-[#ff2f7d]" /> ۱۲۸ <MessageCircle size={17} /> ۱۴</div>
     </div>
   )
 }
@@ -216,7 +216,7 @@ export default function Landing() {
                 { icon: Droplet, t: 'سلامت و تغذیه' },
               ].map((x) => (
                 <li key={x.t} className="flex flex-col gap-2 rounded-[20px] bg-white/[.05] p-3 text-white/75">
-                  <x.icon size={18} className="text-[#a993ff]" /> {x.t}
+                  <x.icon size={18} className="text-[#8a6bff]" /> {x.t}
                 </li>
               ))}
             </ul>
@@ -261,8 +261,9 @@ export default function Landing() {
         </section>
 
         <section className="text-center">
-          <Emblem size={64} className="mx-auto" />
-          <h2 className="mt-5 text-[34px] font-black">آماده‌ای؟</h2>
+          <Emblem size={72} className="mx-auto" />
+          <div dir="ltr" className="mt-4 text-[13px] font-semibold tracking-[.35em] text-white/45">UNLOCK YOUR POTENTIAL</div>
+          <h2 className="mt-3 text-[34px] font-black">آماده‌ای؟</h2>
           <p className="mt-2 text-white/60">ثبت‌نام رایگان است.</p>
           <div className="mt-6">{start}</div>
         </section>

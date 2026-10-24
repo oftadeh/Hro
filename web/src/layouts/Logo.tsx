@@ -2,40 +2,41 @@ import { useId } from 'react'
 import clsx from 'clsx'
 
 /**
- * نشان کی‌فیت: حرف K که ساقه‌اش یک کلید است (حلقه‌ی بالا و دندانه‌ها) و بازوی بالایی‌اش
- * مثل ورزشکاری با دست بالا رفته به یک نقطه ختم می‌شود — «کلید» ورود به همه‌ی ورزش‌ها.
+ * نشان کی‌فیت: حرف K که در محل اتصال بازوها یک «سوراخ کلید» دارد —
+ * کلید ورود به همه‌ی باشگاه‌ها (Unlock your potential).
+ * رنگ کرم روی کاشی تیره، مطابق لوگوی رسمی.
  */
 export function Emblem({ size = 32, className, animated = false }: { size?: number; className?: string; animated?: boolean }) {
   const id = useId().replace(/:/g, '')
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={clsx('shrink-0', className)} role="img" aria-label="نشان کی‌فیت">
       <defs>
-        <linearGradient id={`kg${id}`} x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#8f72ff" />
-          <stop offset=".55" stopColor="#b06bff" />
-          <stop offset="1" stopColor="#ff5fa2" />
-        </linearGradient>
+        <mask id={`kh${id}`}>
+          <rect width="64" height="64" fill="#fff" />
+          <circle cx="27.6" cy="31.5" r="4.6" fill="#000" />
+          <path d="M25.9 34.5h3.4l1.1 10.5h-5.6z" fill="#000" />
+        </mask>
       </defs>
-      <rect width="64" height="64" rx="18" fill={`url(#kg${id})`} />
-      <g fill="none" stroke="#17141c" strokeLinecap="round" strokeLinejoin="round" className={animated ? 'emblem-draw' : undefined}>
-        <circle cx="22" cy="18.5" r="6.5" strokeWidth="5" pathLength={1} />
-        <path d="M22 25v26M22 40.5h-6M22 46.5h-4.5" strokeWidth="5" pathLength={1} />
-        <path d="M27 37 44.5 19.5" strokeWidth="5.5" pathLength={1} />
-        <path d="M31.5 33.5 45 50" strokeWidth="5.5" pathLength={1} />
+      <rect width="64" height="64" rx="16" fill="#16131b" />
+      <rect x=".75" y=".75" width="62.5" height="62.5" rx="15.25" fill="none" stroke="#fff" strokeOpacity=".1" strokeWidth="1.5" />
+      <g fill="#f1ece3" mask={`url(#kh${id})`} className={animated ? 'emblem-rise' : undefined}>
+        <path d="M15 11h11.5v42H15z" />
+        <path d="M26.5 27.5 41.5 11H53L31.5 35z" />
+        <path d="M30 30.5 52.5 53H41.2L26.5 38.2z" />
       </g>
-      <circle cx="47.5" cy="16.5" r="4.2" fill="#17141c" className={animated ? 'emblem-dot' : undefined} />
     </svg>
   )
 }
 
+/** نشان + نام: «keyfit» لاتین مطابق لوگو و نام فارسی زیر آن */
 export function Logo({ size = 32, withText = true, sub = false }: { size?: number; withText?: boolean; sub?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-2.5" dir="ltr">
       <Emblem size={size} />
       {withText && (
         <div className="leading-none">
-          <div className="text-[1.5rem] font-black tracking-tight">کی‌فیت</div>
-          {sub && <div dir="ltr" className="mt-1 text-right text-[10px] font-bold tracking-[.32em] opacity-50">KEYFIT</div>}
+          <div className="text-[1.45rem] font-extrabold tracking-tight">keyfit</div>
+          {sub && <div dir="rtl" className="mt-1 text-[12px] font-semibold opacity-55">کی‌فیت</div>}
         </div>
       )}
     </div>

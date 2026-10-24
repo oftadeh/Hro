@@ -61,7 +61,7 @@ export function useInView<T extends Element>(margin = '0px 0px -10% 0px') {
   return [ref, seen] as const
 }
 
-const CONFETTI = ['#a993ff', '#ff5fa2', '#2ee6c9', '#ff7a2f', '#c6ff3d']
+const CONFETTI = ['#8a6bff', '#ff2f7d', '#00cfae', '#ff5a1f', '#c6ff3d']
 
 /**
  * لحظه‌ی موفقیت: کاغذرنگی کوتاه از نقطه‌ی مشخص (یا وسط صفحه) و لرزش کوتاه گوشی.
