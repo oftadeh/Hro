@@ -136,6 +136,8 @@ export function logout() {
     useDB.setState({ ...useDB.getState(), users: [] })
   }
   useSession.getState().logout()
+  // بعد از خروج از هر نقش، صفحه‌ی معرفی سایت نمایش داده شود (نه صفحه‌ی ورود)
+  if (typeof location !== 'undefined' && location.pathname !== '/') location.replace('/')
 }
 
 /** بازنشانی داده‌های نمایشی (فقط حالت محلی) */

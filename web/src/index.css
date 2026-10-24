@@ -353,3 +353,24 @@ body, .sport-bg {
   .sc-tap, .sc-ripple, .sc-pop, .sc-heart, .sc-flash, .sc-ping { animation: none; }
   .sc-t { transition: none; }
 }
+
+/* ───── نقشه‌ی اختصاصی کی‌فیت: کاشی‌های کم‌رنگ با ته‌رنگ بنفش و هاله‌ی برند ───── */
+.kf-map { position: relative; isolation: isolate; }
+.kf-map .leaflet-tile-pane { filter: saturate(.35) contrast(1.05); }
+.dark .kf-map .leaflet-tile-pane { filter: saturate(.25) brightness(.78) contrast(1.18); }
+.kf-map::after {
+  content: ''; position: absolute; inset: 0; z-index: 450; pointer-events: none; border-radius: inherit;
+  background:
+    radial-gradient(70% 55% at 85% 0%, rgba(91, 55, 245, .16), transparent 70%),
+    radial-gradient(60% 50% at 0% 100%, rgba(184, 244, 0, .08), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(22, 19, 27, .06), inset 0 -40px 60px -40px rgba(22, 19, 27, .18);
+}
+.dark .kf-map::after {
+  background:
+    linear-gradient(rgba(70, 40, 200, .16), rgba(70, 40, 200, .16)),
+    radial-gradient(70% 55% at 85% 0%, rgba(91, 55, 245, .28), transparent 70%),
+    radial-gradient(60% 50% at 0% 100%, rgba(184, 244, 0, .07), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), inset 0 -50px 70px -40px rgba(0, 0, 0, .55);
+}
+.kf-pin { display: flex; flex-direction: column; align-items: center; transition: transform .2s var(--ease-out); transform-origin: bottom center; }
+.kf-pin-on { transform: scale(1.12); }

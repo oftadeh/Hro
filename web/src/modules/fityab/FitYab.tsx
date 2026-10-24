@@ -1,16 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Crosshair, List, Map as MapIcon, Navigation, Search, X } from 'lucide-react'
+import clsx from 'clsx'
+import { Award, Baby, Building2, Crosshair, Dumbbell, Flag, LayoutGrid, List, Map as MapIcon, Navigation, Search, Sparkles, Waves, X, type LucideIcon } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { DEFAULT_CENTER, VENUE_KINDS } from '@/core/config'
 import type { VenueKind } from '@/core/types'
 import { dec, distanceKm, num } from '@/core/format'
-import { Button, Chips, Cover, Input, PageHeader, Tabs } from '@/ui/kit'
+import { Button, Cover, Input, PageHeader, Tabs } from '@/ui/kit'
 import { toast } from '@/ui/toast'
 import { GymMap } from './GymMap'
 import { GymCard } from './GymCard'
 import { directionsUrl } from './nav'
 import { useMe } from '@/ui/hooks'
+
+const KIND_ICON: Record<VenueKind, LucideIcon> = { gym: Dumbbell, pool: Waves, equestrian: Award, hall: Building2, turf: Flag }
 
 export default function FitYab() {
   const gyms = useDB((s) => s.gyms)
@@ -88,22 +91,40 @@ export default function FitYab() {
         </div>
         <Button variant="outline" onClick={locate} icon={<Crosshair size={18} />} aria-label="موقعیت من" />
       </div>
+      {/* نوع مکان: کارت‌های کوچک با آیکون، در یک ردیف اسکرولی */}
       {enabled.length > 1 && (
-        <div className="mb-2">
-          <Chips value={kind} onChange={(k) => { setKind(k); setSport('all') }} items={[{ value: 'all' as const, label: 'همه' }, ...enabled.map((k) => ({ value: k, label: VENUE_KINDS[k].plural }))]} />
+        <div className="-mx-4 mb-2.5 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar" role="tablist" aria-label="نوع مکان">
+          {([{ v: 'all' as const, label: 'همه', Icon: LayoutGrid }, ...enabled.map((k) => ({ v: k, label: VENUE_KINDS[k].plural, Icon: KIND_ICON[k] }))]).map(({ v, label, Icon }) => (
+            <button
+              key={v}
+              role="tab"
+              aria-selected={kind === v}
+              onClick={() => { setKind(v); setSport('all') }}
+              className={clsx('press flex h-[72px] w-[84px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-[20px] text-[12px] font-semibold', kind === v ? 'card-violet shadow-glow' : 'bg-white text-ink-600 shadow-card dark:bg-white/[.06] dark:text-ink-300 dark:shadow-none')}
+            >
+              <Icon size={20} strokeWidth={1.8} />
+              <span className="max-w-full truncate px-1">{label}</span>
+            </button>
+          ))}
         </div>
       )}
-      <div className="flex flex-wrap gap-2">
+      {/* رشته‌ها و فیلترهای ویژه در یک ردیف اسکرولی */}
+      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 no-scrollbar" aria-label="فیلترها">
         {me?.gender === 'female' && (
-          <button onClick={() => setWomenOnly((v) => !v)} className={`mb-2 rounded-full px-4 py-2 text-xs transition ${womenOnly ? 'grad-pink font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300'}`}>
-            فقط باشگاه‌های ویژه‌ی بانوان
+          <button onClick={() => setWomenOnly((v) => !v)} aria-pressed={womenOnly} className={clsx('press flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px]', womenOnly ? 'card-pink font-semibold' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300')}>
+            <Sparkles size={14} /> ویژه‌ی بانوان
           </button>
         )}
-        <button onClick={() => setKidsOnly((v) => !v)} className={`mb-2 rounded-full px-4 py-2 text-xs transition ${kidsOnly ? 'grad-peach font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300'}`}>
-          کلاس کودکان
+        <button onClick={() => setKidsOnly((v) => !v)} aria-pressed={kidsOnly} className={clsx('press flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px]', kidsOnly ? 'card-peach font-semibold' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300')}>
+          <Baby size={14} /> کودکان
         </button>
+        <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-ink-900/10 dark:bg-white/15" />
+        {[{ value: 'all', label: 'همه‌ی رشته‌ها' }, ...sports.map((x) => ({ value: x, label: x }))].map((it) => (
+          <button key={it.value} onClick={() => setSport(it.value)} aria-pressed={sport === it.value} className={clsx('press h-9 shrink-0 whitespace-nowrap rounded-full px-3.5 text-[13px]', sport === it.value ? 'bg-ink-950 font-semibold text-white dark:bg-white dark:text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300')}>
+            {it.label}
+          </button>
+        ))}
       </div>
-      <Chips value={sport} onChange={setSport} items={[{ value: 'all', label: 'همه‌ی رشته‌ها' }, ...sports.map((s) => ({ value: s, label: s }))]} />
 
       {view === 'map' ? (
         <div className="relative mt-3">
