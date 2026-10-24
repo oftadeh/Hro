@@ -6,7 +6,7 @@ import { deleteFood, saveFood, saveRestaurant } from '@/core/services/commerce'
 import type { Food, Restaurant } from '@/core/types'
 import { Badge, Button, Card, Cover, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, Select, Sheet, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
-import { run, runOk } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
 import { LocationPicker } from '../shared/LocationPicker'
 import { FoodIcon } from '@/ui/icons'
 
@@ -23,9 +23,9 @@ export default function RestaurantPanel() {
 
   return (
     <div className="animate-fade-up">
-      <PageHeader title="منو و رستوران" subtitle="غذاهای رژیمی شما در ماژول بوفه" actions={<Button size="sm" variant="outline" icon={<Plus size={16} />} onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 35.72, lng: 51.39 })}>رستوران جدید</Button>} />
+      <PageHeader title="منو و رستوران" subtitle="غذاهای رژیمی شما در ماژول بوفه" actions={<Button size="sm" variant="outline" icon={<Plus size={16} />} onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 32.6546, lng: 51.668 })}>رستوران جدید</Button>} />
       {mine.length === 0 ? (
-        <Empty icon="" title="هنوز رستورانی ثبت نکرده‌اید" action={<Button onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 35.72, lng: 51.39 })}>ثبت رستوران</Button>} />
+        <Empty icon="" title="هنوز رستورانی ثبت نکرده‌اید" action={<Button onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 32.6546, lng: 51.668 })}>ثبت رستوران</Button>} />
       ) : (
         <>
           {mine.length > 1 && (
@@ -56,7 +56,7 @@ export default function RestaurantPanel() {
                   <div className="mt-2 flex gap-1">
                     <Button size="sm" variant="outline" onClick={() => setEditF(f)}>ویرایش</Button>
                     <Button size="sm" variant="ghost" onClick={() => saveFood({ ...f, available: !f.available })}>{f.available ? 'ناموجود کن' : 'موجود کن'}</Button>
-                    <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={13} />} onClick={() => confirm('حذف شود؟') && deleteFood(f.id)} />
+                    <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={13} />} onClick={async () => (await ask('حذف شود؟')) && deleteFood(f.id)} />
                   </div>
                 </div>
               </Card>

@@ -35,7 +35,7 @@ export function TrainingFocus({ user, light }: { user: User; light?: boolean }) 
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[11px] leading-5 opacity-65">{goalNote}</p>
+        <p className="mt-3 text-[12px] leading-5 opacity-65">{goalNote}</p>
         <Link to={`/fityab?sport=${encodeURIComponent(d.sport)}`} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-ink-950 px-4 py-2 text-xs font-medium text-white">
           باشگاه {d.sport} <ArrowLeft size={14} />
         </Link>

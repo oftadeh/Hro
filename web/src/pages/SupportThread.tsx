@@ -17,7 +17,7 @@ export default function SupportThread() {
       <div className="space-y-3">
         {t.messages.map((m, i) => (
           <div key={i} className={`max-w-[85%] rounded-3xl p-4 text-sm leading-7 ${m.staff ? 'mr-auto bg-brand-400/15' : 'bg-white shadow-card dark:bg-ink-850 dark:shadow-none'}`}>
-            <div className="mb-1 text-[10px] text-ink-400">{m.staff ? 'پشتیبانی کی‌فیت' : 'شما'} · {faDateTime(m.at)}</div>
+            <div className="mb-1 text-[12px] text-ink-400">{m.staff ? 'پشتیبانی کی‌فیت' : 'شما'} · {faDateTime(m.at)}</div>
             <div className="whitespace-pre-line">{m.text}</div>
           </div>
         ))}

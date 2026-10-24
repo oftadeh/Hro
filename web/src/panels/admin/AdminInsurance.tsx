@@ -20,10 +20,10 @@ export default function AdminInsurance() {
     <div className="animate-fade-up">
       <PageHeader title="بیمه و خسارت" subtitle="بررسی پرونده‌ها با مدارک، تأیید مبلغ پس از فرانشیز و پرداخت به کیف پول" />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="بیمه‌نامه‌ی فعال" value={num(s.policies.filter((p) => p.status === 'active' && new Date(p.endAt) > new Date()).length)} />
-        <Stat label="حق بیمه‌ی دریافتی" value={toman(premiums)} tone="emerald" />
-        <Stat label="خسارت پرداخت‌شده" value={toman(paid)} tone="rose" />
-        <Stat label="مانده‌ی حساب بیمه‌گر" value={toman(s.wallets.insurer ?? 0)} tone="violet" />
+        <Stat tone="violet" label="بیمه‌نامه‌ی فعال" value={num(s.policies.filter((p) => p.status === 'active' && new Date(p.endAt) > new Date()).length)} />
+        <Stat label="حق بیمه‌ی دریافتی" value={toman(premiums)} tone="sky" />
+        <Stat label="خسارت پرداخت‌شده" value={toman(paid)} tone="emerald" />
+        <Stat label="مانده‌ی حساب بیمه‌گر" value={toman(s.wallets.insurer ?? 0)} tone="amber" />
       </div>
       <Tabs className="my-4" value={tab} onChange={setTab} items={[{ value: 'open', label: 'در جریان' }, { value: 'closed', label: 'بسته‌شده' }]} />
       {list.length === 0 && <Empty title="پرونده‌ای نیست" />}
@@ -67,7 +67,7 @@ export default function AdminInsurance() {
           <Card key={p.id} className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold">{p.name} · {toman(p.price)}</div>
-              <div className="text-[11px] text-ink-500">درمان تا {toman(p.medicalCover)} · فرانشیز {num(p.deductiblePct)}٪</div>
+              <div className="text-[12px] text-ink-500">درمان تا {toman(p.medicalCover)} · فرانشیز {num(p.deductiblePct)}٪</div>
             </div>
             <button onClick={() => run(() => saveInsurancePlan({ ...p, active: !p.active }))}><Badge color={p.active ? 'emerald' : 'slate'}>{p.active ? 'فعال' : 'غیرفعال'}</Badge></button>
           </Card>

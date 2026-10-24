@@ -20,6 +20,8 @@ export interface User {
   bio?: string
   city: string
   roles: Role[]
+  /** احراز مدارک حساب کسب‌وکار (باشگاه، مربی، پزشک، فروشنده). نبودنش = حساب قدیمی/تأییدشده */
+  verification?: Verification
   gender?: 'male' | 'female'
   heightCm?: number
   weightKg?: number
@@ -196,6 +198,8 @@ export interface Gym {
   rental?: { hourlyPrice: number; openFrom: number; openTo: number; maxHours: number }
   /** ظرفیت هم‌زمان سالن (برای نمایش شلوغی) */
   capacity?: number
+  /** رمز QR ورودی باشگاه (چاپی، دم در)؛ با تعویض آن QRهای قبلی باطل می‌شوند */
+  entryCode?: string
   classes?: GymClass[]
   /** تخفیف ساعات خلوت: از ساعت from تا to (۰ تا ۲۴) */
   offPeak?: { from: number; to: number; discountPct: number }
@@ -528,6 +532,11 @@ export interface Post {
   authorId: ID
   text: string
   image?: string
+  /** گالری تصاویر (تا ۶ تصویر) */
+  images?: string[]
+  video?: string
+  /** رنگ کارت پست متنی (CARD_TONES) */
+  bg?: string
   gradient?: string
   likes: ID[]
   saves: ID[]
@@ -545,6 +554,9 @@ export interface Story {
   authorId: ID
   text: string
   image?: string
+  video?: string
+  /** رنگ پس‌زمینه‌ی استوری متنی (CARD_TONES) */
+  bg?: string
   gradient: string
   seenBy: ID[]
   createdAt: ISODate
@@ -942,4 +954,15 @@ export interface Listing {
   /** خرید امن: پول تا تأیید دریافت نزد کی‌فیت می‌ماند */
   deal?: { buyerId: ID; status: 'paid' | 'shipped' | 'done' | 'cancelled'; address: string; tracking?: string; paidAt: ISODate; shippedAt?: ISODate; doneAt?: ISODate }
   createdAt: ISODate
+}
+
+/** وضعیت مدارک حساب کسب‌وکار */
+export interface Verification {
+  status: 'none' | 'pending' | 'approved' | 'rejected'
+  /** نام فایل‌های مدارک (خصوصی؛ فقط صاحب حساب و مدیر می‌بینند) */
+  docs: string[]
+  /** توضیح متقاضی یا دلیل رد از طرف مدیر */
+  note?: string
+  submittedAt?: ISODate
+  reviewedAt?: ISODate
 }

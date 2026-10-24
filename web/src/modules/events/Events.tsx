@@ -9,7 +9,7 @@ import { activePolicy } from '@/core/services/insurance'
 import type { SportEvent } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Cover, Empty, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
 import { useBalance, useMe, useUserMap } from '@/ui/hooks'
-import { run, runOk } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
 
 const STATUS: Record<SportEvent['status'], [string, 'emerald' | 'amber' | 'slate' | 'rose']> = {
   open: ['ثبت‌نام باز', 'emerald'],
@@ -140,7 +140,7 @@ export function EventDetail() {
                 {reg.category && <div className="text-xs text-ink-500">{reg.category}</div>}
               </div>
               {!insured && <Link to="/insurance" className="flex items-center justify-center gap-1 text-xs text-aqua-600"><ShieldCheck size={13} /> پیش از رویداد، بیمه‌ی ورزشی بگیرید</Link>}
-              {canLeave && <Button className="w-full" variant="ghost" onClick={() => confirm('انصراف و بازگشت ورودی؟') && runOk(() => cancelRegistration(e.id), 'انصراف ثبت شد')}>انصراف (تا {num(EVENT_CANCEL_HOURS)} ساعت قبل)</Button>}
+              {canLeave && <Button className="w-full" variant="ghost" onClick={async () => (await ask('انصراف و بازگشت ورودی؟')) && runOk(() => cancelRegistration(e.id), 'انصراف ثبت شد')}>انصراف (تا {num(EVENT_CANCEL_HOURS)} ساعت قبل)</Button>}
             </>
           ) : e.status === 'open' && !started ? (
             <>
@@ -183,7 +183,7 @@ export function EventDetail() {
             {started && e.registrations.length > 0 && (
               <Button className="w-full" onClick={() => runOk(() => publishResults(e.id, e.registrations.map((r) => ({ bib: r.bib, rank: results[r.bib]?.rank ?? r.result?.rank, time: results[r.bib]?.time ?? r.result?.time }))), 'نتایج منتشر شد')}>انتشار نتایج و پایان رویداد</Button>
             )}
-            {e.status !== 'done' && <Button className="w-full" variant="ghost" onClick={() => confirm('رویداد لغو و ورودی همه برگردانده شود؟') && run(() => cancelEvent(e.id), 'رویداد لغو شد')}>لغو رویداد</Button>}
+            {e.status !== 'done' && <Button className="w-full" variant="ghost" onClick={async () => (await ask('رویداد لغو و ورودی همه برگردانده شود؟')) && run(() => cancelEvent(e.id), 'رویداد لغو شد')}>لغو رویداد</Button>}
           </Card>
         </>
       )}
@@ -193,7 +193,7 @@ export function EventDetail() {
 
 export function CreateEvent() {
   const nav = useNavigate()
-  const [f, setF] = useState<NewEvent>({ title: '', kind: 'race', sport: 'دویدن', description: '', at: '', location: '', city: 'تهران', fee: 0, capacity: 100, categories: [], gender: 'mixed' })
+  const [f, setF] = useState<NewEvent>({ title: '', kind: 'race', sport: 'دویدن', description: '', at: '', location: '', city: 'اصفهان', fee: 0, capacity: 100, categories: [], gender: 'mixed' })
   const [cats, setCats] = useState('')
   return (
     <div className="animate-fade-up">

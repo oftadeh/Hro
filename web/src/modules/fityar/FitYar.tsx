@@ -61,7 +61,9 @@ function AIChat({ initial }: { initial: string }) {
     }
   }, [initial]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), [chat.length, busy])
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [chat.length, busy])
 
   return (
     <Card className="flex h-[calc(100dvh-15rem)] min-h-[28rem] flex-col p-0">
@@ -71,7 +73,7 @@ function AIChat({ initial }: { initial: string }) {
         </div>
         <div className="flex-1">
           <div className="font-semibold">فیت‌یار هوشمند</div>
-          <div className="text-[11px] text-brand-500">آنلاین · متخصص تغذیه و تمرین</div>
+          <div className="text-[12px] text-brand-500">آنلاین · متخصص تغذیه و تمرین</div>
         </div>
         {chat.length > 0 && (
           <button onClick={clearAIChat} className="rounded-xl p-2 text-ink-400 hover:text-coral-500" aria-label="پاک کردن">
@@ -173,7 +175,7 @@ function Coaches() {
                     <div className="text-xs text-ink-500">{c.title}</div>
                     <div className="mt-1 flex items-center gap-2">
                       <Stars value={c.rating} />
-                      <span className="text-[11px] text-ink-400">{num(c.students)} شاگرد · {num(c.experienceYears)} سال سابقه</span>
+                      <span className="text-[12px] text-ink-400">{num(c.students)} شاگرد · {num(c.experienceYears)} سال سابقه</span>
                     </div>
                   </div>
                 </div>
@@ -209,7 +211,7 @@ function MyPlans() {
             <Badge color={o.status === 'delivered' ? 'emerald' : 'amber'}>{o.status === 'delivered' ? 'تحویل شده' : 'در حال آماده‌سازی'}</Badge>
           </div>
           {o.program && (
-            <Link to={`/program/${o.id}`} className="mt-3 flex items-center justify-between rounded-2xl grad-lavender px-4 py-3 text-sm text-ink-950">
+            <Link to={`/program/${o.id}`} className="mt-3 flex items-center justify-between rounded-2xl card-violet px-4 py-3 text-sm text-ink-950">
               برنامه‌ی هفتگی ({(o.done?.length ?? 0).toLocaleString('fa-IR')} از {o.program.weeks.reduce((a, w) => a + w.days.length, 0).toLocaleString('fa-IR')} جلسه)
               <span>مشاهده</span>
             </Link>

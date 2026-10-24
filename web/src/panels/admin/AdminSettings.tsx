@@ -79,7 +79,7 @@ export default function AdminSettings() {
             </button>
           )
         })}
-        <p className="w-full text-[11px] text-ink-400">مجموعه‌های نوع غیرفعال ثبت و تأیید می‌شوند اما تا فعال‌سازی، به ورزشکاران نمایش داده نمی‌شوند.</p>
+        <p className="w-full text-[12px] text-ink-400">مجموعه‌های نوع غیرفعال ثبت و تأیید می‌شوند اما تا فعال‌سازی، به ورزشکاران نمایش داده نمی‌شوند.</p>
       </Card>
 
       <SectionTitle title="کدهای تخفیف" />

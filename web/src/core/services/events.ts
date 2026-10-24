@@ -32,7 +32,7 @@ function clean(input: NewEvent) {
   if (!(input.fee === 0 || input.fee >= 10_000)) throw new AppError('ورودی معتبر نیست (رایگان یا حداقل ۱۰ هزار تومان)')
   return {
     title: title.slice(0, 90), kind: input.kind, sport: String(input.sport || EVENT_KINDS[input.kind]).slice(0, 30), description: String(input.description ?? '').slice(0, 2000),
-    at: at.toISOString(), location: String(input.location).trim().slice(0, 150), city: String(input.city || 'تهران').slice(0, 30), lat: input.lat, lng: input.lng,
+    at: at.toISOString(), location: String(input.location).trim().slice(0, 150), city: String(input.city || 'اصفهان').slice(0, 30), lat: input.lat, lng: input.lng,
     fee: Math.round(input.fee), capacity: Math.round(input.capacity), categories: (input.categories ?? []).map((c) => String(c).trim()).filter(Boolean).slice(0, 8),
     gender: (['male', 'female', 'mixed'].includes(input.gender) ? input.gender : 'mixed') as SportEvent['gender'],
   }

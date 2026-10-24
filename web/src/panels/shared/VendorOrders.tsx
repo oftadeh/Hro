@@ -5,7 +5,7 @@ import type { Order } from '@/core/types'
 import { Badge, Button, Card, Empty, PageHeader } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 import { ORDER_STATUS, OrderSteps } from '@/pages/Orders'
-import { run } from '@/ui/toast'
+import { run, ask } from '@/ui/toast'
 
 const NEXT: Partial<Record<Order['status'], { to: Order['status']; label: string }>> = {
   paid: { to: 'preparing', label: 'شروع آماده‌سازی' },
@@ -32,7 +32,7 @@ export default function VendorOrders({ kind }: { kind: Order['kind'] }) {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-semibold">{users[o.userId]?.name}</div>
-                  <div className="text-[11px] text-ink-400">{faDateTime(o.createdAt)}</div>
+                  <div className="text-[12px] text-ink-400">{faDateTime(o.createdAt)}</div>
                 </div>
                 <Badge color={ORDER_STATUS[o.status].color}>{ORDER_STATUS[o.status].label}</Badge>
               </div>
@@ -46,11 +46,11 @@ export default function VendorOrders({ kind }: { kind: Order['kind'] }) {
               </div>
               <OrderSteps o={o} />
               <div className="mt-2 text-xs text-ink-500">{o.address}</div>
-              {o.trackingCode && <div className="mt-1 text-[11px] text-ink-400">کد رهگیری: {o.trackingCode}</div>}
+              {o.trackingCode && <div className="mt-1 text-[12px] text-ink-400">کد رهگیری: {o.trackingCode}</div>}
               <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-3 dark:border-white/5">
                 <b>{toman(o.total + (o.shipping ?? 0))}</b>
                 <div className="flex gap-2">
-                  {o.status !== 'delivered' && o.status !== 'cancelled' && <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => confirm('سفارش لغو و وجه به خریدار برگردد؟') && run(() => setOrderStatus(o.id, 'cancelled'), 'سفارش لغو شد')}>لغو</Button>}
+                  {o.status !== 'delivered' && o.status !== 'cancelled' && <Button size="sm" variant="ghost" className="text-coral-500" onClick={async () => (await ask('سفارش لغو و وجه به خریدار برگردد؟')) && run(() => setOrderStatus(o.id, 'cancelled'), 'سفارش لغو شد')}>لغو</Button>}
                   {next && (
                     <Button
                       size="sm"

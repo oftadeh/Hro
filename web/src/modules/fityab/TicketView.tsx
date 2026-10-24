@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom'
 import { Navigation, Undo2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { faDateTime, toman } from '@/core/format'
-import { cancelTicket, CLASS_CANCEL_HOURS, RENTAL_CANCEL_HOURS, ticketStatus } from '@/core/services/fityab'
+import { CANCEL_GRACE_MIN, cancelTicket, CLASS_CANCEL_HOURS, inCancelGrace, RENTAL_CANCEL_HOURS, ticketStatus } from '@/core/services/fityab'
 import type { CheckIn, Gym } from '@/core/types'
 import { Badge, Button, Sheet } from '@/ui/kit'
-import { runOk } from '@/ui/toast'
+import { runOk, ask } from '@/ui/toast'
 import { directionsUrl } from './nav'
 
 export const TICKET_STATUS: Record<CheckIn['status'], { label: string; color: 'emerald' | 'slate' | 'rose' | 'amber' }> = {
@@ -21,7 +21,8 @@ export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckI
   const cls = ticket?.classId ? gym?.classes?.find((c) => c.id === ticket.classId) : undefined
   const st = ticket ? ticketStatus(ticket) : 'active'
   const win = ticket?.rentalEnd ? RENTAL_CANCEL_HOURS : CLASS_CANCEL_HOURS
-  const lateCancel = !!ticket?.slotAt && new Date(ticket.slotAt).getTime() - Date.now() < win * 3_600_000
+  const grace = !!ticket && inCancelGrace(ticket)
+  const lateCancel = !!ticket?.slotAt && !grace && new Date(ticket.slotAt).getTime() - Date.now() < win * 3_600_000
   return (
     <Sheet open={!!ticket} onClose={onClose} title={cls ? `بلیت کلاس ${cls.title}` : ticket?.rentalEnd ? 'رزرو اجاره' : 'بلیت ورود'}>
       {ticket && gym && (
@@ -66,12 +67,13 @@ export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckI
                 icon={<Undo2 size={16} />}
                 disabled={lateCancel}
                 onClick={async () => {
-                  if (!confirm('بلیت لغو و مبلغ آن برگشت داده شود؟')) return
+                  if (!(await ask('بلیت لغو و مبلغ آن برگشت داده شود؟'))) return
                   if (await runOk(() => cancelTicket(ticket.id), 'بلیت لغو شد و مبلغ برگشت داده شد')) onClose()
                 }}
               >
                 {lateCancel ? `لغو تا ${win} ساعت قبل از شروع ممکن است` : 'لغو و بازگشت وجه'}
               </Button>
+              {grace && ticket.slotAt && <p className="mt-1 text-[12px] text-ink-500">تا {CANCEL_GRACE_MIN.toLocaleString('fa-IR')} دقیقه پس از خرید، لغو بدون محدودیت زمانی ممکن است.</p>}
             </>
           )}
           {st === 'used' && onShare && (
@@ -135,7 +137,7 @@ export function PaySheet({
             </Button>
           </Link>
         )}
-        <p className="text-center text-[11px] text-ink-400">لغو سانس آزاد تا قبل از ورود و لغو کلاس تا {CLASS_CANCEL_HOURS} ساعت قبل، با بازگشت کامل وجه.</p>
+        <p className="text-center text-[12px] text-ink-400">لغو سانس آزاد تا قبل از ورود و لغو کلاس تا {CLASS_CANCEL_HOURS} ساعت قبل، با بازگشت کامل وجه.</p>
       </div>
     </Sheet>
   )

@@ -11,6 +11,7 @@ import { Button, Select } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 import { PaySheet } from './TicketView'
+import { celebrate } from '@/ui/motion'
 
 export function RentalBox({ gym, onBooked }: { gym: Gym; onBooked: (ticketId: string) => void }) {
   const me = useMe()!
@@ -37,11 +38,11 @@ export function RentalBox({ gym, onBooked }: { gym: Gym; onBooked: (ticketId: st
     <div>
       <div className="flex items-baseline justify-between">
         <div className="text-xs text-ink-500">اجاره‌ی {VENUE_KINDS[gym.kind ?? 'hall'].label}</div>
-        <div><span className="font-display text-2xl">{toman(r.hourlyPrice)}</span> <span className="text-[11px] text-ink-400">/ ساعت</span></div>
+        <div><span className="font-display text-2xl">{toman(r.hourlyPrice)}</span> <span className="text-[12px] text-ink-400">/ ساعت</span></div>
       </div>
       <div className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1 no-scrollbar">
         {days.map((d, i) => (
-          <button key={i} onClick={() => { setDayIdx(i); setStart(undefined) }} className={clsx('flex w-12 shrink-0 flex-col items-center rounded-2xl py-1.5 text-[11px]', i === dayIdx ? 'grad-lavender text-ink-950' : 'bg-ink-900/[.04] text-ink-500 dark:bg-white/[.05]')}>
+          <button key={i} onClick={() => { setDayIdx(i); setStart(undefined) }} className={clsx('flex w-12 shrink-0 flex-col items-center rounded-2xl py-1.5 text-[12px]', i === dayIdx ? 'card-violet text-ink-950' : 'bg-ink-900/[.04] text-ink-500 dark:bg-white/[.05]')}>
             {i === 0 ? 'امروز' : weekdayLabel(weekdayOf(d)).slice(0, 2)}
             <span className="font-display text-lg leading-none">{d.toLocaleDateString('fa-IR', { day: 'numeric' })}</span>
           </button>
@@ -73,7 +74,7 @@ export function RentalBox({ gym, onBooked }: { gym: Gym; onBooked: (ticketId: st
           <Button className="w-full" size="lg" onClick={() => setPay(true)}>رزرو {num(h)} ساعت — {toman(price)}</Button>
         </div>
       )}
-      <p className="mt-2 text-[11px] text-ink-400">لغو تا {num(RENTAL_CANCEL_HOURS)} ساعت قبل از شروع با بازگشت کامل وجه. با انتخاب تیم، قرار به‌صورت خودکار برای هم‌تیمی‌ها ثبت می‌شود.</p>
+      <p className="mt-2 text-[12px] text-ink-400">لغو تا {num(RENTAL_CANCEL_HOURS)} ساعت قبل از شروع با بازگشت کامل وجه. با انتخاب تیم، قرار به‌صورت خودکار برای هم‌تیمی‌ها ثبت می‌شود.</p>
       <PaySheet
         open={pay && !!start}
         onClose={() => setPay(false)}
@@ -84,6 +85,7 @@ export function RentalBox({ gym, onBooked }: { gym: Gym; onBooked: (ticketId: st
         balance={bal}
         onPay={async (prefer) => {
           const t = await run(() => bookRental(gym.id, start!.toISOString(), h, prefer, teamId || undefined), 'رزرو انجام شد')
+          if (t) celebrate(undefined, { pieces: 18 })
           if (t) {
             setPay(false)
             setStart(undefined)

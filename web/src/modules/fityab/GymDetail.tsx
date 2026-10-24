@@ -20,6 +20,9 @@ import { RentalBox } from './RentalBox'
 import { isRental } from '@/core/services/fityab'
 import { PostCard } from '@/modules/fitzone/PostCard'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
+import { vtName } from '@/ui/ViewTransitions'
+import { SportArt } from '@/ui/art'
+import { celebrate } from '@/ui/motion'
 
 export default function GymDetail() {
   const { id } = useParams()
@@ -67,6 +70,7 @@ export default function GymDetail() {
 
   const doCheckIn = async (prefer: 'subscription' | 'wallet') => {
     const ci = await run(() => checkIn(gym.id, prefer), 'بلیت صادر شد')
+    if (ci) celebrate(undefined, { pieces: 18 })
     if (ci) {
       setConfirm(false)
       setTicketId(ci.id)
@@ -76,6 +80,7 @@ export default function GymDetail() {
     if (!book) return
     const forMember = book.cls.audience === 'kids' ? memberId || kidsOk[0]?.id : undefined
     const ci = await run(() => bookClass(gym.id, book.cls.id, book.at.toISOString(), prefer, forMember), 'کلاس رزرو شد')
+    if (ci) celebrate(undefined, { pieces: 18 })
     if (ci) {
       setBook(undefined)
       setMemberId('')
@@ -107,11 +112,12 @@ export default function GymDetail() {
       />
 
       {/* گالری عکس و فیلم */}
-      <div className="overflow-hidden rounded-3xl">
+      <div className="overflow-hidden rounded-[30px]">
         {current?.type === 'video' ? (
           <video src={current.url} controls playsInline className="aspect-video w-full bg-black object-cover" />
         ) : (
-          <Cover gradient={gym.cover} image={current?.url} emoji="" className="aspect-video">
+          <Cover gradient={gym.id} image={current?.url} emoji="" className="aspect-video" style={vtName(`gym-${gym.id}`)}>
+            {!current && <SportArt sports={gym.sports} size={190} className="absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2" />}
             <div className="absolute bottom-3 right-3 flex gap-1">
               {gym.sports.map((s) => <Badge key={s} color="slate" className="!bg-white/90 !text-ink-800">{s}</Badge>)}
             </div>
@@ -167,7 +173,7 @@ export default function GymDetail() {
                   <button
                     key={i}
                     onClick={() => setDayIdx(i)}
-                    className={clsx('flex w-14 shrink-0 flex-col items-center rounded-2xl py-2 text-xs transition', i === dayIdx ? 'grad-lavender text-ink-950' : 'bg-white text-ink-500 shadow-card dark:bg-ink-850 dark:shadow-none')}
+                    className={clsx('flex w-14 shrink-0 flex-col items-center rounded-2xl py-2 text-xs transition', i === dayIdx ? 'card-violet text-ink-950' : 'bg-white text-ink-500 shadow-card dark:bg-ink-850 dark:shadow-none')}
                   >
                     <span>{i === 0 ? 'امروز' : weekdayLabel(weekdayOf(d)).slice(0, 2)}</span>
                     <span className="mt-0.5 font-display text-xl leading-none">{d.toLocaleDateString('fa-IR', { day: 'numeric' })}</span>
@@ -186,11 +192,11 @@ export default function GymDetail() {
                       <div key={cls.id + key} className="flex items-center gap-3 border-b hairline py-3 last:border-0">
                         <div className="w-14 text-center">
                           <div className="font-display text-2xl leading-none">{faTime(key)}</div>
-                          <div className="text-[10px] text-ink-400">{num(cls.durationMin)} دقیقه</div>
+                          <div className="text-[12px] text-ink-400">{num(cls.durationMin)} دقیقه</div>
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 truncate text-sm font-medium">{cls.title}{kids && <Badge color="violet">کودکان {num(cls.ageMin ?? 0)}–{num(cls.ageMax ?? 0)} سال</Badge>}</div>
-                          <div className="truncate text-[11px] text-ink-500">
+                          <div className="truncate text-[12px] text-ink-500">
                             {cls.coachName} · {left > 0 ? `${num(left)} جای خالی` : 'تکمیل'} · {toman(classPrice(gym, cls))}
                           </div>
                         </div>
@@ -222,10 +228,10 @@ export default function GymDetail() {
                         <Avatar name={u?.name ?? 'کاربر'} src={u?.avatar} size={28} />
                         <span className="text-xs font-medium">{u?.name ?? 'کاربر کی‌فیت'}</span>
                         <Stars value={r.stars} />
-                        <span className="mr-auto text-[10px] text-ink-400">{faDate(r.createdAt)}</span>
+                        <span className="mr-auto text-[12px] text-ink-400">{faDate(r.createdAt)}</span>
                       </div>
                       {r.text && <p className="mt-2 text-xs leading-6 text-ink-600 dark:text-ink-300">{r.text}</p>}
-                      {r.reply && <p className="mt-2 rounded-xl bg-ink-900/[.04] p-2.5 text-[11px] leading-5 text-ink-500 dark:bg-white/[.05]">پاسخ باشگاه: {r.reply}</p>}
+                      {r.reply && <p className="mt-2 rounded-xl bg-ink-900/[.04] p-2.5 text-[12px] leading-5 text-ink-500 dark:bg-white/[.05]">پاسخ باشگاه: {r.reply}</p>}
                     </div>
                   )
                 })}
@@ -259,12 +265,12 @@ export default function GymDetail() {
               {now.offPeak && <span className="text-xs text-ink-400 line-through">{toman(now.base)}</span>}
             </div>
             {gym.offPeak && gym.offPeak.discountPct > 0 && (
-              <div className="mt-2 text-[11px] text-aqua-700 dark:text-aqua-300">
+              <div className="mt-2 text-[12px] text-aqua-700 dark:text-aqua-300">
                 {num(gym.offPeak.discountPct)}٪ تخفیف از ساعت {num(gym.offPeak.from)} تا {num(gym.offPeak.to)}
               </div>
             )}
             <div className="mt-3">
-              <div className="flex items-center justify-between text-[11px] text-ink-500">
+              <div className="flex items-center justify-between text-[12px] text-ink-500">
                 <span>شلوغی لحظه‌ای</span>
                 <span>
                   {num(occ.count)} نفر از {num(occ.capacity)}

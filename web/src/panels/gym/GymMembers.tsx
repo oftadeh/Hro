@@ -65,10 +65,10 @@ export default function GymMembers() {
         </Select>
       )}
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="کل اعضا" value={num(count('all'))} />
-        <Stat label="فعال" value={num(count('active'))} tone="emerald" />
-        <Stat label="در خطر ریزش" value={num(count('at_risk'))} tone="amber" />
-        <Stat label="ازدست‌رفته" value={num(count('lost'))} tone="rose" />
+        <Stat tone="violet" label="کل اعضا" value={num(count('all'))} />
+        <Stat label="فعال" value={num(count('active'))} tone="sky" />
+        <Stat label="در خطر ریزش" value={num(count('at_risk'))} tone="emerald" />
+        <Stat label="ازدست‌رفته" value={num(count('lost'))} tone="amber" />
       </div>
       <Chips value={seg} onChange={setSeg} items={(Object.keys(SEGMENT_LABEL) as MemberSegment[]).map((k) => ({ value: k, label: `${SEGMENT_LABEL[k].split(' (')[0]} (${num(count(k))})` }))} />
       <div className="mt-3 space-y-2">
@@ -78,7 +78,7 @@ export default function GymMembers() {
             <Avatar name={users[m.userId]?.name ?? ''} src={users[m.userId]?.avatar} size={40} />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold">{users[m.userId]?.name}</div>
-              <div className="text-[11px] text-ink-500">{num(m.visits)} ورود · آخرین: {timeAgo(m.lastAt)} · {toman(m.spent)}</div>
+              <div className="text-[12px] text-ink-500">{num(m.visits)} ورود · آخرین: {timeAgo(m.lastAt)} · {toman(m.spent)}</div>
             </div>
             {m.segments.filter((x) => x !== 'all').map((x) => <Badge key={x} color={SEG_TONE[x]}>{SEGMENT_LABEL[x].split(' (')[0]}</Badge>)}
           </Card>
@@ -94,7 +94,7 @@ export default function GymMembers() {
                 <div className="flex items-center gap-2 text-sm">
                   <Send size={14} className="text-ink-400" />
                   <span className="flex-1 font-medium">{x.title}</span>
-                  <span className="text-[11px] text-ink-400">{faDate(x.createdAt)}</span>
+                  <span className="text-[12px] text-ink-400">{faDate(x.createdAt)}</span>
                 </div>
                 <div className="mt-1 text-xs text-ink-500">
                   {SEGMENT_LABEL[x.segment]} · {num(x.recipients.length)} گیرنده

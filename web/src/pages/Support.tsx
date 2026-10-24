@@ -43,7 +43,7 @@ export default function Support() {
               <LifeBuoy size={18} className="text-ink-400" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{t.subject}</div>
-                <div className="text-[11px] text-ink-400">{TICKET_CATEGORY[t.category]} · {timeAgo(t.updatedAt)}</div>
+                <div className="text-[12px] text-ink-400">{TICKET_CATEGORY[t.category]} · {timeAgo(t.updatedAt)}</div>
               </div>
               <Badge color={t.status === 'answered' ? 'emerald' : t.status === 'open' ? 'amber' : 'slate'}>{TICKET_STATUS[t.status]}</Badge>
             </Card>

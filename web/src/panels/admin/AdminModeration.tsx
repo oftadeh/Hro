@@ -47,7 +47,7 @@ export default function AdminModeration() {
                 <span className="mr-auto text-ink-400">{faDateTime(r.createdAt)}</span>
               </div>
               <p className="mt-2 line-clamp-3 text-sm leading-7">{content(r)}</p>
-              <div className="mt-2 text-[11px] text-ink-500">
+              <div className="mt-2 text-[12px] text-ink-500">
                 {count} گزارش · دلیل: {r.reason}
               </div>
               {r.status === 'open' && (

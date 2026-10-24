@@ -5,6 +5,7 @@ import { ROLE_META } from '@/core/config'
 import type { Role } from '@/core/types'
 import { useMe } from '@/ui/hooks'
 import { RoleIcon } from '@/ui/icons'
+import { isBusiness } from '@/core/roles'
 
 /** جابجایی بین داشبورد نقش‌های مختلف کاربر */
 export function RoleSwitcher({ compact }: { compact?: boolean }) {
@@ -12,15 +13,17 @@ export function RoleSwitcher({ compact }: { compact?: boolean }) {
   const active = useSession((s) => s.activeRole)
   const setRole = useSession((s) => s.setRole)
   const nav = useNavigate()
-  if (!me || me.roles.length < 2) return null
+  // حساب کسب‌وکار به «اپ ورزشکار» دسترسی ندارد
+  const roles = me ? (isBusiness(me) ? me.roles.filter((r) => r !== 'user') : me.roles) : []
+  if (!me || roles.length < 2) return null
   const go = (r: Role) => {
     setRole(r)
     nav(ROLE_META[r].panel)
   }
   return (
     <div className={clsx(compact ? 'flex gap-1.5 overflow-x-auto no-scrollbar' : 'space-y-0.5')}>
-      {!compact && <div className="mb-2 px-3 text-[10px] font-medium tracking-wide text-ink-400">حساب‌ها</div>}
-      {me.roles.map((r) => (
+      {!compact && <div className="mb-2 px-3 text-[12px] font-medium tracking-wide text-ink-400">حساب‌ها</div>}
+      {roles.map((r) => (
         <button
           key={r}
           onClick={() => go(r)}

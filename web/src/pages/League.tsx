@@ -33,7 +33,7 @@ export default function League() {
           {lg.next && (
             <>
               <Progress value={lg.progress} className="mt-3 !bg-white/15" />
-              <div className="mt-1 text-[11px] text-white/50">{num(lg.next.min - myXp)} امتیاز تا لیگ {lg.next.name}</div>
+              <div className="mt-1 text-[12px] text-white/50">{num(lg.next.min - myXp)} امتیاز تا لیگ {lg.next.name}</div>
             </>
           )}
         </div>
@@ -43,7 +43,7 @@ export default function League() {
           <div key={l.id} className={clsx('rounded-2xl p-2.5 text-center text-xs', l.id === lg.id ? 'bg-white shadow-card dark:bg-ink-850' : 'opacity-50')}>
             <div className="mx-auto mb-1 h-2.5 w-2.5 rounded-full" style={{ background: l.color }} />
             {l.name}
-            <div className="text-[10px] text-ink-400">{num(l.min)}+</div>
+            <div className="text-[12px] text-ink-400">{num(l.min)}+</div>
           </div>
         ))}
       </div>

@@ -8,7 +8,7 @@ import type { DeviceKind } from '@/core/types'
 import { Badge, Button, Card, IconTile, PageHeader, Progress, SectionTitle } from '@/ui/kit'
 import { WeekBars } from '@/ui/WeekBars'
 import { useMe } from '@/ui/hooks'
-import { run, toast } from '@/ui/toast'
+import { run, toast, ask } from '@/ui/toast'
 
 const ICON: Record<DeviceKind, typeof Watch> = { hr_monitor: HeartPulse, watch: Watch, apple_health: Apple, health_connect: Smartphone, file: FileSpreadsheet }
 
@@ -67,7 +67,7 @@ export default function Devices() {
           {lastRhr && <Badge color="rose"><HeartPulse size={12} /> ضربان استراحت {num(lastRhr)}</Badge>}
         </div>
         <WeekBars data={week} unit="قدم" />
-        <div className="mt-2 text-[11px] text-ink-400">ستون‌های ثبت‌شده از دستگاه در چالش‌های قدمِ «تأیید خودکار» حساب می‌شوند.</div>
+        <div className="mt-2 text-[12px] text-ink-400">ستون‌های ثبت‌شده از دستگاه در چالش‌های قدمِ «تأیید خودکار» حساب می‌شوند.</div>
       </Card>
 
       {pct !== undefined && (
@@ -83,7 +83,7 @@ export default function Devices() {
           <IconTile tone="violet"><Apple size={20} /></IconTile>
           <div className="flex-1">
             <div className="text-sm font-semibold">آیفون و Apple Watch</div>
-            <p className="mt-1 text-[11px] leading-5 text-ink-500">در اپ Health روی عکس پروفایل بزنید ← «Export All Health Data». فایل zip را باز کنید و export.xml را انتخاب کنید.</p>
+            <p className="mt-1 text-[12px] leading-5 text-ink-500">در اپ Health روی عکس پروفایل بزنید ← «Export All Health Data». فایل zip را باز کنید و export.xml را انتخاب کنید.</p>
             <Button size="sm" className="mt-2" variant="secondary" onClick={() => apple.current?.click()}>انتخاب export.xml</Button>
             <input ref={apple} type="file" accept=".xml,text/xml,application/xml" hidden onChange={(e) => { importFile('apple_health', e.target.files?.[0]); e.target.value = '' }} />
           </div>
@@ -92,7 +92,7 @@ export default function Devices() {
           <IconTile tone="emerald"><FileSpreadsheet size={20} /></IconTile>
           <div className="flex-1">
             <div className="text-sm font-semibold">سامسونگ، شیائومی، Google Fit و…</div>
-            <p className="mt-1 text-[11px] leading-5 text-ink-500">خروجی CSV اپ سلامت را بدهید؛ ستون تاریخ و قدم/خواب/ضربان خودکار پیدا می‌شود.</p>
+            <p className="mt-1 text-[12px] leading-5 text-ink-500">خروجی CSV اپ سلامت را بدهید؛ ستون تاریخ و قدم/خواب/ضربان خودکار پیدا می‌شود.</p>
             <Button size="sm" className="mt-2" variant="secondary" onClick={() => csv.current?.click()}>انتخاب فایل CSV</Button>
             <input ref={csv} type="file" accept=".csv,text/csv" hidden onChange={(e) => { importFile('file', e.target.files?.[0]); e.target.value = '' }} />
           </div>
@@ -101,7 +101,7 @@ export default function Devices() {
           <IconTile tone="rose"><Bluetooth size={20} /></IconTile>
           <div className="flex-1">
             <div className="text-sm font-semibold">سنسور ضربان قلب (بلوتوث)</div>
-            <p className="mt-1 text-[11px] leading-5 text-ink-500">کمربند سینه‌ای یا ساعتی که ضربان را پخش می‌کند (Polar، Garmin، Coospo…). در «تمرین‌ها» هنگام ثبت تمرین، میانگین و بیشینه‌ی ضربان ذخیره می‌شود.</p>
+            <p className="mt-1 text-[12px] leading-5 text-ink-500">کمربند سینه‌ای یا ساعتی که ضربان را پخش می‌کند (Polar، Garmin، Coospo…). در «تمرین‌ها» هنگام ثبت تمرین، میانگین و بیشینه‌ی ضربان ذخیره می‌شود.</p>
             {hr ? (
               <div className="mt-2 flex items-center gap-2">
                 <span className="font-display text-3xl tabular-nums">{bpm ? num(bpm) : '—'}</span><span className="text-xs text-ink-500">ضربان در دقیقه · {hr.name}</span>
@@ -116,7 +116,7 @@ export default function Devices() {
           <IconTile tone="sky"><Smartphone size={20} /></IconTile>
           <div className="flex-1">
             <div className="text-sm font-semibold">همگام‌سازی خودکار (اپ موبایل)</div>
-            <p className="mt-1 text-[11px] leading-5 text-ink-500">در نسخه‌ی اپ اندروید و iOS، داده‌ها از Health Connect و Apple Health به‌صورت خودکار و روزانه همگام می‌شوند.</p>
+            <p className="mt-1 text-[12px] leading-5 text-ink-500">در نسخه‌ی اپ اندروید و iOS، داده‌ها از Health Connect و Apple Health به‌صورت خودکار و روزانه همگام می‌شوند.</p>
           </div>
         </Card>
       </div>
@@ -131,10 +131,10 @@ export default function Devices() {
               <IconTile tone="violet" size={36}><Icon size={17} /></IconTile>
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold">{d.name}</div>
-                <div className="text-[11px] text-ink-500">{DEVICE_LABEL[d.kind]} · {d.lastSyncAt ? `آخرین همگام‌سازی ${timeAgo(d.lastSyncAt)}` : `متصل از ${faDateTime(d.connectedAt)}`}</div>
+                <div className="text-[12px] text-ink-500">{DEVICE_LABEL[d.kind]} · {d.lastSyncAt ? `آخرین همگام‌سازی ${timeAgo(d.lastSyncAt)}` : `متصل از ${faDateTime(d.connectedAt)}`}</div>
               </div>
               {(d.kind === 'apple_health' || d.kind === 'file') && <button className="p-2 text-ink-400" aria-label="همگام‌سازی دوباره" onClick={() => (d.kind === 'apple_health' ? apple : csv).current?.click()}><RefreshCw size={15} /></button>}
-              <button className="p-2 text-ink-400" aria-label="حذف" onClick={() => confirm('اتصال حذف شود؟ داده‌های ثبت‌شده باقی می‌مانند.') && run(() => disconnectDevice(d.id))}><Trash2 size={15} /></button>
+              <button className="p-2 text-ink-400" aria-label="حذف" onClick={async () => (await ask('اتصال حذف شود؟ داده‌های ثبت‌شده باقی می‌مانند.')) && run(() => disconnectDevice(d.id))}><Trash2 size={15} /></button>
             </Card>
           )
         })}

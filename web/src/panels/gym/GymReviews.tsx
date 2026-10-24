@@ -29,7 +29,7 @@ export default function GymReviews() {
                 <Avatar name={u?.name ?? ''} src={u?.avatar} size={32} />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">{u?.name}</div>
-                  <div className="text-[11px] text-ink-400">
+                  <div className="text-[12px] text-ink-400">
                     {mine.find((g) => g.id === r.refId)?.name} · {faDate(r.createdAt)}
                   </div>
                 </div>

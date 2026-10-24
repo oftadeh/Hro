@@ -231,3 +231,23 @@ export function dailySeries(days = 14) {
   }
   return out
 }
+
+/** تأیید یا رد مدارک حساب کسب‌وکار (باشگاه، مربی، پزشک، فروشنده) */
+export const reviewVerification = svc(
+  'admin.reviewVerification',
+  (userId: string, ok: boolean, note?: string) => {
+    if (!ok && !note?.trim()) throw new AppError('دلیل رد مدارک را بنویسید')
+    mutate((d) => {
+      const u = d.users.find((v) => v.id === userId)
+      if (!u?.verification) throw new AppError('پرونده‌ی مدارک یافت نشد')
+      u.verification = { ...u.verification, status: ok ? 'approved' : 'rejected', note: ok ? u.verification.note : note!.trim().slice(0, 500), reviewedAt: now() }
+      notify(
+        d, userId,
+        ok ? 'حساب شما تأیید شد' : 'مدارک شما تأیید نشد',
+        ok ? 'اکنون می‌توانید در کی‌فیت فعالیت کنید.' : `دلیل: ${note!.trim()}. مدارک را اصلاح و دوباره ارسال کنید.`,
+        '', '/',
+      )
+    })
+  },
+  A,
+)

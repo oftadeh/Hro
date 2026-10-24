@@ -43,7 +43,7 @@ export default function ClientHealth() {
           ['BMI', body.bmi ? body.bmi.toFixed(1) : '—'],
         ].map(([l, v]) => (
           <Card key={l} className="text-center">
-            <div className="text-[11px] text-ink-400">{l}</div>
+            <div className="text-[12px] text-ink-400">{l}</div>
             <div className="mt-1 text-sm font-semibold tabular-nums" dir="ltr">{v}</div>
           </Card>
         ))}
@@ -85,7 +85,7 @@ export default function ClientHealth() {
           </Card>
         </>
       )}
-      <p className="mt-6 flex items-center gap-1.5 text-[11px] text-ink-400">
+      <p className="mt-6 flex items-center gap-1.5 text-[12px] text-ink-400">
         <Lock size={11} /> این اطلاعات محرمانه است و کاربر هر زمان می‌تواند دسترسی را بردارد.
       </p>
     </div>

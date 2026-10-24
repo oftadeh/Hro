@@ -53,7 +53,7 @@ export default function UserProfile() {
                 <MessageCircle size={15} /> پیام
               </button>
               {isCoach && (
-                <button onClick={() => nav(`/fityar/coach/${user.id}`)} className="flex h-10 items-center rounded-full grad-lavender px-4 text-sm font-medium text-ink-950">
+                <button onClick={() => nav(`/fityar/coach/${user.id}`)} className="flex h-10 items-center rounded-full card-violet px-4 text-sm font-medium text-ink-950">
                   پکیج‌های مربی
                 </button>
               )}
@@ -87,7 +87,7 @@ export default function UserProfile() {
                 ] as const
               ).map(([l, v]) => (
                 <div key={l} className="rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
-                  <div className="text-[11px] text-ink-400">{l}</div>
+                  <div className="text-[12px] text-ink-400">{l}</div>
                   <div className="mt-1 text-sm font-medium tabular-nums">{v}</div>
                 </div>
               ))}

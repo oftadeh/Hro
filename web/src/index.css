@@ -1,12 +1,9 @@
-@import '@fontsource/vazirmatn/200.css';
-@import '@fontsource/vazirmatn/300.css';
 @import '@fontsource/vazirmatn/400.css';
 @import '@fontsource/vazirmatn/500.css';
 @import '@fontsource/vazirmatn/600.css';
 @import '@fontsource/vazirmatn/700.css';
 @import '@fontsource/vazirmatn/800.css';
-@import '@fontsource/markazi-text/400.css';
-@import '@fontsource/markazi-text/500.css';
+@import '@fontsource/vazirmatn/900.css';
 @import 'leaflet/dist/leaflet.css';
 
 @tailwind base;
@@ -17,20 +14,28 @@
   html {
     -webkit-tap-highlight-color: transparent;
   }
+  /* متن کم‌رنگ: در تم روشن تیره‌تر، در تم تیره روشن‌تر (کنتراست ≥ ۴٫۵) */
+  :root {
+    --ink-400: 110 104 121;
+    --ink-500: 94 88 105;
+  }
+  .dark {
+    --ink-400: 156 149 170;
+    --ink-500: 171 164 184;
+  }
   body {
     @apply min-h-dvh bg-ink-50 font-sans text-ink-900 antialiased dark:bg-ink-950 dark:text-ink-100;
     font-feature-settings: 'ss01';
-    background-image: radial-gradient(70rem 40rem at 50% 120%, rgb(167 139 250 / 0.12), transparent 60%);
-    background-attachment: fixed;
-  }
-  .dark body {
-    background-image:
-      radial-gradient(60rem 40rem at 50% 110%, rgb(124 58 237 / 0.22), transparent 60%),
-      radial-gradient(40rem 30rem at 100% 0%, rgb(124 58 237 / 0.10), transparent 60%);
   }
   ::selection {
     @apply bg-brand-300/50;
   }
+}
+
+/* جلوگیری از بیرون‌زدگی افقی صفحه در موبایل: فرزندان grid/flex اجازه‌ی کوچک‌شدن دارند */
+@layer base {
+  html, body { overflow-x: clip; }
+  .grid > * { min-width: 0; }
 }
 
 @layer utilities {
@@ -38,15 +43,17 @@
     @apply border-ink-200/70 dark:border-white/[.06];
   }
   .font-display {
-    font-feature-settings: normal;
-    letter-spacing: 0;
+    font-weight: 800;
+    letter-spacing: -0.01em;
   }
-  /* گرادیان‌های پاستلی مرجع */
-  .grad-lavender { background-image: linear-gradient(120deg, #a78bfa 0%, #d8b4fe 45%, #f5c2f0 100%); }
-  .grad-mint { background-image: linear-gradient(120deg, #6ee7c8 0%, #a7f3e0 50%, #86efac 100%); }
-  .grad-peach { background-image: linear-gradient(120deg, #fcd679 0%, #fbb6ce 55%, #e9a8f5 100%); }
-  .grad-pink { background-image: linear-gradient(120deg, #f2a3e2 0%, #e879d0 50%, #c4b5fd 100%); }
-  .grad-violet { background-image: linear-gradient(120deg, #8b5cf6 0%, #a78bfa 50%, #e879d0 100%); }
+  /* رنگ‌های تخت «شب یاس»: هر رنگ یک معنا (یاسی انتخاب، نعنایی سلامت، هلویی جایزه) */
+  /* پالت ورزشی: رنگ‌های اشباع و پرانرژی؛ متن روی همه‌ی کارت‌ها تیره است */
+  .grad-lavender, .grad-violet, .card-violet { background: linear-gradient(140deg, #a993ff 0%, #7b5cff 100%); color: #121016; }
+  .grad-mint, .card-mint { background: linear-gradient(140deg, #8ff7e6 0%, #2ee6c9 100%); color: #121016; }
+  .grad-peach, .card-peach { background: linear-gradient(140deg, #ffb27a 0%, #ff7a2f 100%); color: #121016; }
+  .grad-pink, .card-pink { background: linear-gradient(140deg, #ffa0c9 0%, #ff5fa2 100%); color: #121016; }
+  .card-lilac, .card-lime { background: linear-gradient(140deg, #e6ff9e 0%, #c6ff3d 100%); color: #121016; }
+  .card-night { background: linear-gradient(160deg, #2a2533 0%, #16131b 100%); color: #f4f2f7; }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -75,7 +82,7 @@
 
 /* نقشه در حالت تیره کمی تیره‌تر و آبی‌تر دیده شود */
 .dark .leaflet-container {
-  background: #17141d;
+  background: #131118;
 }
 
 /* ───────────── انیمیشن‌های تصویرسازی‌ها و رابط ───────────── */
@@ -194,4 +201,152 @@ svg[data-art] { transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
 
 @media (prefers-reduced-motion: reduce) {
   [class*='kf-'], .stagger > *, .animate-fade-up, .animate-sheet-up, .animate-pop { animation: none !important; }
+}
+
+/* اعتبار نقشه (الزام Mapbox) — کوچک و کم‌رنگ */
+.leaflet-control-attribution {
+  font-size: 9px;
+  background: rgb(255 255 255 / 0.6) !important;
+  border-radius: 6px 0 0 0;
+  direction: ltr;
+}
+.dark .leaflet-control-attribution {
+  background: rgb(20 18 26 / 0.6) !important;
+  color: rgb(255 255 255 / 0.55);
+}
+.dark .leaflet-control-attribution a {
+  color: rgb(255 255 255 / 0.75);
+}
+
+/* ───── حرکت کارت‌ها ───── */
+@keyframes kf-rise { 0% { transform: translateY(26px) scale(.97); } 60% { transform: translateY(-6px) scale(1.01); } 100% { transform: none; } }
+@keyframes kf-item-in { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes kf-pop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes kf-float-up { 0% { opacity: 0; transform: translateY(6px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-34px); } }
+.anim-rise { animation: kf-rise .55s cubic-bezier(.2,.9,.25,1) both; }
+.anim-item { animation: kf-item-in .42s cubic-bezier(.2,.9,.25,1) both; }
+.anim-pop { animation: kf-pop .35s ease-out; }
+.anim-float-up { animation: kf-float-up .9s ease-out forwards; }
+.expand { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.2,.9,.25,1); }
+.expand[data-open="true"] { grid-template-rows: 1fr; }
+.expand > * { overflow: hidden; min-height: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise, .anim-item, .anim-pop, .anim-float-up { animation: none; }
+  .expand { transition: none; }
+}
+
+/* نشان کی‌فیت: کشیده شدن خطوط و پریدن نقطه */
+@keyframes kf-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1; stroke-dashoffset: 0; } }
+@keyframes kf-dot { 0%, 60% { transform: scale(0); } 80% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.emblem-draw > * { animation: kf-draw .9s cubic-bezier(.6,0,.2,1) both; }
+.emblem-draw > :nth-child(2) { animation-delay: .25s; }
+.emblem-draw > :nth-child(3) { animation-delay: .45s; }
+.emblem-draw > :nth-child(4) { animation-delay: .6s; }
+.emblem-dot { transform-box: fill-box; transform-origin: center; animation: kf-dot 1.4s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .emblem-draw > *, .emblem-dot { animation: none; } }
+
+/* ───── موشن صفحه‌ی معرفی ───── */
+@keyframes kf-scan { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(150px); } }
+@keyframes kf-fill { from { width: 0; } }
+@keyframes kf-feed { 0% { transform: translateY(40%); opacity: 0; } 15%, 100% { transform: translateY(0); opacity: 1; } }
+@keyframes kf-ring { from { stroke-dashoffset: 264; } }
+@keyframes kf-appear { 0%, 55% { opacity: 0; transform: scale(.6); } 75% { opacity: 1; transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes kf-bounce { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-10px) rotate(6deg); } }
+@keyframes kf-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes kf-marquee { from { transform: translateX(0); } to { transform: translateX(50%); } }
+.m-scan { animation: kf-scan 2.4s ease-in-out infinite; }
+.m-fill { animation: kf-fill 1.6s cubic-bezier(.2,.9,.25,1) both; }
+.m-feed { animation: kf-feed .7s cubic-bezier(.2,.9,.25,1) both; }
+.m-ring { animation: kf-ring 2s cubic-bezier(.2,.9,.25,1) both; }
+.m-appear { animation: kf-appear 1.8s ease-out both; }
+.m-bounce { animation: kf-bounce 1.6s ease-in-out infinite; }
+.m-bar { transform-origin: right; animation: kf-bar linear both; }
+.m-marquee { animation: kf-marquee 28s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .m-scan, .m-fill, .m-feed, .m-ring, .m-appear, .m-bounce, .m-bar, .m-marquee { animation: none; }
+}
+
+/* قهرمان صفحه‌ی معرفی: کارت‌های داشبورد یک‌بار از هم باز می‌شوند */
+@keyframes kf-fan1 { from { transform: translateY(150px) rotate(0); opacity: 0; } to { transform: translateY(0) rotate(-5deg); opacity: 1; } }
+@keyframes kf-fan2 { from { transform: translateY(90px) rotate(0); opacity: 0; } to { transform: translateY(0) rotate(3deg); opacity: 1; } }
+@keyframes kf-fan3 { from { transform: translateY(40px) scale(.96); opacity: 0; } to { transform: translateY(0) rotate(-1deg); opacity: 1; } }
+.hero-fan .fan-1 { animation: kf-fan1 .9s .35s cubic-bezier(.2,.9,.25,1) both; }
+.hero-fan .fan-2 { animation: kf-fan2 .9s .2s cubic-bezier(.2,.9,.25,1) both; }
+.hero-fan .fan-3 { animation: kf-fan3 .8s .05s cubic-bezier(.2,.9,.25,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-fan .fan-1 { animation: none; transform: rotate(-5deg); }
+  .hero-fan .fan-2 { animation: none; transform: rotate(3deg); }
+  .hero-fan .fan-3 { animation: none; transform: rotate(-1deg); }
+}
+
+/* ───── قانون حرکت کی‌فیت ─────
+   مدت: ۱۸۰ms برای بازخورد، ۲۴۰ms برای ورود، ۳۲۰ms برای شیت‌ها
+   منحنی: cubic-bezier(.23,1,.32,1) — شروع سریع، پایان نرم */
+:root { --ease-out: cubic-bezier(.23, 1, .32, 1); --ease-in: cubic-bezier(.55, 0, 1, .45); }
+a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+.press { transition: transform .18s var(--ease-out), background-color .18s var(--ease-out), color .18s var(--ease-out), opacity .18s var(--ease-out), box-shadow .18s var(--ease-out), filter .18s var(--ease-out); }
+.press:active { transform: scale(.97); }
+@keyframes kf-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes kf-enter { from { opacity: 0; transform: translateY(8px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes kf-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes kf-sheet-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(40%); opacity: 0; } }
+@keyframes kf-dialog-in { from { opacity: 0; transform: scale(.94) translateY(10px); } to { opacity: 1; transform: none; } }
+.anim-fade { animation: kf-fade-in .24s var(--ease-out) both; }
+.anim-enter { animation: kf-enter .32s var(--ease-out) both; }
+.grid > .anim-enter:nth-child(2) { animation-delay: 40ms; }
+.grid > .anim-enter:nth-child(3) { animation-delay: 80ms; }
+.grid > .anim-enter:nth-child(4) { animation-delay: 120ms; }
+.sheet-enter { animation: kf-sheet-in .34s var(--ease-out) both; transition: transform .3s var(--ease-out); }
+.sheet-leave { animation: kf-sheet-out .2s var(--ease-in) both; }
+@media (min-width: 640px) { .sheet-enter { animation-name: kf-dialog-in; } }
+.ease-out-soft { transition-timing-function: var(--ease-out); }
+@keyframes kf-draw-line { from { stroke-dasharray: 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1; stroke-dashoffset: 0; } }
+.success-ring { animation: kf-draw-line .5s var(--ease-out) both; }
+.success-tick { animation: kf-draw-line .4s .35s var(--ease-out) both; }
+
+/* اسکلت بارگذاری */
+@keyframes kf-shimmer { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.skeleton { background: linear-gradient(90deg, rgb(0 0 0 / .05) 0%, rgb(0 0 0 / .09) 50%, rgb(0 0 0 / .05) 100%) 0 0 / 200% 100%; animation: kf-shimmer 1.4s linear infinite; }
+.dark .skeleton { background-image: linear-gradient(90deg, rgb(255 255 255 / .05) 0%, rgb(255 255 255 / .09) 50%, rgb(255 255 255 / .05) 100%); }
+
+/* انتقال بین صفحه‌ها (View Transitions) */
+::view-transition-old(root) { animation: kf-vt-out .18s var(--ease-in) both; }
+::view-transition-new(root) { animation: kf-vt-in .28s var(--ease-out) both; }
+@keyframes kf-vt-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes kf-vt-in { from { opacity: 0; transform: translateY(10px); } }
+::view-transition-group(*) { animation-duration: .34s; animation-timing-function: var(--ease-out); }
+
+/* کاهش حرکت: حالت نهایی حفظ می‌شود، حرکت حذف می‌شود */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.animate-spin), *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* پس‌زمینه‌ی ورزشی: آیکون‌های برجسته (دمبل، کتل‌بل، کرنومتر، توپ، پیست) با هاله‌ی رنگی */
+:root { --sport-pat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' fill='none' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(28 34) rotate(-20)'%3E%3Cpath d='M0 12h44M2 4v16M8 0v24M36 0v24M42 4v16' transform='translate(1.2 1.2)' stroke='rgba(40,20,80,.08)'/%3E%3Cpath d='M0 12h44M2 4v16M8 0v24M36 0v24M42 4v16' stroke='rgba(255,255,255,.95)'/%3E%3C/g%3E%3Cg transform='translate(150 14) rotate(10)'%3E%3Cpath d='M12 16v-5a8 8 0 0 1 16 0v5M20 44a14 14 0 1 0 0-28a14 14 0 1 0 0 28' transform='translate(1.2 1.2)' stroke='rgba(40,20,80,.08)'/%3E%3Cpath d='M12 16v-5a8 8 0 0 1 16 0v5M20 44a14 14 0 1 0 0-28a14 14 0 1 0 0 28' stroke='rgba(255,255,255,.95)'/%3E%3C/g%3E%3Cg transform='translate(96 110)'%3E%3Cpath d='M18 6v-4M14 2h8M18 34a14 14 0 1 0 0-28a14 14 0 1 0 0 28M18 20l6-6' transform='translate(1.2 1.2)' stroke='rgba(40,20,80,.08)'/%3E%3Cpath d='M18 6v-4M14 2h8M18 34a14 14 0 1 0 0-28a14 14 0 1 0 0 28M18 20l6-6' stroke='rgba(255,255,255,.95)'/%3E%3C/g%3E%3Cg transform='translate(20 150)'%3E%3Cpath d='M20 40a20 20 0 1 0 0-40a20 20 0 1 0 0 40M0 20h40M20 0c-9 10-9 30 0 40M20 0c9 10 9 30 0 40' transform='translate(1.2 1.2)' stroke='rgba(40,20,80,.08)'/%3E%3Cpath d='M20 40a20 20 0 1 0 0-40a20 20 0 1 0 0 40M0 20h40M20 0c-9 10-9 30 0 40M20 0c9 10 9 30 0 40' stroke='rgba(255,255,255,.95)'/%3E%3C/g%3E%3Cg transform='translate(186 132) rotate(8)'%3E%3Cpath d='M14 0L2 20h10l-4 18L22 14H12z' transform='translate(1.2 1.2)' stroke='rgba(40,20,80,.08)'/%3E%3Cpath d='M14 0L2 20h10l-4 18L22 14H12z' stroke='rgba(255,255,255,.95)'/%3E%3C/g%3E%3Cg transform='translate(120 196)'%3E%3Cpath d='M0 30c20-26 70-26 90 0M10 34c16-18 54-18 70 0' transform='translate(1.2 1.2)' stroke='rgba(40,20,80,.08)'/%3E%3Cpath d='M0 30c20-26 70-26 90 0M10 34c16-18 54-18 70 0' stroke='rgba(255,255,255,.95)'/%3E%3C/g%3E%3Cg transform='translate(176 82) rotate(-12)'%3E%3Cpath d='M0 18c8 0 12-12 18-12l8 6c6 4 14 4 20 6v6H0zM4 24h42' transform='translate(1.2 1.2)' stroke='rgba(40,20,80,.08)'/%3E%3Cpath d='M0 18c8 0 12-12 18-12l8 6c6 4 14 4 20 6v6H0zM4 24h42' stroke='rgba(255,255,255,.95)'/%3E%3C/g%3E%3C/svg%3E"); --sport-glow: rgba(123, 92, 255, .10); }
+.dark { --sport-pat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' fill='none' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(28 34) rotate(-20)'%3E%3Cpath d='M0 12h44M2 4v16M8 0v24M36 0v24M42 4v16' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M0 12h44M2 4v16M8 0v24M36 0v24M42 4v16' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(150 14) rotate(10)'%3E%3Cpath d='M12 16v-5a8 8 0 0 1 16 0v5M20 44a14 14 0 1 0 0-28a14 14 0 1 0 0 28' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M12 16v-5a8 8 0 0 1 16 0v5M20 44a14 14 0 1 0 0-28a14 14 0 1 0 0 28' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(96 110)'%3E%3Cpath d='M18 6v-4M14 2h8M18 34a14 14 0 1 0 0-28a14 14 0 1 0 0 28M18 20l6-6' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M18 6v-4M14 2h8M18 34a14 14 0 1 0 0-28a14 14 0 1 0 0 28M18 20l6-6' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(20 150)'%3E%3Cpath d='M20 40a20 20 0 1 0 0-40a20 20 0 1 0 0 40M0 20h40M20 0c-9 10-9 30 0 40M20 0c9 10 9 30 0 40' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M20 40a20 20 0 1 0 0-40a20 20 0 1 0 0 40M0 20h40M20 0c-9 10-9 30 0 40M20 0c9 10 9 30 0 40' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(186 132) rotate(8)'%3E%3Cpath d='M14 0L2 20h10l-4 18L22 14H12z' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M14 0L2 20h10l-4 18L22 14H12z' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(120 196)'%3E%3Cpath d='M0 30c20-26 70-26 90 0M10 34c16-18 54-18 70 0' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M0 30c20-26 70-26 90 0M10 34c16-18 54-18 70 0' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(176 82) rotate(-12)'%3E%3Cpath d='M0 18c8 0 12-12 18-12l8 6c6 4 14 4 20 6v6H0zM4 24h42' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M0 18c8 0 12-12 18-12l8 6c6 4 14 4 20 6v6H0zM4 24h42' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3C/svg%3E"); --sport-glow: rgba(123, 92, 255, .20); }
+body, .sport-bg {
+  background-image: radial-gradient(120% 55% at 50% -5%, var(--sport-glow), transparent 60%), radial-gradient(60% 40% at 100% 100%, rgba(198, 255, 61, .06), transparent 70%), var(--sport-pat);
+  background-attachment: fixed;
+}
+.sport-bg { --sport-pat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' fill='none' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(28 34) rotate(-20)'%3E%3Cpath d='M0 12h44M2 4v16M8 0v24M36 0v24M42 4v16' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M0 12h44M2 4v16M8 0v24M36 0v24M42 4v16' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(150 14) rotate(10)'%3E%3Cpath d='M12 16v-5a8 8 0 0 1 16 0v5M20 44a14 14 0 1 0 0-28a14 14 0 1 0 0 28' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M12 16v-5a8 8 0 0 1 16 0v5M20 44a14 14 0 1 0 0-28a14 14 0 1 0 0 28' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(96 110)'%3E%3Cpath d='M18 6v-4M14 2h8M18 34a14 14 0 1 0 0-28a14 14 0 1 0 0 28M18 20l6-6' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M18 6v-4M14 2h8M18 34a14 14 0 1 0 0-28a14 14 0 1 0 0 28M18 20l6-6' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(20 150)'%3E%3Cpath d='M20 40a20 20 0 1 0 0-40a20 20 0 1 0 0 40M0 20h40M20 0c-9 10-9 30 0 40M20 0c9 10 9 30 0 40' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M20 40a20 20 0 1 0 0-40a20 20 0 1 0 0 40M0 20h40M20 0c-9 10-9 30 0 40M20 0c9 10 9 30 0 40' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(186 132) rotate(8)'%3E%3Cpath d='M14 0L2 20h10l-4 18L22 14H12z' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M14 0L2 20h10l-4 18L22 14H12z' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(120 196)'%3E%3Cpath d='M0 30c20-26 70-26 90 0M10 34c16-18 54-18 70 0' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M0 30c20-26 70-26 90 0M10 34c16-18 54-18 70 0' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3Cg transform='translate(176 82) rotate(-12)'%3E%3Cpath d='M0 18c8 0 12-12 18-12l8 6c6 4 14 4 20 6v6H0zM4 24h42' transform='translate(1.2 1.2)' stroke='rgba(0,0,0,.6)'/%3E%3Cpath d='M0 18c8 0 12-12 18-12l8 6c6 4 14 4 20 6v6H0zM4 24h42' stroke='rgba(255,255,255,.07)'/%3E%3C/g%3E%3C/svg%3E"); --sport-glow: rgba(123, 92, 255, .20); }
+
+/* ───── موشن قاب گوشی در صفحه‌ی معرفی ───── */
+@keyframes sc-tap { 0%, 100% { transform: scale(1); } 40% { transform: scale(.7); } }
+@keyframes sc-ripple { from { opacity: .8; transform: scale(.6); } to { opacity: 0; transform: scale(2.3); } }
+@keyframes sc-burst { from { opacity: 1; transform: translate(0, 0) rotate(0); } to { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(300deg); } }
+@keyframes sc-pop { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes sc-heart { 0% { transform: scale(0); opacity: 0; } 30% { transform: scale(1.15); opacity: 1; } 70% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.1); opacity: 0; } }
+@keyframes sc-flash { from { opacity: .9; } to { opacity: 0; } }
+@keyframes sc-ping { from { opacity: .7; transform: scale(1); } to { opacity: 0; transform: scale(3); } }
+.sc-tap { animation: sc-tap .45s var(--ease-out); }
+.sc-ripple { animation: sc-ripple .65s var(--ease-out) both; }
+.sc-pop { animation: sc-pop .5s var(--ease-out) both; }
+.sc-heart { animation: sc-heart 1.1s var(--ease-out) both; }
+.sc-flash { animation: sc-flash .35s ease-out both; }
+.sc-ping { animation: sc-ping 1.6s ease-out infinite; }
+.sc-t { transition: transform .75s var(--ease-out), opacity .5s var(--ease-out); }
+@media (prefers-reduced-motion: reduce) {
+  .sc-tap, .sc-ripple, .sc-pop, .sc-heart, .sc-flash, .sc-ping { animation: none; }
+  .sc-t { transition: none; }
 }

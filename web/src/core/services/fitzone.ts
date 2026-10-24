@@ -1,6 +1,6 @@
 import { AppError, mutate, currentUserId, db, svc } from '../store'
 import { uid, now } from '../id'
-import { GRADIENTS } from '../config'
+import { CARD_TONES, GRADIENTS } from '../config'
 import type { Post, Report } from '../types'
 import { addXP, completeMission } from './engagement'
 import { notify } from './ledger'
@@ -23,25 +23,42 @@ export function searchPosts(posts: Post[], q: string) {
 
 const MAX_TEXT = 2000
 
-export const createPost = svc('zone.post', (input: { text: string; image?: string; challengeId?: string; gymId?: string }) => {
+const isImageUrl = (u: string) => /^\/uploads\/[\w-]+\.(jpg|jpeg|png|webp)$/.test(u) || /^https:\/\/\S+$/.test(u) || /^data:image\/(jpeg|png|webp);base64,/.test(u)
+const isVideoUrl = (u: string) => /^\/uploads\/[\w-]+\.(mp4|webm|mov)$/.test(u) || /^https:\/\/\S+$/.test(u) || u.startsWith('data:video/')
+
+/** بررسی رسانه‌ی پست/استوری (عکس‌ها پیش‌تر در /api/upload و ویدیو در /api/upload-video بارگذاری شده‌اند) */
+function cleanMedia(input: { image?: string; images?: string[]; video?: string; bg?: string }, maxImages: number) {
+  const imgs = [input.image, ...(Array.isArray(input.images) ? input.images : [])].filter((x): x is string => typeof x === 'string' && !!x)
+  if (imgs.length > maxImages) throw new AppError(`حداکثر ${maxImages} تصویر`)
+  if (imgs.some((u) => !isImageUrl(u) || u.length > 3_000_000)) throw new AppError('تصویر معتبر نیست')
+  const video = typeof input.video === 'string' && input.video ? input.video : undefined
+  if (video && (!isVideoUrl(video) || video.length > 6_000_000)) throw new AppError('ویدیو معتبر نیست')
+  if (video && imgs.length) throw new AppError('پست می‌تواند یا ویدیو داشته باشد یا عکس')
+  const bg = (CARD_TONES as readonly string[]).includes(input.bg ?? '') ? input.bg : undefined
+  return { image: imgs[0], images: imgs.length > 1 ? imgs.slice(1) : undefined, video, bg }
+}
+
+export const createPost = svc('zone.post', (input: { text: string; image?: string; images?: string[]; video?: string; bg?: string; challengeId?: string; gymId?: string }) => {
   const me = currentUserId()
   const text = String(input.text ?? '').trim()
-  if (!text && !input.image) throw new AppError('متن یا تصویر پست را وارد کنید')
+  const media = cleanMedia(input, 6)
+  if (!text && !media.image && !media.video) throw new AppError('متن، عکس یا ویدیوی پست را وارد کنید')
   if (text.length > MAX_TEXT) throw new AppError('متن پست خیلی طولانی است')
   mutate((d) => {
     if (input.gymId && !d.gyms.some((g) => g.id === input.gymId && g.approved)) throw new AppError('باشگاه انتخاب‌شده فعال نیست')
     if (input.challengeId && !d.challenges.some((c) => c.id === input.challengeId)) throw new AppError('چالش یافت نشد')
-    d.posts.unshift({ id: uid('post-'), authorId: me, text, image: input.image, gradient: pickGradient(), likes: [], saves: [], comments: [], challengeId: input.challengeId, gymId: input.gymId, tags: hashtags(text), createdAt: now() })
+    d.posts.unshift({ id: uid('post-'), authorId: me, text, ...media, gradient: pickGradient(), likes: [], saves: [], comments: [], challengeId: input.challengeId, gymId: input.gymId, tags: hashtags(text), createdAt: now() })
     addXP(d, me, 15)
   })
 })
 
-export const createStory = svc('zone.story', (input: { text: string; image?: string }) => {
+export const createStory = svc('zone.story', (input: { text: string; image?: string; video?: string; bg?: string }) => {
   const me = currentUserId()
   const text = String(input.text ?? '').trim()
-  if (!text && !input.image) throw new AppError('متن یا تصویر استوری را وارد کنید')
+  const media = cleanMedia({ image: input.image, video: input.video, bg: input.bg }, 1)
+  if (!text && !media.image && !media.video) throw new AppError('متن، عکس یا ویدیوی استوری را وارد کنید')
   mutate((d) => {
-    d.stories.unshift({ id: uid('s-'), authorId: me, text: text.slice(0, 300), image: input.image, gradient: pickGradient(), seenBy: [], createdAt: now() })
+    d.stories.unshift({ id: uid('s-'), authorId: me, text: text.slice(0, 300), image: media.image, video: media.video, bg: media.bg, gradient: pickGradient(), seenBy: [], createdAt: now() })
     addXP(d, me, 10)
   })
 })

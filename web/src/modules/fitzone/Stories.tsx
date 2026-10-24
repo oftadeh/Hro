@@ -1,13 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, X } from 'lucide-react'
+import clsx from 'clsx'
+import { Plus, Volume2, VolumeX, X } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { timeAgo } from '@/core/format'
+import { toneClass } from '@/core/config'
 import { createStory, markStorySeen } from '@/core/services/fitzone'
 import type { Story } from '@/core/types'
-import { Avatar, Button, Orbs, ImagePicker, Sheet, Textarea } from '@/ui/kit'
+import { Avatar, Button, Sheet, Textarea } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 import { runOk } from '@/ui/toast'
+import { MediaInput, TonePicker } from './Media'
+import { ModeSwitch, type PostMode } from './CreatePost'
+
+/** پیش‌نمایش کوچک یک استوری (عکس، فریم ویدیو یا کارت رنگی متن) */
+function StoryThumb({ s }: { s: Story }) {
+  if (s.image) return <img src={s.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+  if (s.video) return <video src={s.video} muted playsInline preload="metadata" className="absolute inset-0 h-full w-full object-cover" />
+  return (
+    <div className={clsx('absolute inset-0 flex items-center justify-center p-2 text-center text-[12px] font-bold leading-5', toneClass(s.bg ?? 'violet'))}>
+      <span className="line-clamp-3">{s.text}</span>
+    </div>
+  )
+}
 
 export function StoriesBar() {
   const me = useMe()!
@@ -22,29 +37,32 @@ export function StoriesBar() {
     const map = new Map<string, Story[]>()
     fresh.forEach((s) => map.set(s.authorId, [...(map.get(s.authorId) ?? []), s]))
     return [...map.entries()]
-      .map(([authorId, items]) => ({ authorId, items: items.reverse(), unseen: items.some((s) => !s.seenBy.includes(me.id)) }))
+      .map(([authorId, items]) => ({ authorId, items: [...items].reverse(), unseen: items.some((s) => !s.seenBy.includes(me.id)) }))
       .sort((a, b) => Number(b.unseen) - Number(a.unseen))
   }, [stories, me.id])
 
   return (
     <>
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 no-scrollbar">
-        <button onClick={() => setCreate(true)} className="flex w-16 shrink-0 flex-col items-center gap-1">
-          <div className="relative">
-            <Avatar name={me.name} src={me.avatar} size={58} />
-            <span className="absolute -bottom-0.5 -left-0.5 rounded-full border-2 border-ink-50 bg-ink-950 p-0.5 text-white dark:border-ink-950 dark:bg-brand-300 dark:text-ink-950">
-              <Plus size={12} />
-            </span>
-          </div>
-          <span className="w-full truncate text-center text-[11px] text-ink-500">استوری تو</span>
+      <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 no-scrollbar" aria-label="استوری‌ها">
+        <button onClick={() => setCreate(true)} className="relative h-[136px] w-[92px] shrink-0 overflow-hidden rounded-[22px] bg-white text-start shadow-card dark:bg-ink-850 dark:shadow-none">
+          {me.avatar ? <img src={me.avatar} alt="" className="h-[86px] w-full object-cover" /> : <div className="card-lilac h-[86px] w-full" />}
+          <span className="absolute right-1/2 top-[70px] flex h-8 w-8 translate-x-1/2 items-center justify-center rounded-full bg-ink-950 text-white ring-4 ring-white dark:bg-white dark:text-ink-950 dark:ring-ink-850">
+            <Plus size={17} />
+          </span>
+          <span className="absolute inset-x-0 bottom-2.5 text-center text-[12px] font-semibold">استوری تو</span>
         </button>
         {groups.map((g) => {
           const u = users[g.authorId]
           if (!u) return null
+          const last = g.items[g.items.length - 1]
           return (
-            <button key={g.authorId} onClick={() => setOpen(g.authorId)} className="flex w-16 shrink-0 flex-col items-center gap-1">
-              <Avatar name={u.name} src={u.avatar} size={58} ring={g.unseen} className={g.unseen ? '' : 'opacity-60'} />
-              <span className="w-full truncate text-center text-[11px]">{u.name.split(' ')[0]}</span>
+            <button key={g.authorId} onClick={() => setOpen(g.authorId)} className={clsx('relative h-[136px] w-[92px] shrink-0 overflow-hidden rounded-[22px] p-[2.5px]', g.unseen ? 'card-violet' : 'bg-ink-200 dark:bg-ink-700')}>
+              <span className="relative block h-full w-full overflow-hidden rounded-[20px] bg-ink-900">
+                <StoryThumb s={last} />
+                <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+                <Avatar name={u.name} src={u.avatar} size={30} className="absolute right-2 top-2 ring-2 ring-white" />
+                <span className="absolute inset-x-2 bottom-2 truncate text-start text-[12px] font-semibold text-white">{u.name.split(' ')[0]}</span>
+              </span>
             </button>
           )
         })}
@@ -59,13 +77,20 @@ function StoryViewer({ groups, startAuthor, onClose }: { groups: { authorId: str
   const users = useUserMap()
   const [gi, setGi] = useState(() => groups.findIndex((g) => g.authorId === startAuthor))
   const [si, setSi] = useState(0)
+  const [muted, setMuted] = useState(true)
+  const [videoPct, setVideoPct] = useState(0)
   const group = groups[gi]
   const story = group?.items[si]
 
   useEffect(() => {
-    if (!story) return onClose()
+    if (!story) {
+      onClose()
+      return
+    }
     markStorySeen(story.id)
-    const t = setTimeout(next, 5000)
+    setVideoPct(0)
+    if (story.video) return // ویدیو با پایان پخش جلو می‌رود
+    const t = setTimeout(next, story.image ? 5000 : 6000)
     return () => clearTimeout(t)
   }, [gi, si]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -85,17 +110,34 @@ function StoryViewer({ groups, startAuthor, onClose }: { groups: { authorId: str
   }
   if (!story) return null
   const u = users[group.authorId]
+  const textOnly = !story.image && !story.video
   return createPortal(
-    <div className="fixed inset-0 z-[950] flex items-center justify-center bg-black">
-      <div className={`relative h-full w-full max-w-md overflow-hidden bg-ink-850 sm:h-[90dvh] sm:rounded-2xl`}>
-        <Orbs seed={story.id} />
+    <div className="fixed inset-0 z-[950] flex items-center justify-center bg-black" role="dialog" aria-label={`استوری ${u?.name ?? ''}`}>
+      <div className={clsx('relative h-full w-full max-w-md overflow-hidden sm:h-[90dvh] sm:rounded-[28px]', textOnly ? toneClass(story.bg ?? 'violet') : 'bg-ink-900')}>
         {story.image && <img src={story.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+        {story.video && (
+          <video
+            key={story.id}
+            src={story.video}
+            autoPlay
+            playsInline
+            muted={muted}
+            onEnded={next}
+            onTimeUpdate={(e) => setVideoPct(e.currentTarget.duration ? e.currentTarget.currentTime / e.currentTarget.duration : 0)}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
         <div className="absolute inset-x-0 top-0 z-10 space-y-3 bg-gradient-to-b from-black/50 to-transparent p-4">
           <div className="flex gap-1">
             {group.items.map((s, i) => (
-              <div key={s.id} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30">
+              <div key={s.id} className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/30">
                 {i < si && <div className="h-full w-full bg-white" />}
-                {i === si && <div key={`${gi}-${si}`} className="h-full animate-progress bg-white" />}
+                {i === si &&
+                  (story.video ? (
+                    <div className="h-full bg-white" style={{ width: `${videoPct * 100}%` }} />
+                  ) : (
+                    <div key={`${gi}-${si}`} className="h-full animate-progress bg-white" style={{ animationDuration: story.image ? '5s' : '6s' }} />
+                  ))}
               </div>
             ))}
           </div>
@@ -104,14 +146,21 @@ function StoryViewer({ groups, startAuthor, onClose }: { groups: { authorId: str
             <div className="flex-1 text-sm font-semibold">
               {u?.name} <span className="text-xs font-normal opacity-70">{timeAgo(story.createdAt)}</span>
             </div>
-            <button onClick={onClose} aria-label="بستن">
+            {story.video && (
+              <button onClick={() => setMuted((m) => !m)} aria-label={muted ? 'پخش صدا' : 'بی‌صدا'} className="relative z-20 p-1">
+                {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+              </button>
+            )}
+            <button onClick={onClose} aria-label="بستن" className="relative z-20 p-1">
               <X />
             </button>
           </div>
         </div>
-        <div className="absolute inset-0 flex items-center justify-center p-8">
-          {story.text && <p className={`text-center font-display text-[2.3rem] leading-[1.3] text-white ${story.image ? 'rounded-2xl bg-black/40 p-4 text-lg' : ''}`}>{story.text}</p>}
-        </div>
+        {story.text && (
+          <div className={clsx('absolute inset-x-0 flex justify-center p-6', textOnly ? 'inset-y-0 items-center' : 'bottom-10')}>
+            <p className={clsx('text-center', textOnly ? 'text-[30px] font-extrabold leading-[1.5]' : 'rounded-2xl bg-black/45 px-4 py-3 text-[17px] font-semibold leading-8 text-white backdrop-blur')}>{story.text}</p>
+          </div>
+        )}
         <button className="absolute inset-y-0 right-0 w-1/3" onClick={prev} aria-label="قبلی" />
         <button className="absolute inset-y-0 left-0 w-2/3" onClick={next} aria-label="بعدی" />
       </div>
@@ -121,22 +170,42 @@ function StoryViewer({ groups, startAuthor, onClose }: { groups: { authorId: str
 }
 
 function CreateStorySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [mode, setMode] = useState<PostMode>('image')
   const [text, setText] = useState('')
-  const [image, setImage] = useState<string>()
+  const [images, setImages] = useState<string[]>([])
+  const [video, setVideo] = useState<string>()
+  const [bg, setBg] = useState('pink')
+  const [sending, setSending] = useState(false)
   const submit = async () => {
-    const ok = await runOk(() => createStory({ text, image }), 'استوری منتشر شد')
+    setSending(true)
+    const ok = await runOk(() => createStory({ text, image: mode === 'image' ? images[0] : undefined, video: mode === 'video' ? video : undefined, bg: mode === 'text' ? bg : undefined }), 'استوری منتشر شد')
+    setSending(false)
     if (ok) {
       setText('')
-      setImage(undefined)
+      setImages([])
+      setVideo(undefined)
       onClose()
     }
   }
+  const ready = mode === 'text' ? !!text.trim() : mode === 'image' ? images.length > 0 : !!video
   return (
     <Sheet open={open} onClose={onClose} title="استوری جدید">
-      <div className="space-y-3">
-        <ImagePicker value={image} onChange={setImage} />
-        <Textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="امروز چه کردی؟" />
-        <Button className="w-full" onClick={submit}>
+      <div className="space-y-4">
+        <ModeSwitch value={mode} onChange={setMode} />
+        {mode === 'text' ? (
+          <>
+            <div className={clsx('anim-item flex aspect-[4/5] max-h-80 w-full items-center rounded-[28px] p-6', toneClass(bg))}>
+              <textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={300} rows={4} placeholder="امروز چه کردی؟" className="w-full resize-none bg-transparent text-center text-[24px] font-extrabold leading-10 outline-none placeholder:text-current placeholder:opacity-50" />
+            </div>
+            <TonePicker value={bg} onChange={setBg} />
+          </>
+        ) : (
+          <>
+            <MediaInput kind={mode} images={images} video={video} onImages={setImages} onVideo={setVideo} maxImages={1} />
+            <Textarea rows={2} maxLength={300} value={text} onChange={(e) => setText(e.target.value)} placeholder="متن روی استوری (اختیاری)" />
+          </>
+        )}
+        <Button variant="dark" size="lg" className="w-full" disabled={!ready} loading={sending} onClick={submit}>
           انتشار استوری
         </Button>
       </div>

@@ -17,7 +17,9 @@ export default function ChatThread() {
   const users = useUserMap()
   const [text, setText] = useState('')
   const end = useRef<HTMLDivElement>(null)
-  useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [thread?.messages.length])
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: 'end' })
+  }, [thread?.messages.length])
 
   if (!thread || !thread.members.includes(me.id)) return <Empty icon="" title="گفتگو یافت نشد" />
   const team = thread.context === 'team'
@@ -35,7 +37,7 @@ export default function ChatThread() {
               <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full grad-mint text-ink-950"><Users size={16} /></span>
               <span>
                 {thread.title}
-                <span className="block text-[11px] font-normal text-ink-400">{thread.members.length.toLocaleString('fa-IR')} عضو</span>
+                <span className="block text-[12px] font-normal text-ink-400">{thread.members.length.toLocaleString('fa-IR')} عضو</span>
               </span>
             </Link>
           ) : thread.context === 'market' ? (
@@ -43,7 +45,7 @@ export default function ChatThread() {
               <Avatar name={other?.name ?? ''} src={other?.avatar} size={34} />
               <span>
                 {other?.name}
-                <span className="block truncate text-[11px] font-normal text-ink-400">آگهی: {thread.title}</span>
+                <span className="block truncate text-[12px] font-normal text-ink-400">آگهی: {thread.title}</span>
               </span>
             </Link>
           ) : (
@@ -73,9 +75,9 @@ export default function ChatThread() {
           ) : (
             <div key={m.id} className={clsx('flex', m.from === me.id ? 'justify-start' : 'justify-end')}>
               <div className={clsx('max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-7', m.from === me.id ? 'rounded-tr-md bg-brand-500 text-white' : 'rounded-tl-md bg-ink-100 dark:bg-white/5')}>
-                {team && m.from !== me.id && <div className="mb-0.5 text-[11px] font-medium text-brand-600 dark:text-brand-300">{users[m.from]?.name}</div>}
+                {team && m.from !== me.id && <div className="mb-0.5 text-[12px] font-medium text-brand-600 dark:text-brand-300">{users[m.from]?.name}</div>}
                 <div className="whitespace-pre-line">{m.text}</div>
-                <div className={clsx('mt-0.5 text-[10px]', m.from === me.id ? 'text-white/70' : 'text-ink-400')}>{faTime(m.at)}</div>
+                <div className={clsx('mt-0.5 text-[12px]', m.from === me.id ? 'text-white/70' : 'text-ink-400')}>{faTime(m.at)}</div>
               </div>
             </div>
           ),

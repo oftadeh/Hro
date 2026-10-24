@@ -7,7 +7,7 @@ import { joinOrg, leaveOrg, orgLeaderboard } from '@/core/services/org'
 import { activeSubscription } from '@/core/services/wallet'
 import { Avatar, Button, Card, Empty, Input, PageHeader, SectionTitle } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
-import { runOk } from '@/ui/toast'
+import { runOk, ask } from '@/ui/toast'
 
 /** عضویت کارکنان در اشتراک سازمانی */
 export default function OrgPage() {
@@ -66,7 +66,7 @@ export default function OrgPage() {
         ))}
       </Card>
       {org.adminId !== me.id && (
-        <Button variant="ghost" className="mt-4 w-full text-coral-500" onClick={() => confirm('از سازمان خارج می‌شوید؟') && runOk(() => leaveOrg(), 'از سازمان خارج شدید')}>
+        <Button variant="ghost" className="mt-4 w-full text-coral-500" onClick={async () => (await ask('از سازمان خارج می‌شوید؟')) && runOk(() => leaveOrg(), 'از سازمان خارج شدید')}>
           خروج از سازمان
         </Button>
       )}

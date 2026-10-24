@@ -19,7 +19,7 @@ export function TxList({ txs, userId, showCommission }: { txs: Transaction[]; us
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border hairline text-ink-500"><TxIcon type={t.type} size={15} /></span>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">{t.description}</div>
-              <div className="text-[11px] text-ink-400">
+              <div className="text-[12px] text-ink-400">
                 {faDateTime(t.createdAt)}
                 {t.from === 'subscription' && ' · از اعتبار اشتراک'}
                 {!incoming && !platformView && t.discount ? ` · تخفیف اشتراک ${toman(t.discount)}` : ''}

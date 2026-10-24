@@ -1,16 +1,15 @@
 /**
- * کیت طراحی کی‌فیت — زبان بصری «آرام و شاعرانه»:
- * پس‌زمینه‌ی زغالی-بنفش، گرادیان‌های پاستلی (یاسی، صورتی، نعنایی، هلویی)،
- * گوی‌های رنگی محو، تیترهای سریف (مرکزی) و کارت‌های لایه‌ای با گوشه‌های گرد.
+ * کیت طراحی کی‌فیت: کارت‌های رنگی گرادیانی (card-*)، سطوح تیره، دکمه‌های گرد،
+ * و یک قانون حرکت واحد (۱۸۰ تا ۳۰۰ میلی‌ثانیه، منحنی ease-out، فشردن ۰٫۹۷).
  */
 import { uploadImage } from '@/core/client/remote'
 import clsx from 'clsx'
 import { ArrowLeft, ArrowRight, Star, X } from 'lucide-react'
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type PointerEvent as RPointerEvent, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { num } from '@/core/format'
-import { useMounted } from './motion'
+import { useInView, useMounted } from './motion'
 import { Yoga } from './art'
 
 type BtnVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'dark'
@@ -23,11 +22,11 @@ export function Button({
       {...rest}
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-full font-medium transition duration-200 active:scale-[.98] disabled:opacity-40 disabled:active:scale-100',
-        size === 'sm' && 'h-9 px-4 text-xs',
-        size === 'md' && 'h-11 px-5 text-sm',
-        size === 'lg' && 'h-12 px-6 text-[15px]',
-        variant === 'primary' && 'grad-lavender text-ink-950 shadow-glow hover:brightness-105',
+        'press inline-flex select-none items-center justify-center gap-2 rounded-full font-semibold disabled:opacity-40 disabled:active:scale-100',
+        size === 'sm' && 'h-10 px-4 text-[13px]',
+        size === 'md' && 'h-12 px-5 text-[15px]',
+        size === 'lg' && 'h-14 px-6 text-[16px]',
+        variant === 'primary' && 'card-lime text-ink-950 shadow-glow hover:brightness-105',
         variant === 'dark' && 'bg-ink-950 text-white hover:bg-ink-800 dark:bg-white dark:text-ink-950 dark:hover:bg-ink-100',
         variant === 'secondary' && 'bg-ink-900/[.06] text-ink-900 hover:bg-ink-900/10 dark:bg-white/[.08] dark:text-ink-100 dark:hover:bg-white/[.12]',
         variant === 'ghost' && 'text-ink-600 hover:bg-ink-900/[.05] dark:text-ink-300 dark:hover:bg-white/[.06]',
@@ -47,8 +46,8 @@ export function Card({ className, children, onClick }: { className?: string; chi
     <div
       onClick={onClick}
       className={clsx(
-        'rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none',
-        onClick && 'lift-hover cursor-pointer',
+        'rounded-[26px] bg-white p-5 shadow-card dark:bg-ink-850 dark:shadow-none',
+        onClick && 'press cursor-pointer',
         className,
       )}
     >
@@ -66,18 +65,18 @@ export function Badge({ children, color = 'slate', className }: { children: Reac
     violet: 'text-brand-700 bg-brand-400/15 dark:text-brand-300',
     slate: 'text-ink-600 bg-ink-900/[.06] dark:text-ink-200 dark:bg-white/[.1]',
   }
-  return <span className={clsx('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-medium', map[color], className)}>{children}</span>
+  return <span className={clsx('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-semibold', map[color], className)}>{children}</span>
 }
 
 const fieldCls =
-  'w-full rounded-2xl border border-transparent bg-ink-900/[.05] px-4 py-3 text-sm outline-none transition placeholder:text-ink-400 focus:border-brand-300 focus:bg-white dark:bg-white/[.06] dark:focus:border-brand-300/50 dark:focus:bg-white/[.08]'
+  'w-full rounded-[18px] border border-transparent bg-ink-900/[.05] px-4 py-3.5 text-[15px] outline-none transition-colors duration-200 placeholder:text-ink-400 focus:border-brand-400 focus:bg-white dark:bg-white/[.06] dark:focus:border-brand-300/60 dark:focus:bg-white/[.08]'
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs text-ink-500 dark:text-ink-400">{label}</span>
+      <span className="text-[13px] font-medium text-ink-500 dark:text-ink-400">{label}</span>
       {children}
-      {hint && <span className="block text-[11px] text-ink-400">{hint}</span>}
+      {hint && <span className="block text-[12px] text-ink-400">{hint}</span>}
     </label>
   )
 }
@@ -104,6 +103,23 @@ export function NumberInput({ value, onChange, ...rest }: { value: number; onCha
 }
 
 export function Sheet({ open, onClose, title, children, wide }: { open: boolean; onClose: () => void; title?: ReactNode; children: ReactNode; wide?: boolean }) {
+  // برای انیمیشن بسته شدن، شیت چند لحظه پس از open=false هم رندر می‌ماند
+  const [render, setRender] = useState(open)
+  const [leaving, setLeaving] = useState(false)
+  const [dy, setDy] = useState(0)
+  const drag = useRef<{ y: number; t: number } | null>(null)
+  useEffect(() => {
+    if (open) {
+      setRender(true)
+      setLeaving(false)
+      setDy(0)
+      return
+    }
+    if (!render) return
+    setLeaving(true)
+    const t = setTimeout(() => setRender(false), 220)
+    return () => clearTimeout(t)
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
@@ -115,24 +131,42 @@ export function Sheet({ open, onClose, title, children, wide }: { open: boolean;
       window.removeEventListener('keydown', onKey)
     }
   }, [open, onClose])
-  if (!open) return null
+  if (!render) return null
+  const onDown = (e: RPointerEvent) => {
+    drag.current = { y: e.clientY, t: performance.now() }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+  const onMove = (e: RPointerEvent) => {
+    if (drag.current) setDy(Math.max(0, e.clientY - drag.current.y))
+  }
+  const onUp = (e: RPointerEvent) => {
+    if (!drag.current) return
+    const v = (e.clientY - drag.current.y) / Math.max(1, performance.now() - drag.current.t)
+    drag.current = null
+    if (dy > 120 || v > 0.6) onClose()
+    else setDy(0)
+  }
   return createPortal(
-    <div className="fixed inset-0 z-[900] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-ink-950/60 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[900] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+      <div className={clsx('absolute inset-0 bg-ink-950/60 backdrop-blur-sm transition-opacity duration-200', leaving ? 'opacity-0' : 'anim-fade')} onClick={onClose} />
       <div
         className={clsx(
-          'relative max-h-[92dvh] w-full animate-sheet-up overflow-y-auto rounded-t-[2rem] bg-white p-6 pt-3 shadow-soft dark:bg-ink-850 sm:rounded-[2rem]',
+          'relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[30px] bg-white px-6 pb-6 shadow-soft dark:bg-ink-850 sm:rounded-[30px]',
           wide ? 'sm:max-w-2xl' : 'sm:max-w-md',
+          leaving ? 'sheet-leave' : 'sheet-enter',
         )}
+        style={dy ? { transform: `translateY(${dy}px)`, transition: drag.current ? 'none' : undefined } : undefined}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-ink-200 dark:bg-white/15" />
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <h3 className="font-display text-2xl leading-none">{title}</h3>
-          <button onClick={onClose} className="rounded-full p-1.5 text-ink-400 transition hover:bg-ink-100 hover:text-ink-900 dark:hover:bg-white/5 dark:hover:text-white" aria-label="بستن">
-            <X size={18} strokeWidth={1.5} />
-          </button>
+        <div className="sticky top-0 z-10 -mx-6 cursor-grab touch-none bg-white px-6 pb-3 pt-3 active:cursor-grabbing dark:bg-ink-850" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+          <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-ink-200 dark:bg-white/15" />
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-[21px] font-extrabold leading-tight">{title}</h3>
+            <button onPointerDown={(e) => e.stopPropagation()} onClick={onClose} className="press flex h-10 w-10 items-center justify-center rounded-full bg-ink-100 text-ink-500 hover:text-ink-900 dark:bg-white/[.06] dark:hover:text-white" aria-label="بستن">
+              <X size={18} strokeWidth={1.8} />
+            </button>
+          </div>
         </div>
-        {children}
+        <div className="pt-2">{children}</div>
       </div>
     </div>,
     document.body,
@@ -141,14 +175,16 @@ export function Sheet({ open, onClose, title, children, wide }: { open: boolean;
 
 export function Tabs<T extends string>({ value, onChange, items, className }: { value: T; onChange: (v: T) => void; items: { value: T; label: ReactNode }[]; className?: string }) {
   return (
-    <div className={clsx('flex gap-1 overflow-x-auto rounded-full bg-ink-900/[.05] p-1 no-scrollbar dark:bg-white/[.06]', className)}>
+    <div role="tablist" className={clsx('flex gap-1 overflow-x-auto rounded-full bg-ink-900/[.05] p-1 no-scrollbar dark:bg-white/[.06]', className)}>
       {items.map((it) => (
         <button
           key={it.value}
+          role="tab"
+          aria-selected={value === it.value}
           onClick={() => onChange(it.value)}
           className={clsx(
-            'flex flex-1 items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] transition',
-            value === it.value ? 'bg-white font-medium text-ink-950 shadow-card dark:bg-ink-700 dark:text-white dark:shadow-none' : 'text-ink-500 hover:text-ink-900 dark:hover:text-ink-100',
+            'flex h-10 flex-1 items-center justify-center whitespace-nowrap rounded-full px-4 text-[14px] transition-colors duration-200',
+            value === it.value ? 'bg-ink-950 font-semibold text-white dark:bg-white dark:text-ink-950' : 'text-ink-500 hover:text-ink-900 dark:hover:text-ink-100',
           )}
         >
           {it.label}
@@ -166,8 +202,8 @@ export function Chips<T extends string>({ value, onChange, items }: { value: T; 
           key={it.value}
           onClick={() => onChange(it.value)}
           className={clsx(
-            'whitespace-nowrap rounded-full px-4 py-1.5 text-xs transition',
-            value === it.value ? 'grad-lavender font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 hover:text-ink-900 dark:bg-white/[.06] dark:text-ink-300',
+            'press h-10 whitespace-nowrap rounded-full px-4 text-[14px]',
+            value === it.value ? 'card-violet font-semibold text-ink-950' : 'bg-ink-900/[.05] text-ink-600 hover:text-ink-900 dark:bg-white/[.06] dark:text-ink-300',
           )}
         >
           {it.label}
@@ -177,7 +213,7 @@ export function Chips<T extends string>({ value, onChange, items }: { value: T; 
   )
 }
 
-const AVATAR_BG = ['grad-lavender', 'grad-mint', 'grad-peach', 'grad-pink']
+const AVATAR_BG = ['card-violet', 'grad-mint', 'grad-peach', 'grad-pink']
 
 export function Avatar({ name, src, size = 40, ring, className }: { name: string; src?: string; size?: number; ring?: boolean; className?: string }) {
   const initial = name.replace('دکتر ', '').trim()[0] ?? ''
@@ -218,11 +254,26 @@ export function Orbs({ seed = 'keyfit', className, intensity = 1 }: { seed?: str
   )
 }
 
-export function Cover({ gradient, image, className, children, label }: { gradient: string; emoji?: string; image?: string; className?: string; children?: ReactNode; label?: string }) {
+const COVER_TONES = ['card-violet', 'card-pink', 'card-mint', 'card-peach', 'card-lilac']
+/** رنگ ثابت کاور بر اساس یک رشته (مثلاً شناسه یا گرادیان قدیمی) */
+export const toneFor = (seed: string) => COVER_TONES[[...seed].reduce((a, c) => a + c.charCodeAt(0), 0) % COVER_TONES.length]
+
+/** الگوی خطوط پیست برای کاورهایی که هنوز عکس ندارند */
+export function CoverPattern() {
   return (
-    <div className={clsx('relative overflow-hidden bg-ink-850', className)}>
-      {image ? <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <Orbs seed={gradient} />}
-      {label && !image && <div className="absolute right-4 top-3 font-display text-xl text-white/85">{label}</div>}
+    <svg aria-hidden viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full text-ink-950 opacity-[.13]">
+      {[0, 1, 2, 3].map((i) => (
+        <rect key={i} x={40 + i * 22} y={30 + i * 22} width={520 - i * 44} height={260 - i * 44} rx={130 - i * 22} fill="none" stroke="currentColor" strokeWidth="3" />
+      ))}
+    </svg>
+  )
+}
+
+export function Cover({ gradient, image, className, children, label, style }: { gradient: string; emoji?: string; image?: string; className?: string; children?: ReactNode; label?: string; style?: CSSProperties }) {
+  return (
+    <div style={style} className={clsx('relative overflow-hidden', image ? 'bg-ink-850' : toneFor(gradient), className)}>
+      {image ? <img src={image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : <CoverPattern />}
+      {label && !image && <div className="absolute right-4 top-3 text-[20px] font-extrabold text-ink-950/85">{label}</div>}
       {children}
     </div>
   )
@@ -230,10 +281,10 @@ export function Cover({ gradient, image, className, children, label }: { gradien
 
 export function Empty({ title, desc, action, art }: { icon?: string; title: string; desc?: string; action?: ReactNode; art?: ReactNode }) {
   return (
-    <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-3xl bg-white px-6 py-12 text-center dark:bg-ink-850">
+    <div className="anim-fade relative flex flex-col items-center justify-center overflow-hidden rounded-[28px] bg-white px-6 py-12 text-center dark:bg-ink-850">
       {art ?? <Yoga size={120} className="mb-1" />}
-      <div className="font-display text-xl">{title}</div>
-      {desc && <p className="mt-1 max-w-xs text-xs leading-6 text-ink-500">{desc}</p>}
+      <div className="text-[20px] font-extrabold">{title}</div>
+      {desc && <p className="mt-1.5 max-w-xs text-[14px] leading-7 text-ink-500">{desc}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   )
@@ -258,24 +309,35 @@ export function IconTile({ tone = 'violet', size = 40, children, className }: { 
 }
 
 // کاشی آمار با درخشش رنگی پایین (مانند «۲۳ جلسه مدیتیشن»)
-const STAT_GLOW: Record<Tone, string> = {
-  emerald: 'from-transparent to-aqua-400/30',
-  violet: 'from-transparent to-brand-400/35',
-  amber: 'from-transparent to-gold-400/30',
-  sky: 'from-transparent to-brand-400/35',
-  rose: 'from-transparent to-coral-400/30',
+const STAT_CARD: Record<Tone, string> = {
+  emerald: 'card-mint',
+  violet: 'card-violet',
+  amber: 'card-peach',
+  sky: 'card-lilac',
+  rose: 'card-pink',
 }
 
+/** کارت شاخص رنگی، هم‌سبک کارت‌های داشبورد خانه */
 export function Stat({ label, value, icon, hint, tone = 'violet', art }: { label: string; value: ReactNode; icon?: ReactNode; hint?: ReactNode; tone?: Tone; art?: ReactNode }) {
   return (
-    <div className={clsx('lift-hover relative overflow-hidden rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none', art && 'min-h-[8.5rem]')}>
+    <div className={clsx('anim-enter relative overflow-hidden rounded-[26px] p-4 text-ink-950', STAT_CARD[tone], art && 'min-h-[8.5rem]')}>
       {art && <div className="pointer-events-none absolute -bottom-2 left-1">{art}</div>}
-      <div className={clsx('pointer-events-none absolute inset-0 bg-gradient-to-b', STAT_GLOW[tone])} />
+      <svg aria-hidden viewBox="0 0 120 120" className="pointer-events-none absolute -left-8 -top-8 h-28 w-28 opacity-[.18]">
+        <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" strokeWidth="2" />
+        <circle cx="60" cy="60" r="28" fill="none" stroke="currentColor" strokeWidth="2" />
+      </svg>
       <div className="relative">
-        {icon && <div className={clsx('mb-3 [&_svg]:stroke-[1.4]', TILE[tone].split(' ').filter((c) => c.startsWith('text') || c.startsWith('dark:text')).join(' '))}>{icon}</div>}
-        <div className="truncate text-lg font-medium tabular-nums text-ink-950 dark:text-white">{value}</div>
-        <div className="text-[11px] text-ink-500 dark:text-ink-400">{label}</div>
-        {hint && <div className="mt-0.5 text-[10px] text-ink-400">{hint}</div>}
+        {icon && <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/45 [&_svg]:stroke-[1.6]">{icon}</div>}
+        {typeof value === 'string' && value.endsWith(' تومان') ? (
+          <div className="flex items-baseline gap-1 whitespace-nowrap">
+            <span className="min-w-0 truncate text-[22px] font-extrabold tabular-nums">{value.slice(0, -6)}</span>
+            <span className="text-[12px] font-semibold opacity-60">تومان</span>
+          </div>
+        ) : (
+          <div className="truncate text-[22px] font-extrabold tabular-nums">{value}</div>
+        )}
+        <div className="text-[13px] font-medium opacity-70">{label}</div>
+        {hint && <div className="mt-0.5 text-[12px] opacity-60">{hint}</div>}
       </div>
     </div>
   )
@@ -304,15 +366,15 @@ export function PageHeader({ title, subtitle, back, actions }: { title: ReactNod
       {back && (
         <button
           onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink-900/[.05] text-ink-700 transition hover:bg-ink-900/10 dark:bg-white/[.06] dark:text-ink-200"
+          className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink-900/[.05] text-ink-700 hover:bg-ink-900/10 dark:bg-white/[.06] dark:text-ink-200"
           aria-label="بازگشت"
         >
           <ArrowRight size={18} strokeWidth={1.5} />
         </button>
       )}
       <div className="min-w-0 flex-1">
-        <h1 className="truncate font-display text-[2.1rem] leading-[1.15]">{title}</h1>
-        {subtitle && <p className="mt-0.5 truncate text-[13px] text-ink-500 dark:text-ink-400">{subtitle}</p>}
+        <h1 className="truncate text-[28px] font-extrabold leading-tight">{title}</h1>
+        {subtitle && <p className="mt-0.5 truncate text-[14px] text-ink-500 dark:text-ink-400">{subtitle}</p>}
       </div>
       {actions}
     </div>
@@ -322,8 +384,8 @@ export function PageHeader({ title, subtitle, back, actions }: { title: ReactNod
 /** کارت تیره با گوی‌های رنگی (مانند «Guided Meditation») */
 export function HeroHeader({ children, className, seed = 'hero' }: { children: ReactNode; className?: string; tone?: string; gradient?: string; seed?: string }) {
   return (
-    <div className={clsx('relative overflow-hidden rounded-[2rem] bg-ink-850 text-white', className)}>
-      <Orbs seed={seed} intensity={0.9} />
+    <div data-seed={seed} className={clsx('card-night relative overflow-hidden rounded-[30px]', className)}>
+      <span aria-hidden className="pointer-events-none absolute -left-16 -top-20 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(140,110,255,.4),transparent_65%)]" />
       <div className="relative">{children}</div>
     </div>
   )
@@ -403,7 +465,7 @@ export function Donut({ segments, size = 200, stroke = 12, center }: { segments:
 export function SectionTitle({ title, action }: { title: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-3 mt-9 flex items-end justify-between">
-      <h2 className="font-display text-[1.65rem] leading-none">{title}</h2>
+      <h2 className="text-[20px] font-extrabold leading-tight">{title}</h2>
       {action}
     </div>
   )
@@ -418,10 +480,10 @@ const BAR: Record<string, string> = {
 }
 
 export function Progress({ value, className, tone = 'violet' }: { value: number; className?: string; tone?: string }) {
-  const mounted = useMounted()
+  const [ref, seen] = useInView<HTMLDivElement>()
   return (
-    <div className={clsx('h-1.5 overflow-hidden rounded-full bg-ink-900/[.07] dark:bg-white/10', className)}>
-      <div className={clsx('h-full rounded-full bg-gradient-to-l transition-all duration-700', BAR[tone] ?? BAR.violet)} style={{ width: `${mounted ? Math.min(100, Math.max(0, value * 100)) : 0}%` }} />
+    <div ref={ref} className={clsx('h-2 overflow-hidden rounded-full bg-ink-900/[.07] dark:bg-white/10', className)}>
+      <div className={clsx('h-full rounded-full bg-gradient-to-l transition-[width] duration-700 ease-out-soft', BAR[tone] ?? BAR.violet)} style={{ width: `${seen ? Math.min(100, Math.max(0, value * 100)) : 0}%` }} />
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { CalendarCheck, CalendarClock, MessageCircle, Wallet } from 'lucide-reac
 import { useDB } from '@/core/db'
 import { faDateTime, num, toman } from '@/core/format'
 import { cancelAppointment, completeAppointment } from '@/core/services/doctor'
-import { run } from '@/ui/toast'
+import { run, ask } from '@/ui/toast'
 import { findThread } from '@/core/services/fityar'
 import type { Appointment } from '@/core/types'
 import { Avatar, Badge, Button, Card, Empty, PageHeader, Sheet, Stat, Tabs, Textarea } from '@/ui/kit'
@@ -28,10 +28,10 @@ export default function DoctorPanel() {
     <div className="animate-fade-up">
       <PageHeader title="نوبت‌های ویزیت" subtitle="ارتباط با بیماران از طریق پیام‌ها و تماس" />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="نوبت‌های پیش‌رو" value={num(mine.filter((a) => a.status === 'booked').length)} icon={<CalendarClock size={18} />} tone="sky" />
-        <Stat label="ویزیت‌های انجام‌شده" value={num(doc?.visits ?? 0)} icon={<CalendarCheck size={18} />} />
-        <Stat label="نوبت آزاد" value={num(doc?.slots.length ?? 0)} icon={<CalendarClock size={18} />} tone="amber" />
-        <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="violet" />
+        <Stat label="نوبت‌های پیش‌رو" value={num(mine.filter((a) => a.status === 'booked').length)} icon={<CalendarClock size={18} />} tone="violet" />
+        <Stat tone="sky" label="ویزیت‌های انجام‌شده" value={num(doc?.visits ?? 0)} icon={<CalendarCheck size={18} />} />
+        <Stat label="نوبت آزاد" value={num(doc?.slots.length ?? 0)} icon={<CalendarClock size={18} />} tone="emerald" />
+        <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="amber" />
       </div>
       <Tabs className="my-4 max-w-sm" value={tab} onChange={setTab} items={[{ value: 'booked', label: 'پیش‌رو' }, { value: 'done', label: 'انجام‌شده' }]} />
       {list.length === 0 && <Empty icon="" title="نوبتی در این بخش نیست" desc={tab === 'booked' ? 'از بخش پروفایل نوبت‌های آزاد اضافه کنید.' : undefined} />}
@@ -55,7 +55,7 @@ export default function DoctorPanel() {
                 {t && <Link to={`/messages/${t.id}`} className="flex-1"><Button variant="secondary" size="sm" className="w-full" icon={<MessageCircle size={14} />}>گفتگو</Button></Link>}
                 {a.status === 'booked' && a.callLink && <a href={a.callLink} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">ویزیت تصویری</Button></a>}
                 {a.status === 'booked' && <Button size="sm" className="flex-1" onClick={() => { setOpen(a); setRx('') }}>ثبت نتیجه‌ی ویزیت</Button>}
-                {a.status === 'booked' && <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => confirm('نوبت لغو و وجه به بیمار برگردد؟') && run(() => cancelAppointment(a.id), 'نوبت لغو شد')}>لغو</Button>}
+                {a.status === 'booked' && <Button size="sm" variant="ghost" className="text-coral-500" onClick={async () => (await ask('نوبت لغو و وجه به بیمار برگردد؟')) && run(() => cancelAppointment(a.id), 'نوبت لغو شد')}>لغو</Button>}
               </div>
             </Card>
           )

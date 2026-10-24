@@ -45,9 +45,44 @@ export async function runOk(fn: () => unknown, success?: string): Promise<boolea
   return ok
 }
 
+/* ───── پنجره‌ی تأیید درون‌برنامه‌ای (جایگزین window.confirm که در بعضی مرورگرهای داخل‌برنامه‌ای کار نمی‌کند) ───── */
+interface Ask { id: number; text: string; resolve: (v: boolean) => void }
+const useAsk = create<{ q: Ask | null; set: (q: Ask | null) => void }>((set) => ({ q: null, set: (q) => set({ q }) }))
+
+/** پرسیدن تأیید از کاربر؛ نتیجه true/false */
+export function ask(text: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    useAsk.getState().q?.resolve(false)
+    useAsk.getState().set({ id: Date.now(), text, resolve })
+  })
+}
+
+function AskHost() {
+  const q = useAsk((s) => s.q)
+  const close = (v: boolean) => {
+    if (!q) return
+    q.resolve(v)
+    useAsk.getState().set(null)
+  }
+  if (!q) return null
+  return (
+    <div className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center" role="alertdialog" aria-modal="true" aria-label={q.text} onClick={() => close(false)}>
+      <div className="animate-sheet-up w-full max-w-sm rounded-[28px] bg-white p-6 text-center shadow-soft dark:bg-ink-850" onClick={(e) => e.stopPropagation()}>
+        <p className="text-[16px] font-semibold leading-8">{q.text}</p>
+        <div className="mt-5 flex gap-2.5">
+          <button autoFocus onClick={() => close(true)} className="h-12 flex-1 rounded-full bg-ink-950 text-[15px] font-bold text-white dark:bg-white dark:text-ink-950">بله</button>
+          <button onClick={() => close(false)} className="h-12 flex-1 rounded-full bg-ink-100 text-[15px] font-semibold dark:bg-ink-800">انصراف</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Toaster() {
   const items = useToasts((s) => s.items)
   return (
+    <>
+    <AskHost />
     <div className="pointer-events-none fixed inset-x-0 top-3 z-[1000] flex flex-col items-center gap-2 px-4">
       {items.map((t) => (
         <div
@@ -59,5 +94,6 @@ export function Toaster() {
         </div>
       ))}
     </div>
+    </>
   )
 }

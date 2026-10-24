@@ -7,7 +7,7 @@ import { careProviders, toggleHealthShare } from '@/core/services/health'
 import { activePolicy } from '@/core/services/insurance'
 import { Avatar, Badge, Button, Card, Empty, PageHeader, SectionTitle } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
-import { run } from '@/ui/toast'
+import { run, ask } from '@/ui/toast'
 
 /** پرونده‌ی پزشکی: نوبت‌ها، ویزیت تصویری، نسخه‌ها و اجازه‌ی دسترسی مربی/پزشک */
 export default function Medical() {
@@ -52,7 +52,7 @@ export default function Medical() {
                     </Button>
                   </a>
                 )}
-                <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => confirm('نوبت لغو و مبلغ برگشت داده شود؟') && run(() => cancelAppointment(a.id), 'نوبت لغو شد')}>
+                <Button size="sm" variant="ghost" className="text-coral-500" onClick={async () => (await ask('نوبت لغو و مبلغ برگشت داده شود؟')) && run(() => cancelAppointment(a.id), 'نوبت لغو شد')}>
                   لغو
                 </Button>
               </div>
@@ -69,7 +69,7 @@ export default function Medical() {
             <div className="flex items-center gap-2">
               <FileText size={16} className="text-ink-400" />
               <span className="text-sm font-medium">{users[a.doctorId]?.name}</span>
-              <span className="text-[11px] text-ink-400">{faDateTime(a.at)}</span>
+              <span className="text-[12px] text-ink-400">{faDateTime(a.at)}</span>
               <Badge color={a.status === 'done' ? 'emerald' : 'rose'} className="mr-auto">
                 {a.status === 'done' ? 'انجام شد' : 'لغو شد'}
               </Badge>
@@ -97,7 +97,7 @@ export default function Medical() {
                 <Avatar name={p.name} src={p.avatar} size={36} />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">{p.name}</div>
-                  <div className="text-[11px] text-ink-400">{p.roles.includes('doctor') ? 'پزشک' : 'مربی'}</div>
+                  <div className="text-[12px] text-ink-400">{p.roles.includes('doctor') ? 'پزشک' : 'مربی'}</div>
                 </div>
                 <Button size="sm" variant={on ? 'secondary' : 'primary'} icon={on ? <ShieldCheck size={14} /> : undefined} onClick={() => run(() => toggleHealthShare(p.id), on ? 'دسترسی برداشته شد' : 'پرونده به اشتراک گذاشته شد')}>
                   {on ? 'دسترسی دارد' : 'اجازه‌ی دسترسی'}

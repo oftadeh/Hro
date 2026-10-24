@@ -26,21 +26,21 @@ export function ProfileHero({ user, actions, extra }: { user: User; actions?: Re
           {/* آواتار با حلقه‌ی پیشرفت سطح */}
           <div className="relative shrink-0">
             <Donut size={96} stroke={4} segments={[{ value: Math.max(0.02, lvl.progress), color: '#c4b5fd' }, { value: 1 - Math.max(0.02, lvl.progress), color: 'rgba(255,255,255,.12)' }]} center={<Avatar name={user.name} src={user.avatar} size={80} />} />
-            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full grad-lavender px-2 py-0.5 text-[10px] font-medium text-ink-950">سطح {num(lvl.level)}</span>
+            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full card-violet px-2 py-0.5 text-[12px] font-medium text-ink-950">سطح {num(lvl.level)}</span>
           </div>
           <div className="min-w-0 flex-1 pt-1">
             <h1 className="truncate font-display text-[2rem] leading-[1.1]">{user.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/60">
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-white/60">
               <span className="flex items-center gap-1"><Pin size={11} /> {user.city}</span>
               <span>عضو از {since}</span>
               {user.goal && <span>هدف: {GOALS[user.goal]}</span>}
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px]">{lvl.title}</span>
+              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[12px]">{lvl.title}</span>
               {user.roles
                 .filter((r) => r !== 'user')
                 .map((r) => (
-                  <span key={r} className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px]">
+                  <span key={r} className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[12px]">
                     <RoleIcon role={r} size={11} /> {ROLE_META[r].label}
                   </span>
                 ))}
@@ -61,7 +61,7 @@ export function StatRow({ items }: { items: [string, number][] }) {
       {items.map(([l, v]) => (
         <div key={l} className="text-center">
           <div className="font-display text-[1.7rem] leading-none tabular-nums"><CountUp value={v} /></div>
-          <div className="mt-1 text-[11px] text-ink-400">{l}</div>
+          <div className="mt-1 text-[12px] text-ink-400">{l}</div>
         </div>
       ))}
     </div>
@@ -96,7 +96,7 @@ export function Achievements({ list }: { list: Achievement[] }) {
         <div key={a.id} className={clsx('rounded-3xl p-4 transition', a.done ? 'grad-peach text-ink-950' : 'bg-white text-ink-400 shadow-card dark:bg-ink-850 dark:shadow-none')}>
           <span className={clsx('flex h-10 w-10 items-center justify-center rounded-2xl', a.done ? 'bg-white/60' : 'bg-ink-900/[.05] dark:bg-white/[.06]')}>{a.icon}</span>
           <div className={clsx('mt-3 text-sm font-medium', !a.done && 'text-ink-500')}>{a.title}</div>
-          <div className="mt-0.5 text-[11px] leading-5 opacity-70">{a.desc}</div>
+          <div className="mt-0.5 text-[12px] leading-5 opacity-70">{a.desc}</div>
         </div>
       ))}
     </div>
@@ -111,7 +111,7 @@ export function BmiGauge({ bmi }: { bmi: number }) {
       <div className="relative h-2.5 rounded-full" style={{ background: 'linear-gradient(to left, #fcd679 0%, #5eead4 17.5%, #5eead4 50%, #fcd679 75%, #fb7a8c 100%)' }}>
         <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 translate-x-1/2 rounded-full border-4 border-white bg-ink-950 shadow-soft transition-all duration-700" style={{ right: `${pos * 100}%` }} />
       </div>
-      <div className="relative mt-2 h-4 text-[10px] tabular-nums text-ink-400">
+      <div className="relative mt-2 h-4 text-[12px] tabular-nums text-ink-400">
         {[15, 18.5, 25, 30, 35].map((t) => (
           <span key={t} className="absolute translate-x-1/2" style={{ right: `${((t - 15) / 20) * 100}%` }}>
             {t.toLocaleString('fa-IR')}

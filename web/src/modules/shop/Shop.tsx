@@ -40,7 +40,7 @@ export default function Shop() {
         <Orbs seed="shop" intensity={0.8} />
         <Shaker size={120} className="pointer-events-none absolute -bottom-2 left-4" />
         <div className="relative max-w-[62%]">
-          <div className="text-[11px] text-white/70">مجموعه‌ی پاییز</div>
+          <div className="text-[12px] text-white/70">مجموعه‌ی پاییز</div>
           <div className="mt-2 font-display text-[2rem] leading-[1.1]">تا ۲۰٪ تخفیف مکمل‌های منتخب</div>
           <div className="mt-1 text-[13px] text-white/75">ارسال رایگان برای خریدهای بالای ۲ میلیون تومان</div>
         </div>
@@ -66,12 +66,12 @@ function ProductCard({ p }: { p: Product }) {
         {p.discount > 0 && <Badge color="rose" className="absolute right-2 top-2">٪{num(p.discount)}</Badge>}
       </Link>
       <div className="flex flex-1 flex-col p-3">
-        <div className="text-[11px] text-ink-400">{p.brand}</div>
+        <div className="text-[12px] text-ink-400">{p.brand}</div>
         <Link to={`/shop/${p.id}`} className="line-clamp-2 text-sm font-semibold leading-6">{p.name}</Link>
         <div className="mt-1"><Stars value={p.rating} /></div>
         <div className="mt-auto flex items-end justify-between pt-2">
           <div>
-            {p.discount > 0 && <div className="text-[11px] text-ink-400 line-through">{num(p.price)}</div>}
+            {p.discount > 0 && <div className="text-[12px] text-ink-400 line-through">{num(p.price)}</div>}
             <div className="text-sm font-semibold">{toman(finalPrice(p))}</div>
           </div>
           <button

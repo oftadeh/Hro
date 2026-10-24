@@ -29,8 +29,8 @@ export default function AdminFinance() {
           <Card key={p.id} className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <div className="font-semibold">{name(p.userId)} — {toman(p.amount)}</div>
-              <div className="truncate text-[11px] text-ink-400" dir="ltr">{p.iban}</div>
-              <div className="text-[11px] text-ink-400">{faDateTime(p.createdAt)}</div>
+              <div className="truncate text-[12px] text-ink-400" dir="ltr">{p.iban}</div>
+              <div className="text-[12px] text-ink-400">{faDateTime(p.createdAt)}</div>
             </div>
             {p.status === 'pending' ? (
               <div className="flex gap-1">

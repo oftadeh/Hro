@@ -33,7 +33,7 @@ export default function Doctors() {
         <Orbs seed="doctor" intensity={0.8} />
         <Doctor size={130} className="pointer-events-none absolute -bottom-3 left-2" />
         <div className="relative max-w-[62%]">
-          <div className="text-[11px] text-white/70">{CARE_KINDS[kind].plural}</div>
+          <div className="text-[12px] text-white/70">{CARE_KINDS[kind].plural}</div>
           <div className="mt-2 font-display text-[2rem] leading-[1.1]">{HERO[kind][0]}</div>
           <div className="mt-1 text-[13px] text-white/75">{HERO[kind][1]}</div>
         </div>
@@ -71,7 +71,7 @@ export default function Doctors() {
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold">{u.name}</div>
                   <div className="text-xs text-ink-500">{d.specialty}</div>
-                  <div className="mt-1 flex items-center gap-2 text-[11px] text-ink-400">
+                  <div className="mt-1 flex items-center gap-2 text-[12px] text-ink-400">
                     <Stars value={d.rating} /> {num(d.visits)} ویزیت
                   </div>
                   <div className="mt-1 text-xs">

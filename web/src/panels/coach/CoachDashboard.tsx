@@ -37,10 +37,10 @@ export default function CoachDashboard() {
         </Card>
       )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="سفارش در انتظار" value={num(pending.length)} icon={<ClipboardList size={18} />} tone="amber" />
-        <Stat label="شاگردان" value={num(coach?.students ?? 0)} icon={<Star size={18} />} />
-        <Stat label="گفتگوها" value={num(chats.length)} icon={<MessageCircle size={18} />} tone="sky" />
-        <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="violet" />
+        <Stat label="سفارش در انتظار" value={num(pending.length)} icon={<ClipboardList size={18} />} tone="violet" />
+        <Stat tone="sky" label="شاگردان" value={num(coach?.students ?? 0)} icon={<Star size={18} />} />
+        <Stat label="گفتگوها" value={num(chats.length)} icon={<MessageCircle size={18} />} tone="emerald" />
+        <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="amber" />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div>
@@ -55,7 +55,7 @@ export default function CoachDashboard() {
                     <div className="text-sm font-semibold">{users[o.userId]?.name}</div>
                     <div className="truncate text-xs text-ink-500">{o.title}</div>
                   </div>
-                  <span className="text-[11px] text-ink-400">{timeAgo(o.createdAt)}</span>
+                  <span className="text-[12px] text-ink-400">{timeAgo(o.createdAt)}</span>
                 </Card>
               </Link>
             ))}

@@ -61,14 +61,14 @@ export default function Invite() {
         <Button className="w-full" disabled={bal < plan.price} onClick={async () => { const c = await run(() => giftSubscription(g.planId, g.phone, g.message), 'هدیه خریداری شد'); if (c) { setSent(c); setG({ ...g, phone: '', message: '' }) } }}>
           پرداخت {toman(plan.price)} از کیف پول
         </Button>
-        {bal < plan.price && <div className="text-center text-[11px] text-ink-400">موجودی کیف پول: {toman(bal)}</div>}
+        {bal < plan.price && <div className="text-center text-[12px] text-ink-400">موجودی کیف پول: {toman(bal)}</div>}
         {sent && (
           <div className="rounded-2xl bg-aqua-400/10 p-3 text-center text-xs">
             کد هدیه: <b dir="ltr" className="text-base">{sent}</b>
             <div className="mt-1 text-ink-500">اگر گیرنده عضو کی‌فیت باشد اعلان دریافت می‌کند؛ کد را برایش بفرستید.</div>
           </div>
         )}
-        {myGifts.length > 0 && <div className="text-[11px] text-ink-400">{num(myGifts.length)} هدیه خریده‌ای · {num(myGifts.filter((x) => x.redeemedBy).length)} فعال‌شده</div>}
+        {myGifts.length > 0 && <div className="text-[12px] text-ink-400">{num(myGifts.length)} هدیه خریده‌ای · {num(myGifts.filter((x) => x.redeemedBy).length)} فعال‌شده</div>}
       </Card>
 
       <SectionTitle title="کد هدیه داری؟" />

@@ -4,7 +4,7 @@ import { faDate, num, toman } from '@/core/format'
 import { settleChallenge } from '@/core/services/challenges'
 import { Badge, Button, Card, PageHeader } from '@/ui/kit'
 import { useUserMap } from '@/ui/hooks'
-import { run } from '@/ui/toast'
+import { run, ask } from '@/ui/toast'
 import { MetricIcon } from '@/ui/icons'
 
 export default function AdminChallenges() {
@@ -26,7 +26,7 @@ export default function AdminChallenges() {
                 <Badge color={c.status === 'active' ? 'emerald' : 'slate'}>{c.status === 'active' ? 'فعال' : 'پایان‌یافته'}</Badge>
               </div>
               {c.status === 'active' && (
-                <Button size="sm" variant="outline" className="mt-2" onClick={() => confirm('چالش بسته و جوایز پرداخت شود؟') && run(() => settleChallenge(c.id, true), 'جوایز پرداخت شد')}>
+                <Button size="sm" variant="outline" className="mt-2" onClick={async () => (await ask('چالش بسته و جوایز پرداخت شود؟')) && run(() => settleChallenge(c.id, true), 'جوایز پرداخت شد')}>
                   پایان و تسویه
                 </Button>
               )}

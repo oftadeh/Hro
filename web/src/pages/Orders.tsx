@@ -7,7 +7,7 @@ import { ORDER_STEPS, reviewOrder, setOrderStatus } from '@/core/services/commer
 import type { Order } from '@/core/types'
 import { Badge, Button, Card, Empty, PageHeader, Sheet, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
-import { runOk } from '@/ui/toast'
+import { runOk, ask } from '@/ui/toast'
 
 export const ORDER_STATUS = {
   paid: { label: 'پرداخت شده', color: 'sky' },
@@ -89,7 +89,7 @@ export default function Orders() {
               </div>
               <div className="mt-3 flex gap-2">
                 {o.status === 'paid' && (
-                  <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => confirm('سفارش لغو و مبلغ به کیف پول برگردد؟') && runOk(() => setOrderStatus(o.id, 'cancelled'), 'سفارش لغو شد و مبلغ برگشت داده شد')}>
+                  <Button size="sm" variant="ghost" className="text-coral-500" onClick={async () => (await ask('سفارش لغو و مبلغ به کیف پول برگردد؟')) && runOk(() => setOrderStatus(o.id, 'cancelled'), 'سفارش لغو شد و مبلغ برگشت داده شد')}>
                     لغو سفارش
                   </Button>
                 )}

@@ -9,7 +9,7 @@ import { reportContent } from '@/core/services/fitzone'
 import type { Listing } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, SectionTitle, Select, Sheet, Textarea } from '@/ui/kit'
 import { useBalance, useMe, useUserMap } from '@/ui/hooks'
-import { run, runOk } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
 
 type Cat = Listing['category']
 const DEAL: Record<NonNullable<Listing['deal']>['status'], string> = { paid: 'پرداخت‌شده؛ در انتظار ارسال', shipped: 'ارسال شد؛ در انتظار تأیید خریدار', done: 'تحویل و تسویه شد', cancelled: 'لغو شد' }
@@ -21,7 +21,7 @@ function ListingCard({ l }: { l: Listing }) {
         <img src={l.photos[0]} alt="" className="aspect-[4/3] w-full object-cover" />
         <div className="p-3">
           <div className="truncate text-sm font-semibold">{l.title}</div>
-          <div className="mt-0.5 text-[11px] text-ink-400">{LISTING_CONDITION[l.condition]} · {l.city} · {timeAgo(l.createdAt)}</div>
+          <div className="mt-0.5 text-[12px] text-ink-400">{LISTING_CONDITION[l.condition]} · {l.city} · {timeAgo(l.createdAt)}</div>
           <div className="mt-1 flex items-center justify-between">
             <b className="text-sm">{toman(l.price)}</b>
             {l.status !== 'active' && <Badge color={l.status === 'sold' ? 'slate' : 'amber'}>{l.status === 'sold' ? 'فروخته شد' : l.status === 'reserved' ? 'رزرو' : 'حذف'}</Badge>}
@@ -109,9 +109,9 @@ export function ListingDetail() {
             </div>
           )}
           {mineBuy && l.deal.status === 'shipped' && (
-            <Button className="w-full" icon={<PackageCheck size={16} />} onClick={() => confirm('کالا را سالم تحویل گرفتید؟ مبلغ به فروشنده پرداخت می‌شود.') && runOk(() => confirmReceived(l.id), 'تأیید شد؛ مبلغ به فروشنده پرداخت شد')}>کالا را تحویل گرفتم</Button>
+            <Button className="w-full" icon={<PackageCheck size={16} />} onClick={async () => (await ask('کالا را سالم تحویل گرفتید؟ مبلغ به فروشنده پرداخت می‌شود.')) && runOk(() => confirmReceived(l.id), 'تأیید شد؛ مبلغ به فروشنده پرداخت شد')}>کالا را تحویل گرفتم</Button>
           )}
-          {l.deal.status === 'paid' && <Button className="w-full" variant="ghost" onClick={() => confirm('معامله لغو و مبلغ به خریدار برگردانده شود؟') && runOk(() => cancelDeal(l.id), 'معامله لغو شد')}>لغو معامله</Button>}
+          {l.deal.status === 'paid' && <Button className="w-full" variant="ghost" onClick={async () => (await ask('معامله لغو و مبلغ به خریدار برگردانده شود؟')) && runOk(() => cancelDeal(l.id), 'معامله لغو شد')}>لغو معامله</Button>}
           {mineBuy && l.deal.status === 'shipped' && <Link to="/support" className="block text-center text-xs text-ink-500 underline">مشکل در کالا؟ به پشتیبانی بگویید</Link>}
         </Card>
       )}
@@ -125,11 +125,11 @@ export function ListingDetail() {
       {mineSell && l.status === 'active' && (
         <div className="mt-4 flex gap-2">
           <Link to={`/market/${l.id}/edit`} className="flex-1"><Button className="w-full" variant="secondary" icon={<Pencil size={15} />}>ویرایش</Button></Link>
-          <Button variant="ghost" className="text-coral-500" onClick={() => confirm('آگهی حذف شود؟') && run(async () => { await removeListing(l.id); nav('/market') })}>حذف</Button>
+          <Button variant="ghost" className="text-coral-500" onClick={async () => (await ask('آگهی حذف شود؟')) && run(async () => { await removeListing(l.id); nav('/market') })}>حذف</Button>
         </div>
       )}
       {!mineSell && (
-        <button className="mt-4 flex items-center gap-1 text-[11px] text-ink-400" onClick={() => { const r = prompt('دلیل گزارش (کالای تقلبی، کلاهبرداری…)'); if (r) run(() => reportContent('listing', l.id, r), 'گزارش ثبت شد') }}><Flag size={12} /> گزارش آگهی</button>
+        <button className="mt-4 flex items-center gap-1 text-[12px] text-ink-400" onClick={() => { const r = prompt('دلیل گزارش (کالای تقلبی، کلاهبرداری…)'); if (r) run(() => reportContent('listing', l.id, r), 'گزارش ثبت شد') }}><Flag size={12} /> گزارش آگهی</button>
       )}
 
       <Sheet open={buy} onClose={() => setBuy(false)} title="خرید امن">

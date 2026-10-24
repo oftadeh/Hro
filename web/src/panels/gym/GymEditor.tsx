@@ -20,7 +20,7 @@ export default function GymEditor() {
   const nav = useNavigate()
   const existing = useDB((s) => s.gyms.find((g) => g.id === id))
   const [f, setF] = useState<Partial<Gym>>(
-    existing ?? { name: '', tagline: '', description: '', address: '', phone: '', sessionPrice: 100_000, facilities: [], sports: [], hours: '۸ صبح تا ۱۰ شب', gender: 'mixed', lat: 35.7219, lng: 51.3347, media: [], capacity: 50, classes: [] },
+    existing ?? { name: '', tagline: '', description: '', address: '', phone: '', sessionPrice: 100_000, facilities: [], sports: [], hours: '۸ صبح تا ۱۰ شب', gender: 'mixed', lat: 32.6546, lng: 51.668, media: [], capacity: 50, classes: [] },
   )
   const [facilities, setFacilities] = useState((existing?.facilities ?? []).join('، '))
   const [sports, setSports] = useState((existing?.sports ?? []).join('، '))

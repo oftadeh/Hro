@@ -77,7 +77,7 @@ export function CycleCard() {
             <div><b>تمرین: </b>{pregnancy.workout}</div>
             <div><b>تغذیه: </b>{pregnancy.nutrition}</div>
           </div>
-          <p className="mt-3 text-[10px] opacity-60">هر برنامه‌ی ورزشی در این دوران باید با نظر پزشک یا ماما باشد.</p>
+          <p className="mt-3 text-[12px] opacity-60">هر برنامه‌ی ورزشی در این دوران باید با نظر پزشک یا ماما باشد.</p>
         </div>
         <CycleSetupSheet open={setup} onClose={() => setSetup(false)} />
       </>
@@ -91,7 +91,7 @@ export function CycleCard() {
           <div className="relative max-w-[65%]">
             <div className="font-display text-[1.8rem] leading-none">ردیاب چرخه</div>
             <p className="mt-2 text-xs leading-6 opacity-75">تمرین و تغذیه‌ات را با فاز چرخه هماهنگ کن؛ پیش‌بینی پریود بعدی و روزهای پرانرژی.</p>
-            <div className="mt-1 flex items-center gap-1 text-[11px] opacity-60">
+            <div className="mt-1 flex items-center gap-1 text-[12px] opacity-60">
               <Lock size={11} /> کاملاً خصوصی
             </div>
             <Button size="sm" variant="dark" className="mt-3" onClick={() => setSetup(true)}>
@@ -124,9 +124,9 @@ export function CycleCard() {
         <div className="relative shrink-0">
           <CycleWheel st={st} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-[11px] text-ink-400">روز</span>
+            <span className="text-[12px] text-ink-400">روز</span>
             <span className="font-display text-[2.6rem] leading-none tabular-nums">{num(st.day)}</span>
-            <span className="text-[11px] text-ink-400">از {num(st.cycleLength)}</span>
+            <span className="text-[12px] text-ink-400">از {num(st.cycleLength)}</span>
           </div>
         </div>
         <div className="w-full min-w-0 flex-1 space-y-3">
@@ -139,7 +139,7 @@ export function CycleCard() {
           <Tip title="تغذیه" text={st.info.nutrition} />
           <div className="flex flex-wrap gap-1.5">
             {st.info.sports.map((s) => (
-              <Link key={s} to={`/fityab?sport=${encodeURIComponent(s)}`} className="rounded-full bg-ink-900/[.05] px-3 py-1.5 text-[11px] transition hover:bg-ink-900/10 dark:bg-white/[.06] dark:hover:bg-white/10">
+              <Link key={s} to={`/fityab?sport=${encodeURIComponent(s)}`} className="rounded-full bg-ink-900/[.05] px-3 py-1.5 text-[12px] transition hover:bg-ink-900/10 dark:bg-white/[.06] dark:hover:bg-white/10">
                 {s}
               </Link>
             ))}
@@ -155,7 +155,7 @@ export function CycleCard() {
           {todayLog ? 'ویرایش علائم امروز' : 'ثبت علائم امروز'}
         </Button>
       </div>
-      <p className="relative mt-3 text-[10px] leading-5 text-ink-400">پیش‌بینی‌ها تقریبی‌اند و جایگزین مشاوره‌ی پزشکی نیستند. در صورت نامنظمی یا درد شدید با پزشک مشورت کنید.</p>
+      <p className="relative mt-3 text-[12px] leading-5 text-ink-400">پیش‌بینی‌ها تقریبی‌اند و جایگزین مشاوره‌ی پزشکی نیستند. در صورت نامنظمی یا درد شدید با پزشک مشورت کنید.</p>
 
       <CycleSetupSheet open={setup} onClose={() => setSetup(false)} />
       <SymptomSheet open={log} onClose={() => setLog(false)} initial={todayLog} />
@@ -165,7 +165,7 @@ export function CycleCard() {
 
 const Mini = ({ label, value, color }: { label: string; value: string; color?: string }) => (
   <div className="rounded-2xl bg-ink-900/[.04] px-2 py-2.5 dark:bg-white/[.05]">
-    <div className="text-[10px] text-ink-400">{label}</div>
+    <div className="text-[12px] text-ink-400">{label}</div>
     <div className="mt-0.5 flex items-center justify-center gap-1 text-[13px] font-medium tabular-nums">
       {color && <span className="h-2 w-2 rounded-full" style={{ background: color }} />}
       {value}
@@ -348,7 +348,7 @@ export function CycleHistory() {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {(Object.keys(PHASES) as (keyof typeof PHASES)[]).map((p) => (
-            <span key={p} className="flex items-center gap-1 text-[11px] text-ink-500">
+            <span key={p} className="flex items-center gap-1 text-[12px] text-ink-500">
               <span className="h-2 w-2 rounded-full" style={{ background: PHASES[p].color }} />
               {PHASES[p].label}
             </span>

@@ -26,7 +26,7 @@ export default function Buffet() {
         <Orbs seed="buffet" intensity={0.8} />
         <SaladBowl size={140} className="pointer-events-none absolute -bottom-3 left-3" />
         <div className="relative max-w-[60%]">
-          <div className="text-[11px] text-white/70">تغذیه‌ی هوشمند</div>
+          <div className="text-[12px] text-white/70">تغذیه‌ی هوشمند</div>
           <div className="mt-2 font-display text-[2rem] leading-[1.1]">غذای سالم، با کالری دقیق</div>
           <div className="mt-1 text-[13px] text-white/75">با تخفیف ویژه‌ی اعضای کی‌فیت</div>
         </div>
@@ -41,7 +41,7 @@ export default function Buffet() {
                 <Stars value={r.rating} />
               </div>
               <div className="truncate text-xs text-ink-500">{r.description}</div>
-              <div className="mt-1 flex items-center gap-1 text-[11px] text-ink-400">
+              <div className="mt-1 flex items-center gap-1 text-[12px] text-ink-400">
                 <Clock size={12} /> {num(r.deliveryMinutes)} دقیقه {!r.open && <Badge color="rose">بسته</Badge>}
               </div>
             </div>

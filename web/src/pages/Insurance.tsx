@@ -8,7 +8,7 @@ import { CLAIM_STATUS, activePolicy, buyPolicy, cancelPolicy, submitClaim, usedC
 import { Badge, Button, Card, Field, ImagePicker, Input, NumberInput, PageHeader, Progress, SectionTitle, Select, Sheet, Textarea } from '@/ui/kit'
 import { HeartPulse } from '@/ui/art'
 import { useMe, useBalance } from '@/ui/hooks'
-import { runOk } from '@/ui/toast'
+import { runOk, ask } from '@/ui/toast'
 
 const STATUS_COLOR = { submitted: 'sky', reviewing: 'amber', approved: 'emerald', rejected: 'rose', paid: 'emerald' } as const
 
@@ -50,12 +50,12 @@ export default function Insurance() {
             <div className="flex items-center gap-1.5 text-xs opacity-60"><ShieldCheck size={14} /> بیمه‌نامه‌ی فعال</div>
             <div className="mt-1 font-display text-[2rem] leading-none">بیمه‌ی {plan.name}</div>
             <div className="mt-2 text-xs opacity-70" dir="rtl">شماره: <span dir="ltr">{policy.number}</span> · تا {faDate(policy.endAt)}</div>
-            <div className="mt-4 text-[11px] opacity-70">سقف درمان: {toman(plan.medicalCover)} · استفاده‌شده: {toman(used)}</div>
+            <div className="mt-4 text-[12px] opacity-70">سقف درمان: {toman(plan.medicalCover)} · استفاده‌شده: {toman(used)}</div>
             <Progress value={used / plan.medicalCover} className="mt-1.5 !bg-white/50" />
           </div>
           <div className="relative mt-4 flex gap-2">
             <Button size="sm" variant="dark" icon={<Plus size={14} />} onClick={() => setClaim(true)}>اعلام خسارت</Button>
-            {canCancel && <Button size="sm" variant="ghost" onClick={() => confirm('انصراف و بازگشت کامل حق بیمه؟') && runOk(() => cancelPolicy(policy.id), 'بیمه‌نامه لغو و حق بیمه برگشت داده شد')}>انصراف</Button>}
+            {canCancel && <Button size="sm" variant="ghost" onClick={async () => (await ask('انصراف و بازگشت کامل حق بیمه؟')) && runOk(() => cancelPolicy(policy.id), 'بیمه‌نامه لغو و حق بیمه برگشت داده شد')}>انصراف</Button>}
           </div>
         </div>
       ) : (
@@ -66,13 +66,13 @@ export default function Insurance() {
               <Card key={p.id} className="p-5">
                 <div className="flex items-center justify-between">
                   <span className="font-display text-2xl">{p.name}</span>
-                  <span className="text-sm font-semibold">{toman(p.price)} <span className="text-[11px] font-normal text-ink-400">/ سال</span></span>
+                  <span className="text-sm font-semibold">{toman(p.price)} <span className="text-[12px] font-normal text-ink-400">/ سال</span></span>
                 </div>
-                <div className="mt-1 text-[11px] text-ink-400">{p.provider} · فرانشیز {num(p.deductiblePct)}٪</div>
+                <div className="mt-1 text-[12px] text-ink-400">{p.provider} · فرانشیز {num(p.deductiblePct)}٪</div>
                 <ul className="mt-3 space-y-1 text-xs leading-6">
                   {p.perks.map((x) => <li key={x}>• {x}</li>)}
                 </ul>
-                <div className="mt-2 text-[11px] text-ink-500">رشته‌ها: {p.sports.join('، ')}</div>
+                <div className="mt-2 text-[12px] text-ink-500">رشته‌ها: {p.sports.join('، ')}</div>
                 <Button className="mt-4 w-full" onClick={() => setBuy(p.id)}>خرید بیمه‌نامه</Button>
               </Card>
             ))}
@@ -89,19 +89,19 @@ export default function Insurance() {
                 <div className="flex items-center gap-2">
                   <FileText size={16} className="text-ink-400" />
                   <span className="text-sm font-medium">{c.sport}</span>
-                  <span className="text-[11px] text-ink-400">{faDate(c.incidentAt)}</span>
+                  <span className="text-[12px] text-ink-400">{faDate(c.incidentAt)}</span>
                   <Badge color={STATUS_COLOR[c.status]} className="mr-auto">{CLAIM_STATUS[c.status]}</Badge>
                 </div>
                 <div className="mt-2 text-xs text-ink-500">{c.description}</div>
                 <div className="mt-2 text-xs">درخواست: {toman(c.amount)}{c.approvedAmount ? ` · تأییدشده: ${toman(c.approvedAmount)}` : ''}</div>
-                {c.note && <div className="mt-1 text-[11px] text-ink-400">نظر کارشناس: {c.note}</div>}
+                {c.note && <div className="mt-1 text-[12px] text-ink-400">نظر کارشناس: {c.note}</div>}
               </Card>
             ))}
           </div>
         </>
       )}
 
-      <p className="mt-6 text-center text-[11px] leading-5 text-ink-400">صدور بیمه‌نامه و پرداخت خسارت بر اساس شرایط عمومی بیمه‌ی حوادث بیمه‌گر طرف قرارداد است. کی‌فیت نماینده‌ی فروش و پیگیری است.</p>
+      <p className="mt-6 text-center text-[12px] leading-5 text-ink-400">صدور بیمه‌نامه و پرداخت خسارت بر اساس شرایط عمومی بیمه‌ی حوادث بیمه‌گر طرف قرارداد است. کی‌فیت نماینده‌ی فروش و پیگیری است.</p>
 
       <Sheet open={!!buy} onClose={() => setBuy(undefined)} title="خرید بیمه‌نامه">
         {buy && (() => {
@@ -111,7 +111,7 @@ export default function Insurance() {
               <p className="text-sm text-ink-500">بیمه‌ی {p.name} — {toman(p.price)} برای یک سال. پرداخت از کیف پول (موجودی: {toman(bal)}).</p>
               <Field label="کد ملی بیمه‌شده"><Input value={nid} onChange={(e) => setNid(e.target.value)} inputMode="numeric" dir="ltr" placeholder="۰۰۱۲۳۴۵۶۷۸" /></Field>
               <Button className="w-full" disabled={bal < p.price} onClick={async () => { if (await runOk(() => buyPolicy(p.id, nid.replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))), 'بیمه‌نامه صادر شد')) setBuy(undefined) }}>پرداخت و صدور</Button>
-              <p className="text-center text-[11px] text-ink-400">تا ۱۴ روز پس از خرید (بدون خسارت) امکان انصراف با بازگشت کامل وجه.</p>
+              <p className="text-center text-[12px] text-ink-400">تا ۱۴ روز پس از خرید (بدون خسارت) امکان انصراف با بازگشت کامل وجه.</p>
             </div>
           )
         })()}

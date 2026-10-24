@@ -127,10 +127,10 @@ export default function FitYab() {
                   {[
                     ['فاصله', `${dec(sel.d)} کیلومتر`],
                     ['زمان رسیدن', `${num(Math.max(3, (sel.d / 22) * 60))} دقیقه`],
-                    ['هر سانس', `${num(sel.g.sessionPrice / 1000)} هزار`],
+                    sel.g.rental && !sel.g.sessionPrice ? ['هر ساعت اجاره', `${num(sel.g.rental.hourlyPrice / 1000)} هزار`] : ['هر سانس', `${num(sel.g.sessionPrice / 1000)} هزار`],
                   ].map(([k, v], i) => (
                     <div key={k} className={i === 1 ? 'border-x hairline' : ''}>
-                      <div className="text-[11px] text-ink-400">{k}</div>
+                      <div className="text-[12px] text-ink-400">{k}</div>
                       <div className="mt-0.5 text-sm font-light tabular-nums">{v}</div>
                     </div>
                   ))}

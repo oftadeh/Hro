@@ -45,9 +45,9 @@ export default function GymDashboard() {
     <div className="animate-fade-up">
       <PageHeader title={`سلام ${me.name.split(' ')[0]}`} subtitle="خلاصه‌ی عملکرد باشگاه‌های شما در فیت‌یاب" actions={<Link to="edit"><Button size="sm" icon={<Plus size={16} />}>باشگاه جدید</Button></Link>} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="ورود امروز" value={num(today.length)} icon={<Users size={18} />} />
+        <Stat tone="violet" label="ورود امروز" value={num(today.length)} icon={<Users size={18} />} />
         <Stat label="کل ورودها" value={num(myCheckins.length)} icon={<TrendingUp size={18} />} tone="sky" />
-        <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="violet" />
+        <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="emerald" />
         <Stat label="موجودی کیف پول" value={toman(bal)} icon={<Building2 size={18} />} tone="amber" />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
@@ -62,7 +62,7 @@ export default function GymDashboard() {
         <Card>
           <div className="mb-2 font-semibold">ساعات اوج ورود</div>
           <MiniBars data={hours} />
-          <div className="mt-2 text-[11px] text-ink-500">لغو: {num(cancelled)} · عدم حضور: {num(noShow)} — برای پر کردن ساعات کم‌تردد، «تخفیف ساعات خلوت» را در ویرایش باشگاه فعال کنید.</div>
+          <div className="mt-2 text-[12px] text-ink-500">لغو: {num(cancelled)} · عدم حضور: {num(noShow)} — برای پر کردن ساعات کم‌تردد، «تخفیف ساعات خلوت» را در ویرایش باشگاه فعال کنید.</div>
         </Card>
       </div>
       <SectionTitle title="باشگاه‌های من" />

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Activity, Building2, Coins, Landmark, Lock, Users } from 'lucide-react'
+import { Activity, Building2, ChevronLeft, Coins, Landmark, Lock, Users } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { MODULE_LABEL, ROLE_META } from '@/core/config'
 import { num, toman } from '@/core/format'
@@ -20,6 +20,12 @@ export default function AdminOverview() {
   const { gmv, revenue, revenueByModule } = platformStats()
   const pendingGyms = gyms.filter((g) => !g.approved).length
   const pendingPayouts = payouts.filter((p) => p.status === 'pending').length
+  const pendingDocs = users.filter((u) => u.verification?.status === 'pending').length
+  const todo = [
+    { n: pendingDocs, label: 'مدرک کسب‌وکار در انتظار بررسی', to: 'approvals', tone: 'card-violet' },
+    { n: pendingGyms, label: 'باشگاه در انتظار تأیید', to: 'gyms', tone: 'card-pink' },
+    { n: pendingPayouts, label: 'درخواست تسویه در انتظار', to: 'finance', tone: 'card-mint' },
+  ].filter((t) => t.n > 0)
   const roleCounts = (Object.keys(ROLE_META) as Role[]).filter((r) => r !== 'admin').map((r) => ({ r, n: users.filter((u) => u.roles.includes(r)).length }))
   const bars = [
     { label: 'اشتراک', value: revenueByModule.subscription ?? 0 },
@@ -30,16 +36,21 @@ export default function AdminOverview() {
     <div className="animate-fade-up">
       <PageHeader title="نمای کلی کی‌فیت" subtitle="نظارت بر همه‌ی ماژول‌ها، نقش‌ها و جریان مالی" />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="درآمد کی‌فیت (کمیسیون + اشتراک)" value={toman(revenue)} icon={<Coins size={18} />} />
+        <Stat tone="violet" label="درآمد کی‌فیت (کمیسیون + اشتراک)" value={toman(revenue)} icon={<Coins size={18} />} />
         <Stat label="گردش مالی (GMV)" value={toman(gmv)} icon={<Activity size={18} />} tone="sky" />
-        <Stat label="موجودی حساب پلتفرم" value={toman(wallets.platform ?? 0)} icon={<Landmark size={18} />} tone="violet" />
+        <Stat label="موجودی حساب پلتفرم" value={toman(wallets.platform ?? 0)} icon={<Landmark size={18} />} tone="emerald" />
         <Stat label="صندوق امانی چالش‌ها" value={toman(wallets.escrow ?? 0)} icon={<Lock size={18} />} tone="amber" hint={`${num(challenges.filter((c) => c.status === 'active').length)} چالش فعال`} />
       </div>
 
-      {(pendingGyms > 0 || pendingPayouts > 0) && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {pendingGyms > 0 && <Link to="gyms"><Card className="border-brand-200 bg-brand-50 text-sm font-semibold dark:border-brand-500/20 dark:bg-brand-500/10">{num(pendingGyms)} باشگاه در انتظار تایید</Card></Link>}
-          {pendingPayouts > 0 && <Link to="finance"><Card className="border-aqua-200 bg-aqua-50 text-sm font-semibold dark:border-aqua-500/20 dark:bg-aqua-500/10">{num(pendingPayouts)} درخواست تسویه در انتظار</Card></Link>}
+      {todo.length > 0 && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {todo.map((t) => (
+            <Link key={t.to} to={t.to} className={`press anim-enter flex items-center gap-3 rounded-[22px] p-4 text-ink-950 ${t.tone}`}>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/50 text-[17px] font-extrabold tabular-nums">{num(t.n)}</span>
+              <span className="min-w-0 flex-1 text-[14px] font-semibold leading-6">{t.label}</span>
+              <ChevronLeft size={18} className="opacity-60" />
+            </Link>
+          ))}
         </div>
       )}
 

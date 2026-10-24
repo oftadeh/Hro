@@ -318,7 +318,7 @@ export const saveRestaurant = svc(
       if (ex) Object.assign(ex, data)
       else {
         d.restaurants.unshift({
-          name: 'رستوران من', description: '', address: '', lat: 35.72, lng: 51.39, cover: 'from-ink-700 via-ink-800 to-brand-600', deliveryMinutes: 40, open: true, ...data,
+          name: 'رستوران من', description: '', address: '', lat: 32.6546, lng: 51.668, cover: 'from-ink-700 via-ink-800 to-brand-600', deliveryMinutes: 40, open: true, ...data,
           id: uid('r-'), ownerId: me, rating: 5, approved: false,
         } as Restaurant)
         d.users.filter((u) => u.roles.includes('admin')).forEach((a) => notify(d, a.id, 'رستوران جدید در انتظار تأیید', `«${data.name ?? 'رستوران'}» ثبت شد.`, '', '/panel/admin/approvals'))

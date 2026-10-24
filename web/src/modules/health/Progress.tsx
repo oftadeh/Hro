@@ -61,7 +61,7 @@ export default function Progress() {
                 ['میانگین خواب', `${num(week.avgSleep)} ساعت`],
               ].map(([l, v]) => (
                 <div key={l} className="rounded-2xl bg-ink-900/[.04] p-3 dark:bg-white/[.05]">
-                  <div className="text-[10px] text-ink-400">{l}</div>
+                  <div className="text-[12px] text-ink-400">{l}</div>
                   <div className="mt-1 text-sm font-semibold">{v}</div>
                 </div>
               ))}
@@ -82,7 +82,7 @@ export default function Progress() {
 
       {inbody.length > 0 && (
         <>
-          <SectionTitle title="آنالیز ترکیب بدن (InBody)" action={<span className="text-[11px] text-ink-400">{state.gyms.find((g) => g.id === inbody[inbody.length - 1].gymId)?.name}</span>} />
+          <SectionTitle title="آنالیز ترکیب بدن (InBody)" action={<span className="text-[12px] text-ink-400">{state.gyms.find((g) => g.id === inbody[inbody.length - 1].gymId)?.name}</span>} />
           <Card>
             <div className="grid grid-cols-3 gap-2 text-center">
               {(
@@ -101,14 +101,14 @@ export default function Progress() {
                 const good = diff !== undefined && diff !== 0 && (lowerBetter ? diff < 0 : diff > 0)
                 return (
                   <div key={k} className="rounded-2xl bg-ink-900/[.03] p-2.5 dark:bg-white/[.04]">
-                    <div className="text-[10px] text-ink-400">{label}</div>
-                    <div className="mt-0.5 font-display text-xl tabular-nums">{last !== undefined ? last.toLocaleString('fa-IR') : '—'}<span className="text-[10px] text-ink-400"> {unit}</span></div>
-                    {diff !== undefined && diff !== 0 && <div className={`text-[10px] ${good ? 'text-aqua-600' : 'text-coral-500'}`}>{diff > 0 ? '+' : ''}{diff.toLocaleString('fa-IR')}</div>}
+                    <div className="text-[12px] text-ink-400">{label}</div>
+                    <div className="mt-0.5 font-display text-xl tabular-nums">{last !== undefined ? last.toLocaleString('fa-IR') : '—'}<span className="text-[12px] text-ink-400"> {unit}</span></div>
+                    {diff !== undefined && diff !== 0 && <div className={`text-[12px] ${good ? 'text-aqua-600' : 'text-coral-500'}`}>{diff > 0 ? '+' : ''}{diff.toLocaleString('fa-IR')}</div>}
                   </div>
                 )
               })}
             </div>
-            {inbody.length > 1 && <div className="mt-2 text-[11px] text-ink-400">مقایسه با آنالیز {faDate(inbody[inbody.length - 2].day + 'T12:00')}</div>}
+            {inbody.length > 1 && <div className="mt-2 text-[12px] text-ink-400">مقایسه با آنالیز {faDate(inbody[inbody.length - 2].day + 'T12:00')}</div>}
           </Card>
         </>
       )}
@@ -133,7 +133,7 @@ export default function Progress() {
             {photos.map((p) => (
               <div key={p.id} className="relative aspect-[3/4] overflow-hidden rounded-2xl">
                 <img src={p.photo} alt="" className="h-full w-full object-cover" />
-                <span className="absolute bottom-1 right-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white">{faDate(p.day + 'T12:00')}</span>
+                <span className="absolute bottom-1 right-1 rounded-full bg-black/50 px-2 py-0.5 text-[12px] text-white">{faDate(p.day + 'T12:00')}</span>
               </div>
             ))}
           </div>
@@ -180,7 +180,7 @@ export default function Progress() {
           </Button>
         </div>
       </Sheet>
-      <p className="mt-6 text-center text-[11px] text-ink-400">{healthScore(me.id, undefined, state).parts.map((p) => p.hint).slice(0, 2).join(' · ')}</p>
+      <p className="mt-6 text-center text-[12px] text-ink-400">{healthScore(me.id, undefined, state).parts.map((p) => p.hint).slice(0, 2).join(' · ')}</p>
     </div>
   )
 }

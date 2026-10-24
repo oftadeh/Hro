@@ -59,8 +59,8 @@ export default function CoachOrders() {
                 <ShieldCheck size={13} /> پرونده‌ی سلامت شاگرد (اشتراک‌گذاری‌شده)
               </Link>
             )}
-            {o.program && <div className="mt-2 text-[11px] text-ink-500">پایبندی: {(o.done?.length ?? 0).toLocaleString('fa-IR')} از {o.program.weeks.reduce((a, w) => a + w.days.length, 0).toLocaleString('fa-IR')} جلسه</div>}
-            <div className="mt-2 text-[11px] text-ink-400">{faDateTime(o.createdAt)}</div>
+            {o.program && <div className="mt-2 text-[12px] text-ink-500">پایبندی: {(o.done?.length ?? 0).toLocaleString('fa-IR')} از {o.program.weeks.reduce((a, w) => a + w.days.length, 0).toLocaleString('fa-IR')} جلسه</div>}
+            <div className="mt-2 text-[12px] text-ink-400">{faDateTime(o.createdAt)}</div>
             {o.status === 'pending' ? (
               <Button className="mt-3 w-full" onClick={() => { setOpen(o); setContent(TEMPLATE); setProgram(newProgram(Math.min(4, Math.max(1, 4)))) }}>نوشتن و تحویل برنامه</Button>
             ) : (
@@ -110,7 +110,7 @@ export default function CoachOrders() {
               </details>
             ))}
             <Button size="sm" variant="secondary" icon={<Plus size={14} />} onClick={() => setProgram({ ...program, weeks: [...program.weeks, { days: program.weeks[program.weeks.length - 1].days.map((d) => ({ ...d })) }] })}>افزودن هفته</Button>
-            <div className="text-[11px] text-ink-400">{program.weeks.length.toLocaleString('fa-IR')} هفته · حرکات: {[...new Set(program.weeks.flatMap((w) => w.days.flatMap((d) => d.exercises.map((e) => exerciseById(e.exerciseId)?.name))))].slice(0, 6).join('، ')}</div>
+            <div className="text-[12px] text-ink-400">{program.weeks.length.toLocaleString('fa-IR')} هفته · حرکات: {[...new Set(program.weeks.flatMap((w) => w.days.flatMap((d) => d.exercises.map((e) => exerciseById(e.exerciseId)?.name))))].slice(0, 6).join('، ')}</div>
           </div>
         )}
         <Textarea rows={program ? 5 : 14} value={content} onChange={(e) => setContent(e.target.value)} placeholder="توضیحات و نکات برنامه" />

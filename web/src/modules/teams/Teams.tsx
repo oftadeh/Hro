@@ -43,17 +43,17 @@ export default function Teams() {
             <Link key={t.id} to={`/teams/${t.id}`}>
               <Card className="lift-hover p-5">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl grad-lavender text-ink-950"><Users size={18} /></span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl card-violet text-ink-950"><Users size={18} /></span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold">{t.name}</div>
-                    <div className="text-[11px] text-ink-500">{num(t.members.length)} از {num(TEAM_MAX)} عضو{t.goal ? ` · ${t.goal}` : ''}</div>
+                    <div className="text-[12px] text-ink-500">{num(t.members.length)} از {num(TEAM_MAX)} عضو{t.goal ? ` · ${t.goal}` : ''}</div>
                   </div>
                 </div>
                 <div className="mt-3 flex -space-x-2 space-x-reverse">
                   {t.members.slice(0, 6).map((m) => <Avatar key={m} name={users[m]?.name ?? ''} src={users[m]?.avatar} size={30} className="ring-2 ring-white dark:ring-ink-850" />)}
                 </div>
                 {next && (
-                  <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-ink-900/[.04] px-3 py-2 text-[11px] dark:bg-white/[.05]">
+                  <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-ink-900/[.04] px-3 py-2 text-[12px] dark:bg-white/[.05]">
                     <CalendarClock size={13} /> {next.title} · {faDateTime(next.at)}
                   </div>
                 )}

@@ -7,7 +7,8 @@ import { num, timeAgo, toman } from '@/core/format'
 import { addComment, deleteComment, deletePost, reportContent, toggleBlock, toggleLike, toggleSave } from '@/core/services/fitzone'
 import { hasBadge } from '@/core/services/perks'
 import type { Post } from '@/core/types'
-import { ROLE_META } from '@/core/config'
+import { ROLE_META, toneClass } from '@/core/config'
+import { MediaGallery } from './Media'
 import { Avatar, Button, Card, Sheet, Textarea } from '@/ui/kit'
 import { MetricIcon } from '@/ui/icons'
 import { useMe, useUserMap } from '@/ui/hooks'
@@ -31,10 +32,19 @@ export function PostCard({ post }: { post: Post }) {
   const [report, setReport] = useState<{ kind: 'post' | 'comment' | 'user'; refId: string } | null>(null)
   const [reason, setReason] = useState('')
   const isAdmin = me.roles.includes('admin')
+  const [pop, setPop] = useState(0)
+  const images = [post.image, ...(post.images ?? [])].filter((x): x is string => !!x)
+  const hasMedia = images.length > 0 || !!post.video
+  // پست متنی کوتاه با رنگ انتخابی به‌صورت کارت رنگی نمایش داده می‌شود
+  const colorCard = !hasMedia && !!post.bg && post.text.length <= 280
+  const like = () => {
+    if (!liked) setPop((n) => n + 1)
+    run(() => toggleLike(post.id))
+  }
 
   if (!author) return null
   return (
-    <Card className="overflow-hidden p-0">
+    <Card className="overflow-hidden rounded-[28px] p-0">
       <div className="flex items-center gap-3 px-4 pt-4">
         <Link to={`/u/${author.id}`}>
           <Avatar name={author.name} src={author.avatar} size={36} />
@@ -44,7 +54,7 @@ export function PostCard({ post }: { post: Post }) {
             {author.name}
             {hasBadge(author.id, { subscriptions: subs }) && <BadgeCheck size={14} strokeWidth={1.75} className="text-brand-500 dark:text-brand-300" aria-label="عضو ویژه" />}
           </Link>
-          <div className="mt-0.5 text-[11px] text-ink-400">
+          <div className="mt-0.5 text-[12px] text-ink-400">
             {proRole && <span>{ROLE_META[proRole].label} · </span>}
             {timeAgo(post.createdAt)}
           </div>
@@ -54,7 +64,11 @@ export function PostCard({ post }: { post: Post }) {
         </button>
       </div>
 
-      {post.text && (
+      {colorCard ? (
+        <div className={clsx('mx-3 mt-3 flex min-h-[220px] items-center justify-center rounded-[22px] p-6 text-center', toneClass(post.bg))} onDoubleClick={() => !liked && like()}>
+          <p className="whitespace-pre-line text-[22px] font-extrabold leading-[1.7]">{post.text}</p>
+        </div>
+      ) : post.text && (
         <p className="whitespace-pre-line px-4 pt-3 text-[14.5px] leading-7 text-ink-800 dark:text-ink-100">
           {post.text.split(/(#[\p{L}\p{N}_]+)/u).map((part, i) =>
             part.startsWith('#') ? (
@@ -67,11 +81,7 @@ export function PostCard({ post }: { post: Post }) {
           )}
         </p>
       )}
-      {post.image && (
-        <div className="mt-3" onDoubleClick={() => !liked && toggleLike(post.id)}>
-          <img src={post.image} alt="" className="max-h-[34rem] w-full object-cover" />
-        </div>
-      )}
+      {hasMedia && <MediaGallery images={images} video={post.video} className="mx-3 mt-3" onDoubleTap={() => !liked && like()} />}
 
       {(challenge || gym) && (
         <div className="mx-4 mt-3 space-y-2">
@@ -80,27 +90,27 @@ export function PostCard({ post }: { post: Post }) {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-950 text-brand-300"><MetricIcon metric={challenge.metric} size={16} /></span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-medium">{challenge.title}</div>
-                <div className="text-[11px] tabular-nums text-ink-400">صندوق {toman(challenge.pool)} · {num(challenge.participants.length)} شرکت‌کننده</div>
+                <div className="text-[12px] tabular-nums text-ink-400">صندوق {toman(challenge.pool)} · {num(challenge.participants.length)} شرکت‌کننده</div>
               </div>
-              <span className="text-[11px] text-ink-500">مشاهده</span>
+              <span className="text-[12px] text-ink-500">مشاهده</span>
             </Link>
           )}
           {gym && (
             <Link to={`/fityab/${gym.id}`} className="flex items-center gap-3 rounded-xl border hairline p-3 transition hover:border-ink-300 dark:hover:border-white/15">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-900/[.05] text-[11px] font-medium dark:bg-white/[.06]">{gym.name.replace('باشگاه ', '')[0]}</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-900/[.05] text-[12px] font-medium dark:bg-white/[.06]">{gym.name.replace('باشگاه ', '')[0]}</span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-medium">{gym.name}</div>
-                <div className="truncate text-[11px] text-ink-400">{gym.address}</div>
+                <div className="truncate text-[12px] text-ink-400">{gym.address}</div>
               </div>
-              <span className="text-[11px] text-ink-500">فیت‌یاب</span>
+              <span className="text-[12px] text-ink-500">فیت‌یاب</span>
             </Link>
           )}
         </div>
       )}
 
       <div className="mt-2 flex items-center gap-1 px-2.5 pb-1">
-        <button onClick={() => run(() => toggleLike(post.id))} className={clsx(action, liked ? 'text-coral-600' : 'text-ink-500 hover:text-ink-950 dark:hover:text-white')}>
-          <Heart size={18} strokeWidth={1.5} className={clsx(liked && 'fill-coral-600')} /> {num(post.likes.length)}
+        <button onClick={like} aria-pressed={liked} aria-label="پسندیدن" className={clsx(action, liked ? 'text-coral-600' : 'text-ink-500 hover:text-ink-950 dark:hover:text-white')}>
+          <Heart key={pop} size={20} strokeWidth={1.6} className={clsx(liked && 'fill-coral-600', pop > 0 && 'anim-pop')} /> {num(post.likes.length)}
         </button>
         <button onClick={() => setShowComments(!showComments)} className={clsx(action, 'text-ink-500 hover:text-ink-950 dark:hover:text-white')}>
           <MessageCircle size={18} strokeWidth={1.5} /> {num(post.comments.length)}
@@ -182,7 +192,7 @@ export function PostCard({ post }: { post: Post }) {
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {['محتوای نامناسب', 'توهین یا آزار', 'اسپم یا تبلیغ', 'اطلاعات نادرست سلامت'].map((r) => (
-              <button key={r} onClick={() => setReason(r)} className={clsx('rounded-full px-3 py-1.5 text-xs', reason === r ? 'grad-lavender text-ink-950' : 'bg-ink-900/[.05] dark:bg-white/[.06]')}>
+              <button key={r} onClick={() => setReason(r)} className={clsx('rounded-full px-3 py-1.5 text-xs', reason === r ? 'card-violet text-ink-950' : 'bg-ink-900/[.05] dark:bg-white/[.06]')}>
                 {r}
               </button>
             ))}

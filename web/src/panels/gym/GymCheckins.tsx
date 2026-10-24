@@ -84,10 +84,10 @@ export default function GymCheckins() {
               <Avatar name={result.userName} src={result.avatar} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">{result.memberName ? `${result.memberName} (فرزند ${result.userName})` : result.userName}</div>
-                <div className="text-[11px] text-ink-500">
+                <div className="text-[12px] text-ink-500">
                   {result.className ? `کلاس ${result.className}` : 'سانس آزاد'} · {toman(result.paid)}
                 </div>
-                {result.memberNotes && <div className="mt-1 text-[11px] font-medium text-coral-600">نکته‌ی والد: {result.memberNotes}</div>}
+                {result.memberNotes && <div className="mt-1 text-[12px] font-medium text-coral-600">نکته‌ی والد: {result.memberNotes}</div>}
               </div>
               {!result.memberName && <Button size="sm" variant="secondary" onClick={() => setInbody(true)}>InBody</Button>}
             </div>
@@ -104,7 +104,7 @@ export default function GymCheckins() {
               </Badge>
             )}
           </div>
-          <p className="mt-1 text-[11px] leading-5 text-ink-500">شماره‌ی موبایل کی‌فیت ورزشکار را وارد کنید؛ درخواست ورود برایش ارسال می‌شود و با تأیید او، پرداخت و ورود ثبت می‌شود.</p>
+          <p className="mt-1 text-[12px] leading-5 text-ink-500">شماره‌ی موبایل کی‌فیت ورزشکار را وارد کنید؛ درخواست ورود برایش ارسال می‌شود و با تأیید او، پرداخت و ورود ثبت می‌شود.</p>
           <form
             className="mt-3 flex gap-2"
             onSubmit={async (e) => {
@@ -155,7 +155,7 @@ export default function GymCheckins() {
               <Avatar name={users[c.userId]?.name ?? ''} src={users[c.userId]?.avatar} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold">{users[c.userId]?.name}</div>
-                <div className="text-[11px] text-ink-400">
+                <div className="text-[12px] text-ink-400">
                   {cls ? `کلاس ${cls.title} · ${c.slotAt && faTime(c.slotAt)}` : 'سانس آزاد'} · {faDateTime(c.usedAt ?? c.createdAt)}
                 </div>
               </div>

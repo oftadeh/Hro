@@ -35,7 +35,7 @@ export function CartSheet({ kind, open, onClose }: { kind: CartItem['kind']; ope
   }
   const cal = lines.reduce((a, l) => a + ('calories' in l ? (l.calories as number) : 0), 0)
   const saved = me.addresses ?? []
-  const [address, setAddress] = useState(saved[0]?.text ?? 'تهران، ')
+  const [address, setAddress] = useState(saved[0]?.text ?? 'اصفهان، ')
 
   return (
     <Sheet open={open} onClose={onClose} title={kind === 'product' ? 'سبد خرید' : 'سفارش غذا'}>
@@ -62,7 +62,7 @@ export function CartSheet({ kind, open, onClose }: { kind: CartItem['kind']; ope
             {saved.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {saved.map((a) => (
-                  <button key={a.id} type="button" onClick={() => setAddress(a.text)} className={`rounded-full px-3 py-1.5 text-[11px] ${address === a.text ? 'grad-lavender text-ink-950' : 'bg-ink-900/[.05] dark:bg-white/[.06]'}`}>
+                  <button key={a.id} type="button" onClick={() => setAddress(a.text)} className={`rounded-full px-3 py-1.5 text-[12px] ${address === a.text ? 'card-violet text-ink-950' : 'bg-ink-900/[.05] dark:bg-white/[.06]'}`}>
                     {a.title}
                   </button>
                 ))}

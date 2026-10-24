@@ -26,10 +26,10 @@ export default function PanelFinance() {
     <div className="animate-fade-up">
       <PageHeader title="درآمد و تسویه" />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="موجودی قابل برداشت" value={toman(bal)} icon={<Wallet size={18} />} />
+        <Stat tone="violet" label="موجودی قابل برداشت" value={toman(bal)} icon={<Wallet size={18} />} />
         <Stat label="فروش ناخالص" value={toman(gross)} icon={<TrendingUp size={18} />} tone="sky" />
-        <Stat label="کمیسیون کی‌فیت" value={toman(commission)} icon={<Percent size={18} />} tone="rose" />
-        <Stat label="درآمد خالص" value={toman(gross - commission)} icon={<Banknote size={18} />} tone="violet" />
+        <Stat label="کمیسیون کی‌فیت" value={toman(commission)} icon={<Percent size={18} />} tone="emerald" />
+        <Stat label="درآمد خالص" value={toman(gross - commission)} icon={<Banknote size={18} />} tone="amber" />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_340px]">
         <Card>
@@ -52,7 +52,7 @@ export default function PanelFinance() {
             <Card key={p.id} className="flex items-center justify-between py-3">
               <div>
                 <div className="text-sm font-semibold">{toman(p.amount)}</div>
-                <div className="text-[11px] text-ink-400">{faDate(p.createdAt)}</div>
+                <div className="text-[12px] text-ink-400">{faDate(p.createdAt)}</div>
               </div>
               <Badge color={p.status === 'paid' ? 'emerald' : p.status === 'rejected' ? 'rose' : 'amber'}>{p.status === 'paid' ? 'پرداخت شد' : p.status === 'rejected' ? 'رد شد' : 'در انتظار'}</Badge>
             </Card>

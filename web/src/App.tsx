@@ -8,6 +8,8 @@ import { connectDevice, syncHealthData } from '@/core/services/devices'
 import { installNativeHealthBridge } from '@/core/client/health'
 import { REMOTE } from '@/core/client/remote'
 import type { Role } from '@/core/types'
+import { ROLE_META } from '@/core/config'
+import { isBusiness, isBusinessPathAllowed, primaryBusinessRole } from '@/core/roles'
 import { Toaster } from '@/ui/toast'
 import { useMe } from '@/ui/hooks'
 import { AppShell } from '@/layouts/AppShell'
@@ -15,6 +17,11 @@ import { PanelShell, type PanelLink } from '@/layouts/PanelShell'
 
 import Login from '@/pages/Login'
 import Home from '@/pages/Home'
+import { ViewTransitions } from '@/ui/ViewTransitions'
+const Services = lazy(() => import('@/pages/Services'))
+const Landing = lazy(() => import('@/pages/Landing'))
+const Scan = lazy(() => import('@/pages/Scan'))
+const GymQr = lazy(() => import('@/panels/gym/GymQr'))
 const WalletPage = lazy(() => import('@/pages/Wallet'))
 const Profile = lazy(() => import('@/pages/Profile'))
 const Notifications = lazy(() => import('@/pages/Notifications'))
@@ -95,7 +102,8 @@ const finance: PanelLink = { to: 'finance', label: 'درآمد و تسویه', i
 const PANELS: Record<Exclude<Role, 'user'>, PanelLink[]> = {
   gym: [
     { to: '/panel/gym', label: 'داشبورد', icon: BarChart3, end: true },
-    { to: 'checkins', label: 'پذیرش ورود', icon: QrCode },
+    { to: 'checkins', label: 'پذیرش ورود', icon: ClipboardList },
+    { to: 'qr', label: 'QR ورود باشگاه', icon: QrCode },
     { to: 'members', label: 'اعضا و کمپین', icon: Megaphone },
     { to: 'reviews', label: 'نظرات', icon: Star },
     { to: '/events', label: 'رویدادها', icon: CalendarDays },
@@ -147,10 +155,33 @@ function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
   return <>{children}</>
 }
 
+/** حساب کسب‌وکار فقط بخش‌های مجاز اپ (فیت‌زون، چالش‌ها، پیام، اعلان، پشتیبانی، پروفایل و کیف پول) را می‌بیند */
+function BusinessGate({ children }: { children: ReactNode }) {
+  const me = useMe()
+  const { pathname } = useLocation()
+  if (me && isBusiness(me) && !isBusinessPathAllowed(pathname)) {
+    const role = primaryBusinessRole(me)
+    return <Navigate to={role ? ROLE_META[role].panel : '/fitzone'} replace />
+  }
+  return <>{children}</>
+}
+
 export default function App() {
   const me = useMe()
   const theme = useSession((s) => s.theme)
+  const activeRole = useSession((s) => s.activeRole)
+  const setRole = useSession((s) => s.setRole)
   const { pathname } = useLocation()
+  const business = isBusiness(me)
+
+  // حساب کسب‌وکار همیشه در نقش تجاری خودش است (نه «ورزشکار»)
+  useEffect(() => {
+    if (!me || !business) return
+    if (activeRole === 'user' || !me.roles.includes(activeRole)) {
+      const r = primaryBusinessRole(me)
+      if (r) setRole(r)
+    }
+  }, [me?.id, business, activeRole]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -159,19 +190,27 @@ export default function App() {
   useEffect(() => {
     if (!me) return
     touchDaily().catch(() => {})
+    if (isBusiness(me)) return
     installNativeHealthBridge(async (kind, samples) => syncHealthData(await connectDevice(kind), samples))
     if (!REMOTE) expireTickets()
   }, [me?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => window.scrollTo(0, 0), [pathname, me?.id])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname, me?.id])
 
   if (!me) {
     return (
       <>
         <Toaster />
-        <Routes>
-          <Route path="*" element={<Login />} />
-        </Routes>
+        <ViewTransitions />
+        <Suspense fallback={<div className="h-dvh bg-[#131118]" />}>
+          <Routes>
+            {/* صفحه‌ی معرفی با موشن؛ ورود فقط با «شروع کن!» */}
+            <Route path="/" element={<Landing />} />
+            <Route path="*" element={<Login />} />
+          </Routes>
+        </Suspense>
       </>
     )
   }
@@ -185,11 +224,14 @@ export default function App() {
   return (
     <>
       <Toaster />
+      <ViewTransitions />
       <Suspense fallback={<div className="flex h-dvh items-center justify-center"><span className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>}>
       <Routes>
         <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route element={<AppShell />}>
+        <Route element={<BusinessGate><AppShell /></BusinessGate>}>
           <Route index element={<Home />} />
+          <Route path="services" element={<Services />} />
+          <Route path="scan" element={<Scan />} />
           <Route path="wallet" element={<WalletPage />} />
           <Route path="profile" element={<Profile />} />
           <Route path="u/:id" element={<UserProfile />} />
@@ -242,6 +284,7 @@ export default function App() {
         <Route path="/panel/gym" element={panel('gym')}>
           <Route index element={<GymDashboard />} />
           <Route path="checkins" element={<GymCheckins />} />
+          <Route path="qr" element={<GymQr />} />
           <Route path="members" element={<GymMembers />} />
           <Route path="reviews" element={<GymReviews />} />
           <Route path="edit" element={<GymEditor />} />

@@ -1,4 +1,6 @@
-import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, useMapEvents } from 'react-leaflet'
+import { BaseTiles } from '@/ui/BaseTiles'
+import { useSession } from '@/core/db'
 import L from 'leaflet'
 
 const pin = L.divIcon({
@@ -15,9 +17,10 @@ function Clicker({ onPick }: { onPick: (lat: number, lng: number) => void }) {
 
 /** انتخاب موقعیت روی نقشه با کلیک */
 export function LocationPicker({ lat, lng, onChange }: { lat: number; lng: number; onChange: (lat: number, lng: number) => void }) {
+  const dark = useSession((s) => s.theme) === 'dark'
   return (
-    <MapContainer center={[lat, lng]} zoom={13} className="h-64 w-full overflow-hidden rounded-2xl" attributionControl={false}>
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <MapContainer center={[lat, lng]} zoom={13} className="h-64 w-full overflow-hidden rounded-2xl">
+      <BaseTiles dark={dark} />
       <Clicker onPick={onChange} />
       <Marker position={[lat, lng]} icon={pin} />
     </MapContainer>

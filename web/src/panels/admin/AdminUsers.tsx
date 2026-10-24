@@ -35,7 +35,7 @@ export default function AdminUsers() {
                     <Avatar name={u.name} src={u.avatar} size={32} />
                     <div>
                       <div className="font-semibold">{u.name}</div>
-                      <div className="text-[11px] text-ink-400" dir="ltr">{u.phone}</div>
+                      <div className="text-[12px] text-ink-400" dir="ltr">{u.phone}</div>
                     </div>
                   </div>
                 </td>

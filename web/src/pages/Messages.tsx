@@ -29,7 +29,7 @@ export default function Messages() {
                   </div>
                   <div className="truncate text-xs text-ink-500">{last ? `${team && last.from !== me.id ? `${users[last.from]?.name ?? ''}: ` : ''}${last.text}` : 'گفتگو را شروع کنید'}</div>
                 </div>
-                <span className="text-[11px] text-ink-400">{timeAgo(t.updatedAt)}</span>
+                <span className="text-[12px] text-ink-400">{timeAgo(t.updatedAt)}</span>
               </Link>
             )
           })}

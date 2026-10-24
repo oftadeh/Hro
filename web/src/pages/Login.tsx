@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { Logo } from '@/layouts/Logo'
 import { ArrowLeft, Check, Lock } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
@@ -13,6 +14,7 @@ import { run, runOk } from '@/ui/toast'
 import { RoleIcon } from '@/ui/icons'
 import { Runner, Lifter, Yoga, Trophy } from '@/ui/art'
 import { daysAgoKey, GOALS, ACTIVITY } from '@/core/profile'
+import { BUSINESS_ROLES, type BusinessRole } from '@/core/roles'
 
 const DEMOS: { userId: string; role: Role }[] = [
   { userId: 'u-sara', role: 'user' },
@@ -53,7 +55,7 @@ export default function Login() {
   useEffect(() => {
     if (REMOTE) api<{ demo: boolean; demoUsers?: { id: string; name: string }[] }>('/config').then((c) => setDemoUsers(c.demo ? c.demoUsers ?? [] : null)).catch(() => setDemoUsers(null))
   }, [])
-  const [f, setF] = useState({ referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
+  const [f, setF] = useState<Form>({ kind: 'athlete', referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }))
   const n = (v: string) => Number(faDigitsToEn(v)) || undefined
 
@@ -73,6 +75,11 @@ export default function Login() {
       const r = await run(() => verifyOtp(phone, otp))
       if (r && !r.exists) setStep('profile')
     } else {
+      if (f.kind !== 'athlete') {
+        await run(() => registerUser({ name: f.name, gender: '', accountType: f.kind as BusinessRole }))
+        setLoading(false)
+        return
+      }
       const cycle = f.gender === 'female' && f.track && f.ago !== '' ? { lastPeriodStart: daysAgoKey(n(f.ago) ?? 0), cycleLength: n(f.cycleLength) ?? 28, periodLength: n(f.periodLength) ?? 5 } : undefined
       await run(() => registerUser({ referral: f.referral || undefined, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))
     }
@@ -97,10 +104,9 @@ export default function Login() {
           <div className="pointer-events-none absolute -left-2 top-2 sm:hidden">
             <Runner size={120} />
           </div>
-          <div className="flex items-center gap-3">
-            <img src="/favicon.svg" width={44} height={44} alt="" className="rounded-2xl" />
-            <div className="font-display text-3xl">کی‌فیت</div>
-          </div>
+          <Link to="/" className="inline-flex" aria-label="صفحه‌ی معرفی کی‌فیت">
+            <Logo size={44} sub />
+          </Link>
           <h1 className="mt-12 font-display text-[3.4rem] leading-[1.05] lg:text-[4.6rem]">
             یک عضویت،
             <br />
@@ -141,12 +147,12 @@ export default function Login() {
               <label className="block space-y-2">
                 <span className="text-xs text-white/50">کد تأیید ارسال‌شده به {phone}</span>
                 <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="• • • •" dir="ltr" className={`${field} text-center text-xl tracking-[1em]`} inputMode="numeric" maxLength={4} autoFocus />
-                <span className="block text-[11px] text-white/35">{hint}</span>
+                <span className="block text-[12px] text-white/35">{hint}</span>
               </label>
             ) : (
               <Onboarding f={f} set={set} />
             )}
-            <button type="submit" disabled={loading} className="grad-lavender flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-medium text-ink-950 shadow-glow transition hover:brightness-105 disabled:opacity-50">
+            <button type="submit" disabled={loading} className="card-violet flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-medium text-ink-950 shadow-glow transition hover:brightness-105 disabled:opacity-50">
               {step === 'phone' ? 'دریافت کد تأیید' : step === 'otp' ? 'ورود' : 'ساخت حساب و شروع'}
               <ArrowLeft size={17} strokeWidth={1.5} />
             </button>
@@ -159,7 +165,7 @@ export default function Login() {
 
           {demoUsers && (
           <div className="mt-10 border-t border-white/10 pt-6">
-            <div className="mb-4 text-[11px] tracking-wide text-white/40">ورود سریع با حساب‌های نمایشی</div>
+            <div className="mb-4 text-[12px] tracking-wide text-white/40">ورود سریع با حساب‌های نمایشی</div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {DEMOS.map((d) => {
                 const u = REMOTE ? demoUsers.find((x) => x.id === d.userId) : users.find((x) => x.id === d.userId)
@@ -172,7 +178,7 @@ export default function Login() {
                   >
                     <RoleIcon role={d.role} size={16} className="text-aqua-300" />
                     <div className="mt-2 text-xs font-medium">{ROLE_META[d.role].label}</div>
-                    <div className="truncate text-[11px] text-white/40">{u.name}</div>
+                    <div className="truncate text-[12px] text-white/40">{u.name}</div>
                   </button>
                 )
               })}
@@ -186,6 +192,8 @@ export default function Login() {
 }
 
 type Form = {
+  /** نوع حساب: ورزشکار یا یکی از انواع کسب‌وکار */
+  kind: 'athlete' | BusinessRole
   referral: string
   name: string
   gender: RegisterInput['gender']
@@ -200,11 +208,54 @@ type Form = {
   periodLength: string
 }
 
-const chip = (on: boolean) => clsx('rounded-full px-3.5 py-2 text-xs transition', on ? 'grad-lavender font-medium text-ink-950' : 'bg-white/[.07] text-white/65 hover:bg-white/[.12]')
+const chip = (on: boolean) => clsx('rounded-full px-3.5 py-2 text-xs transition', on ? 'card-violet font-medium text-ink-950' : 'bg-white/[.07] text-white/65 hover:bg-white/[.12]')
+
+function AccountKind({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void }) {
+  const business = f.kind !== 'athlete'
+  return (
+    <div className="space-y-3">
+      <span className="text-xs text-white/50">نوع حساب</span>
+      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="نوع حساب">
+        <button type="button" role="radio" aria-checked={!business} onClick={() => set('kind', 'athlete')} className={clsx(chip(!business), 'py-3 text-sm')}>
+          ورزشکار
+        </button>
+        <button type="button" role="radio" aria-checked={business} onClick={() => !business && set('kind', 'gym')} className={clsx(chip(business), 'py-3 text-sm')}>
+          کسب‌وکار
+        </button>
+      </div>
+      {business && (
+        <>
+          <div className="flex flex-wrap gap-2">
+            {BUSINESS_ROLES.map((r) => (
+              <button key={r} type="button" onClick={() => set('kind', r)} className={clsx(chip(f.kind === r), 'flex items-center gap-1.5')}>
+                <RoleIcon role={r} size={14} /> {ROLE_META[r].label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[12px] leading-6 text-white/40">
+            حساب کسب‌وکار فقط پنل مدیریت {ROLE_META[f.kind as BusinessRole].label} (اطلاعات، سفارش‌ها و حسابداری) به‌علاوه‌ی فیت‌زون و چالش‌ها را دارد. برای استفاده‌ی شخصی از کی‌فیت، یک حساب ورزشکار با شماره‌ی دیگر بسازید.
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
 
 function Onboarding({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void }) {
+  if (f.kind !== 'athlete') {
+    return (
+      <div className="space-y-5 animate-fade-up">
+        <AccountKind f={f} set={set} />
+        <label className="block space-y-2">
+          <span className="text-xs text-white/50">نام {f.kind === 'company' ? 'سازمان' : 'مجموعه یا کسب‌وکار'}</span>
+          <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً باشگاه آیرون‌من" className={field} autoFocus />
+        </label>
+      </div>
+    )
+  }
   return (
     <div className="space-y-5 animate-fade-up">
+      <AccountKind f={f} set={set} />
       <label className="block space-y-2">
         <span className="text-xs text-white/50">نام و نام خانوادگی</span>
         <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً سارا محمدی" className={field} autoFocus />
@@ -248,7 +299,7 @@ function Onboarding({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: 
           ['weightKg', 'وزن (کیلوگرم)', '۶۵'],
         ] as const).map(([k, label, ph]) => (
           <label key={k} className="block space-y-2">
-            <span className="text-[11px] text-white/50">{label}</span>
+            <span className="text-[12px] text-white/50">{label}</span>
             <input value={f[k]} onChange={(e) => set(k, e.target.value)} placeholder={ph} inputMode="numeric" className={`${field} text-center`} />
           </label>
         ))}
@@ -281,7 +332,7 @@ function Onboarding({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: 
           <label className="flex items-center justify-between gap-3">
             <span>
               <span className="block text-sm font-medium">ردیاب چرخه‌ی قاعدگی</span>
-              <span className="mt-0.5 flex items-center gap-1 text-[11px] text-white/50">
+              <span className="mt-0.5 flex items-center gap-1 text-[12px] text-white/50">
                 <Lock size={11} /> کاملاً خصوصی؛ برای تنظیم شدت تمرین و تغذیه در هر فاز
               </span>
             </span>
@@ -295,7 +346,7 @@ function Onboarding({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: 
                 ['periodLength', 'طول پریود (روز)', '۵'],
               ] as const).map(([k, label, ph]) => (
                 <label key={k} className="flex flex-col justify-end space-y-2">
-                  <span className="text-[11px] leading-5 text-white/50">{label}</span>
+                  <span className="text-[12px] leading-5 text-white/50">{label}</span>
                   <input value={f[k]} onChange={(e) => set(k, e.target.value)} placeholder={ph} inputMode="numeric" className={`${field} text-center`} />
                 </label>
               ))}

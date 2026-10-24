@@ -108,7 +108,7 @@ export default function CoachDetail() {
             <div className="mt-3 flex items-center justify-between">
               <div>
                 <div className="text-lg font-semibold">{toman(p.price)}</div>
-                <div className="text-[11px] text-ink-400">{num(p.durationWeeks)} هفته</div>
+                <div className="text-[12px] text-ink-400">{num(p.durationWeeks)} هفته</div>
               </div>
               <Button onClick={() => openBuy(p)}>خرید برنامه</Button>
             </div>

@@ -8,6 +8,7 @@ import { notify } from './ledger'
 import { faDigitsToEn } from '../format'
 import { ROLE_META } from '../config'
 import { setupCycleFor } from './cycle'
+import { type BusinessRole, isBusiness, isBusinessRole, needsVerification } from '../roles'
 
 export function normalizePhone(raw: string) {
   const p = faDigitsToEn(raw).replace(/\D/g, '').replace(/^98/, '0')
@@ -27,14 +28,27 @@ export interface ProfileInput {
   cycle?: { lastPeriodStart: string; cycleLength: number; periodLength: number }
   /** کد معرفی دوست (اختیاری) */
   referral?: string
+  /** اگر پر باشد، حساب کسب‌وکار از این نوع ساخته می‌شود (به‌جای حساب ورزشکار) */
+  accountType?: BusinessRole
+}
+
+/** ساخت پروفایل اولیه‌ی ماژول برای نقش کسب‌وکار */
+function initRoleProfile(d: DBState, userId: string, role: BusinessRole) {
+  if (role === 'coach' && !d.coaches.find((c) => c.userId === userId))
+    d.coaches.push({ userId, title: 'مربی', specialties: [], experienceYears: 1, bio: '', rating: 5, students: 0, online: true, callPrice: 100_000, plans: [], certificates: [] })
+  if (role === 'doctor' && !d.doctors.find((x) => x.userId === userId))
+    d.doctors.push({ userId, specialty: 'پزشک عمومی', medicalCode: '', bio: '', visitPrice: 200_000, rating: 5, visits: 0, slots: [], online: true })
 }
 
 /** ساخت کاربر جدید پس از تأیید شماره؛ هم در حالت نمایشی و هم روی سرور استفاده می‌شود */
 export function createUser(phone: string, input: ProfileInput): User {
   if (!isValidPhone(phone)) throw new AppError('شماره موبایل معتبر نیست')
   if (db().users.some((u) => u.phone === phone)) throw new AppError('این شماره قبلاً ثبت‌نام کرده است')
-  const name = input.name.trim()
-  if (name.length < 2) throw new AppError('نام و نام خانوادگی را وارد کنید')
+  const business = input.accountType
+  if (business !== undefined && !isBusinessRole(business)) throw new AppError('نوع حساب معتبر نیست')
+  const name = String(input.name ?? '').trim()
+  if (name.length < 2) throw new AppError(business ? 'نام کسب‌وکار را وارد کنید' : 'نام و نام خانوادگی را وارد کنید')
+  if (business) return createBusinessUser(phone, name, business)
   if (input.gender !== 'male' && input.gender !== 'female') throw new AppError('لطفاً جنسیت خود را انتخاب کنید')
   if (input.birthYear && (input.birthYear < 1300 || input.birthYear > 1400)) throw new AppError('سال تولد معتبر نیست')
   if (input.heightCm && (input.heightCm < 100 || input.heightCm > 230)) throw new AppError('قد معتبر نیست')
@@ -49,7 +63,7 @@ export function createUser(phone: string, input: ProfileInput): User {
     referredBy: referrer?.id,
     name,
     phone,
-    city: 'تهران',
+    city: 'اصفهان',
     gender: input.gender,
     birthYear: input.birthYear || undefined,
     heightCm: input.heightCm || undefined,
@@ -78,6 +92,37 @@ export function createUser(phone: string, input: ProfileInput): User {
   return created
 }
 
+/** حساب کسب‌وکار: فقط پنل ماژول خودش + فیت‌زون و چالش‌ها */
+function createBusinessUser(phone: string, name: string, role: BusinessRole): User {
+  const id = uid('u-')
+  const created: User = {
+    id,
+    referralCode: id.slice(-5).toUpperCase() + Math.floor(10 + Math.random() * 90),
+    name,
+    phone,
+    city: 'اصفهان',
+    privacy: { publicProfile: true, showBody: false },
+    roles: [role],
+    xp: 0,
+    streak: 0,
+    following: [],
+    createdAt: now(),
+  }
+  // باشگاه، مربی، پزشک و فروشنده پیش از فعالیت باید مدارک بفرستند
+  if (needsVerification(created)) created.verification = { status: 'none', docs: [] }
+  mutate((d) => {
+    d.users.push(created)
+    d.wallets[created.id] = 0
+    initRoleProfile(d, id, role)
+    notify(
+      d, id, `پنل ${ROLE_META[role].label} شما ساخته شد`,
+      created.verification ? 'برای فعال شدن، مدارک خود را از پنل بارگذاری کنید تا کی‌فیت بررسی کند.' : 'اطلاعات مجموعه را از پنل تکمیل کنید تا به کاربران نمایش داده شود.',
+      ROLE_META[role].icon, ROLE_META[role].panel,
+    )
+  })
+  return created
+}
+
 /** کنترل پیش از ورود */
 export function assertCanLogin(userId: string) {
   const u = db().users.find((x) => x.id === userId)
@@ -89,13 +134,15 @@ export function assertCanLogin(userId: string) {
 /** فعال‌سازی نقش جدید (مربی، باشگاه‌دار و...) برای کاربر فعلی */
 export const activateRole = svc('auth.activateRole', (role: Exclude<Role, 'admin' | 'user'>) => {
   const me = currentUserId()
+  if (!isBusinessRole(role)) throw new AppError('نقش معتبر نیست')
+  const current = db().users.find((x) => x.id === me)!
+  // حساب ورزشکار و کسب‌وکار جدا هستند؛ فقط حساب کسب‌وکار می‌تواند نقش تجاری دیگری اضافه کند
+  if (!isBusiness(current) && !current.roles.includes('admin'))
+    throw new AppError('برای فعالیت تجاری، یک حساب کسب‌وکار جدا با شماره‌ی دیگر بسازید')
   mutate((d) => {
     const u = d.users.find((x) => x.id === me)!
     if (!u.roles.includes(role)) u.roles.push(role)
-    if (role === 'coach' && !d.coaches.find((c) => c.userId === me))
-      d.coaches.push({ userId: me, title: 'مربی', specialties: [], experienceYears: 1, bio: '', rating: 5, students: 0, online: true, callPrice: 100_000, plans: [], certificates: [] })
-    if (role === 'doctor' && !d.doctors.find((x) => x.userId === me))
-      d.doctors.push({ userId: me, specialty: 'پزشک عمومی', medicalCode: '', bio: '', visitPrice: 200_000, rating: 5, visits: 0, slots: [], online: true })
+    initRoleProfile(d, me, role)
     notify(d, me, `پنل ${ROLE_META[role].label} فعال شد`, 'از منوی پروفایل وارد پنل شوید و اطلاعات خود را تکمیل کنید.', ROLE_META[role].icon, ROLE_META[role].panel)
   })
 })
@@ -134,5 +181,21 @@ export const setIntroVideo = svc('auth.introVideo', (url: string | null) => {
   }
   mutate((d) => {
     d.users.find((x) => x.id === me)!.introVideo = url ?? undefined
+  })
+})
+
+/** ارسال مدارک حساب کسب‌وکار برای بررسی مدیر (فایل‌ها پیش‌تر در /api/upload-doc بارگذاری شده‌اند) */
+export const submitVerification = svc('auth.submitVerification', (docs: string[], note?: string) => {
+  const me = currentUserId()
+  const u = db().users.find((x) => x.id === me)!
+  if (!needsVerification(u)) throw new AppError('این حساب نیازی به ارسال مدارک ندارد')
+  if (u.verification?.status === 'approved') throw new AppError('مدارک شما قبلاً تأیید شده است')
+  const list = (Array.isArray(docs) ? docs : []).map(String).filter((x) => !x.startsWith('doc-') || x.startsWith(`doc-${me.replace(/[^A-Za-z0-9]/g, '')}-`)).filter((x) => /^(doc-[A-Za-z0-9-]+\.(jpg|png|webp|pdf)|data:(image\/(jpeg|png|webp)|application\/pdf);base64,[A-Za-z0-9+/=]+)$/.test(x))
+  if (list.length < 1) throw new AppError('حداقل یک مدرک بارگذاری کنید')
+  if (list.length > 6) throw new AppError('حداکثر ۶ فایل')
+  mutate((d) => {
+    const x = d.users.find((v) => v.id === me)!
+    x.verification = { status: 'pending', docs: list, note: note?.trim().slice(0, 500) || undefined, submittedAt: now() }
+    d.users.filter((a) => a.roles.includes('admin')).forEach((a) => notify(d, a.id, 'مدارک جدید برای بررسی', `${x.name} مدارک خود را فرستاد.`, '', '/panel/admin/approvals'))
   })
 })

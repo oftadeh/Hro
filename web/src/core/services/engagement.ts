@@ -130,4 +130,20 @@ export const markNotificationsRead = svc('engagement.readAll', () => {
   })
 })
 
+/** پاک کردن یک اعلان کاربر جاری */
+export const deleteNotification = svc('engagement.deleteNotification', (id: ID) => {
+  const userId = currentUserId()
+  mutate((d) => {
+    d.notifications = d.notifications.filter((n) => !(n.id === id && n.userId === userId))
+  })
+})
+
+/** پاک کردن همه‌ی اعلان‌های کاربر جاری */
+export const clearNotifications = svc('engagement.clearNotifications', () => {
+  const userId = currentUserId()
+  mutate((d) => {
+    d.notifications = d.notifications.filter((n) => n.userId !== userId)
+  })
+})
+
 export const touchDaily = svc('engagement.touch', () => touchDailyFor(currentUserId()))

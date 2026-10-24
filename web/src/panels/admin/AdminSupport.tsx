@@ -24,12 +24,12 @@ export default function AdminSupport() {
               <span className="text-sm font-semibold">{t.subject}</span>
               <Badge>{TICKET_CATEGORY[t.category]}</Badge>
               <Badge color={t.status === 'open' ? 'amber' : t.status === 'answered' ? 'emerald' : 'slate'}>{TICKET_STATUS[t.status]}</Badge>
-              <span className="mr-auto text-[11px] text-ink-400">{users[t.userId]?.name} · {users[t.userId]?.phone}</span>
+              <span className="mr-auto text-[12px] text-ink-400">{users[t.userId]?.name} · {users[t.userId]?.phone}</span>
             </div>
             <div className="mt-3 space-y-2">
               {t.messages.map((m, i) => (
                 <div key={i} className={`rounded-2xl p-3 text-xs leading-6 ${m.staff ? 'bg-brand-400/10' : 'bg-ink-900/[.04] dark:bg-white/[.05]'}`}>
-                  <div className="mb-1 text-[10px] text-ink-400">{m.staff ? 'پشتیبانی' : users[m.from]?.name} · {faDateTime(m.at)}</div>
+                  <div className="mb-1 text-[12px] text-ink-400">{m.staff ? 'پشتیبانی' : users[m.from]?.name} · {faDateTime(m.at)}</div>
                   {m.text}
                 </div>
               ))}

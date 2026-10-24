@@ -8,7 +8,7 @@ import type { LiveClass } from '@/core/types'
 import { PerkPrice } from '@/ui/PerkPrice'
 import { Avatar, Badge, Button, Card, Empty, HeroHeader, PageHeader, SectionTitle } from '@/ui/kit'
 import { useBalance, useMe, useUserMap } from '@/ui/hooks'
-import { run, runOk } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
 
 export function LiveCard({ c }: { c: LiveClass }) {
   const users = useUserMap()
@@ -24,7 +24,7 @@ export function LiveCard({ c }: { c: LiveClass }) {
             {live && <Badge color="rose">در حال برگزاری</Badge>}
           </div>
           <div className="text-xs text-ink-500">{host?.name} · {c.sport} · {LIVE_LEVEL[c.level]}</div>
-          <div className="mt-1 text-[11px] text-ink-400">{faDateTime(c.at)} · {num(c.durationMin)} دقیقه · {num(c.attendees.length)}/{num(c.capacity)} نفر</div>
+          <div className="mt-1 text-[12px] text-ink-400">{faDateTime(c.at)} · {num(c.durationMin)} دقیقه · {num(c.attendees.length)}/{num(c.capacity)} نفر</div>
         </div>
         <div className="text-left text-xs font-semibold">{c.price ? toman(c.price) : 'رایگان'}</div>
       </Card>
@@ -43,7 +43,7 @@ export default function LiveClasses() {
     <div className="animate-fade-up">
       <PageHeader back title="کلاس آنلاین زنده" subtitle="یوگا، HIIT، پیلاتس و حرکات اصلاحی با مربیان کی‌فیت، از خانه" />
       <HeroHeader seed="live" className="mb-5 p-6">
-        <div className="flex items-center gap-1.5 text-[11px] text-white/70"><Radio size={13} /> زنده و تعاملی</div>
+        <div className="flex items-center gap-1.5 text-[12px] text-white/70"><Radio size={13} /> زنده و تعاملی</div>
         <div className="mt-2 font-display text-[1.9rem] leading-[1.1]">همراه مربی، هر جا که هستی</div>
         <div className="mt-1 text-[13px] text-white/75">با ورود به کلاس، تمرین امروزت خودکار ثبت و در چالش‌ها حساب می‌شود.</div>
       </HeroHeader>
@@ -111,7 +111,7 @@ export function LiveDetail() {
               {link && <a href={link} target="_blank" rel="noreferrer" className="block text-center text-xs text-aqua-600 underline">اگر کلاس باز نشد، اینجا بزنید</a>}
               {registered && c.joined.includes(me.id) && <div className="text-center text-xs text-aqua-600">حضور شما ثبت شد و تمرین امروز به‌روز شد.</div>}
               {canLeave && (
-                <Button className="w-full" variant="ghost" onClick={() => confirm('انصراف و بازگشت وجه؟') && runOk(() => leaveLiveClass(c.id), 'انصراف ثبت شد')}>
+                <Button className="w-full" variant="ghost" onClick={async () => (await ask('انصراف و بازگشت وجه؟')) && runOk(() => leaveLiveClass(c.id), 'انصراف ثبت شد')}>
                   انصراف (تا {num(LIVE_CANCEL_HOURS)} ساعت قبل)
                 </Button>
               )}

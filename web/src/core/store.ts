@@ -8,6 +8,7 @@
  */
 import type { DBState } from './state'
 import type { ID, Role } from './types'
+import { BUSINESS_BLOCKED_MESSAGE, UNVERIFIED_MESSAGE, blockedUntilVerified, isBusiness, isConsumerOnlyService, isVerified } from './roles'
 
 export class AppError extends Error {}
 
@@ -45,6 +46,15 @@ export function requireRole(...roles: Role[]) {
   return u
 }
 
+/** حساب کسب‌وکار به سرویس‌های مخصوص ورزشکار دسترسی ندارد (روی سرور هم اعمال می‌شود) */
+export function assertServiceAllowed(name: string, userId: ID | null, roles?: readonly Role[]) {
+  if (!userId) return
+  const u = db().users.find((x) => x.id === userId)
+  if (isConsumerOnlyService(name) && isBusiness(u)) throw new AppError(BUSINESS_BLOCKED_MESSAGE)
+  // باشگاه‌دار، مربی، پزشک و فروشنده تا تأیید مدارک فقط می‌توانند مدارک بفرستند
+  if (!isVerified(u) && blockedUntilVerified(name, roles)) throw new AppError(UNVERIFIED_MESSAGE)
+}
+
 /* ───────── ثبت سرویس‌ها برای RPC ───────── */
 
 export interface SvcOptions {
@@ -71,6 +81,7 @@ export function svc<A extends unknown[], R>(name: string, fn: (...a: A) => R, op
     if (transport) return transport(name, a) as Promise<Awaited<R>>
     const run = async (): Promise<Awaited<R>> => {
       if (opts.roles?.length) requireRole(...opts.roles)
+      assertServiceAllowed(name, A().userId(), opts.roles)
       return await (fn(...a) as Awaited<R>)
     }
     return run()

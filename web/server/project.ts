@@ -28,6 +28,7 @@ export function project(s: DBState, uid: string): DBState {
       healthShares: shared ? [uid] : undefined,
       phone: admin ? u.phone : '',
       blocked: admin ? u.blocked : undefined,
+      verification: admin ? u.verification : undefined,
       referredBy: u.referredBy === uid ? uid : undefined,
       referralRewarded: u.referredBy === uid ? u.referralRewarded : undefined,
     }
@@ -63,7 +64,8 @@ export function project(s: DBState, uid: string): DBState {
     wallets: admin ? s.wallets : { [uid]: s.wallets[uid] ?? 0 },
     transactions: admin ? s.transactions : s.transactions.filter(involves),
     payouts: admin ? s.payouts : s.payouts.filter((p) => p.userId === uid),
-    gyms: s.gyms.filter((g) => g.approved || g.ownerId === uid || admin),
+    // رمز QR ورودی فقط برای صاحب باشگاه و مدیر
+    gyms: s.gyms.filter((g) => g.approved || g.ownerId === uid || admin).map((g) => (g.ownerId === uid || admin || !g.entryCode ? g : { ...g, entryCode: undefined })),
     checkins,
     entryRequests: s.entryRequests.filter((r) => r.userId === uid || myGyms.has(r.gymId) || admin),
     planOrders: s.planOrders.filter((o) => o.userId === uid || o.coachId === uid || admin),

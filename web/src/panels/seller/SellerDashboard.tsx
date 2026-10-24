@@ -6,7 +6,7 @@ import { deleteProduct, saveProduct } from '@/core/services/commerce'
 import type { Product } from '@/core/types'
 import { Badge, Button, Card, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, Select, Sheet, Stat, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
-import { runOk } from '@/ui/toast'
+import { runOk, ask } from '@/ui/toast'
 import { CATEGORIES } from '@/modules/shop/Shop'
 import { CategoryIcon } from '@/ui/icons'
 
@@ -26,10 +26,10 @@ export default function SellerDashboard() {
     <div className="animate-fade-up">
       <PageHeader title="محصولات من" subtitle="محصولات شما در ماژول فروشگاه کی‌فیت" actions={<Button size="sm" icon={<Plus size={16} />} onClick={() => setEdit({ ...EMPTY })}>محصول جدید</Button>} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="محصولات" value={num(mine.length)} icon={<Package size={18} />} />
+        <Stat tone="violet" label="محصولات" value={num(mine.length)} icon={<Package size={18} />} />
         <Stat label="سفارش‌ها" value={num(myOrders.length)} icon={<ShoppingBag size={18} />} tone="sky" />
-        <Stat label="در انتظار ارسال" value={num(myOrders.filter((o) => o.status === 'paid' || o.status === 'preparing').length)} icon={<ShoppingBag size={18} />} tone="amber" />
-        <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="violet" />
+        <Stat label="در انتظار ارسال" value={num(myOrders.filter((o) => o.status === 'paid' || o.status === 'preparing').length)} icon={<ShoppingBag size={18} />} tone="emerald" />
+        <Stat label="درآمد خالص" value={toman(net)} icon={<Wallet size={18} />} tone="amber" />
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {mine.length === 0 && <Empty icon="" title="هنوز محصولی ثبت نکرده‌اید" />}
@@ -47,7 +47,7 @@ export default function SellerDashboard() {
               <div className="mt-1 text-xs">{toman(p.price)} · {num(p.sold)} فروش</div>
               <div className="mt-2 flex gap-1">
                 <Button size="sm" variant="outline" icon={<Pencil size={13} />} onClick={() => setEdit(p)}>ویرایش</Button>
-                <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={13} />} onClick={() => confirm('حذف شود؟') && deleteProduct(p.id)} />
+                <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={13} />} onClick={async () => (await ask('حذف شود؟')) && deleteProduct(p.id)} />
               </div>
             </div>
           </Card>

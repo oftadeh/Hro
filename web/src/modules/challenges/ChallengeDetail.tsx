@@ -8,12 +8,15 @@ import { daysLeft, faDate, num, toman } from '@/core/format'
 import { DAILY_CAP, VERIFICATION_LABEL, joinChallenge, logChallengeProgress, pendingLogs, rankings, reviewChallengeLog, settleChallenge, verificationOf } from '@/core/services/challenges'
 import { ROLE_META } from '@/core/config'
 import { freeChallengeLeft } from '@/core/services/perks'
-import { Avatar, Badge, Button, Card, Empty, Field, HeroHeader, ImagePicker, Money, Input, NumberInput, PageHeader, Progress, RaisedSheet, SectionTitle, Sheet, Stat } from '@/ui/kit'
+import { toneFor, Avatar, Badge, Button, Card, Empty, Field, ImagePicker, Money, Input, NumberInput, PageHeader, Progress, RaisedSheet, SectionTitle, Sheet, Stat } from '@/ui/kit'
 import { useMe, useUserMap, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { MetricIcon } from '@/ui/icons'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
 import { PostCard } from '@/modules/fitzone/PostCard'
+import { celebrate } from '@/ui/motion'
+import { vtName } from '@/ui/ViewTransitions'
+import { MetricArt } from '@/ui/art'
 
 const MEDALS = ['', '', '']
 
@@ -50,14 +53,15 @@ export default function ChallengeDetail() {
   return (
     <div className="animate-fade-up">
       <PageHeader back="/challenges" title={c.title} actions={<Button variant="outline" size="sm" icon={<Share2 size={15} />} onClick={() => setShare(true)}>فیت‌زون</Button>} />
-      <HeroHeader seed={c.id} className="px-6 pb-14 pt-8 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur">
+      <div style={vtName(`ch-${c.id}`)} className={`relative overflow-hidden rounded-[30px] px-6 pb-14 pt-8 text-center text-ink-950 ${toneFor(c.id)}`}>
+        <MetricArt metric={c.metric} size={130} className="pointer-events-none absolute -bottom-3 left-2 opacity-80" />
+        <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ink-950 text-white">
           <MetricIcon metric={c.metric} size={20} />
         </div>
-        <div className="mt-5 text-xs text-white/75">صندوق جایزه</div>
-        <div className="mt-1 font-display text-[3.2rem] leading-none"><Money value={c.pool} unitClass="font-sans" /></div>
-        {c.extraReward && <div className="mx-auto mt-4 w-fit rounded-full bg-white/20 px-3 py-1 text-xs text-white backdrop-blur">+ {c.extraReward}</div>}
-      </HeroHeader>
+        <div className="relative mt-5 text-[13px] font-semibold opacity-70">صندوق جایزه</div>
+        <div className="relative mt-1 text-[44px] font-black leading-none"><Money value={c.pool} /></div>
+        {c.extraReward && <div className="relative mx-auto mt-4 w-fit rounded-full bg-white/50 px-3 py-1.5 text-[13px] font-semibold">+ {c.extraReward}</div>}
+      </div>
       <RaisedSheet className="mx-3 sm:mx-auto sm:max-w-3xl">
         <div className="grid grid-cols-3 text-center">
           {[
@@ -66,7 +70,7 @@ export default function ChallengeDetail() {
             ['هدف', `${num(c.goal)} ${c.unit}`],
           ].map(([k, v], i) => (
             <div key={k} className={i === 1 ? 'border-x hairline' : ''}>
-              <div className="text-[11px] text-ink-400">{k}</div>
+              <div className="text-[12px] text-ink-400">{k}</div>
               <div className="mt-0.5 text-sm font-semibold">{v}</div>
             </div>
           ))}
@@ -91,7 +95,7 @@ export default function ChallengeDetail() {
           </Card>
 
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="ورودی" value={c.entryFee ? num(c.entryFee) : 'رایگان'} hint={c.entryFee ? 'تومان' : undefined} icon={<Ticket size={18} />} tone="rose" />
+            <Stat label="ورودی" value={c.entryFee ? num(c.entryFee) : 'رایگان'} hint={c.entryFee ? 'تومان' : undefined} icon={<Ticket size={18} />} tone="violet" />
             <Stat label="امتیاز تجربه" value={`+${num(c.xpReward)} XP`} hint="با رسیدن به هدف" icon={<Zap size={18} />} tone="sky" />
           </div>
 
@@ -110,7 +114,7 @@ export default function ChallengeDetail() {
                 </div>
               </div>
               <Progress value={mine.score / c.goal} className="mt-3 h-2.5" tone="from-coral-400 to-ink-900" />
-              {myPending.length > 0 && <div className="mt-2 text-[11px] text-gold-700 dark:text-gold-300">{num(myPending.reduce((a, l) => a + l.value, 0))} {c.unit} در انتظار تأیید سازنده</div>}
+              {myPending.length > 0 && <div className="mt-2 text-[12px] text-gold-700 dark:text-gold-300">{num(myPending.reduce((a, l) => a + l.value, 0))} {c.unit} در انتظار تأیید سازنده</div>}
               {c.status === 'active' && left > 0 && mode !== 'auto' && (
                 <Button className="mt-4 w-full" onClick={() => setLog(true)}>
                   ثبت پیشرفت امروز
@@ -141,7 +145,7 @@ export default function ChallengeDetail() {
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium">{users[userId]?.name}</div>
                       <div className="text-xs text-ink-500">{num(l.value)} {c.unit} · {faDateTime(l.at)}</div>
-                      {l.note && <div className="mt-1 truncate text-[11px] text-ink-400">{l.note}</div>}
+                      {l.note && <div className="mt-1 truncate text-[12px] text-ink-400">{l.note}</div>}
                       <div className="mt-2 flex gap-2">
                         <Button size="sm" icon={<Check size={14} />} onClick={() => run(() => reviewChallengeLog(c.id, userId, l.id!, true), 'تأیید شد')}>تأیید</Button>
                         <Button size="sm" variant="ghost" className="text-coral-500" icon={<X size={14} />} onClick={() => run(() => reviewChallengeLog(c.id, userId, l.id!, false), 'رد شد')}>رد</Button>
@@ -187,7 +191,7 @@ export default function ChallengeDetail() {
                 <b>{toman(Math.floor((c.pool * p.percent) / 100))}</b>
               </div>
             ))}
-            <div className="mt-2 text-[11px] text-ink-400">صندوق با هر شرکت‌کننده‌ی جدید بزرگ‌تر می‌شود.</div>
+            <div className="mt-2 text-[12px] text-ink-400">صندوق با هر شرکت‌کننده‌ی جدید بزرگ‌تر می‌شود.</div>
           </Card>
           <Card>
             <div className="mb-3 font-semibold">جدول رده‌بندی</div>
@@ -224,6 +228,7 @@ export default function ChallengeDetail() {
           size="lg"
           onClick={async () => {
             const ok = await runOk(() => joinChallenge(c.id), 'به چالش پیوستی!')
+            if (ok) celebrate()
             if (ok) setJoin(false)
           }}
         >

@@ -10,12 +10,13 @@ import { useDB } from '@/core/db'
 import { SUBSCRIPTION_PLANS } from '@/core/config'
 import { daysLeft, num, toman } from '@/core/format'
 import { activeSubscription, buySubscription, topUp } from '@/core/services/wallet'
-import { Badge, Button, Card, Field, HeroHeader, MetricRow, Money, NumberInput, PageHeader, SectionTitle, Sheet } from '@/ui/kit'
+import { Button, Card, Field, HeroHeader, MetricRow, Money, NumberInput, PageHeader, SectionTitle, Sheet } from '@/ui/kit'
 import { KeyCard } from '@/ui/KeyCard'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { TxList } from './TxList'
 import { WalletCoins } from '@/ui/art'
+import { celebrate } from '@/ui/motion'
 
 const AMOUNTS = [200_000, 500_000, 1_000_000, 2_000_000]
 
@@ -99,22 +100,22 @@ export default function WalletPage() {
 
       <div id="plans" /><SectionTitle title="عضویت‌ها" />
       <div className="grid gap-4 md:grid-cols-3">
-        {SUBSCRIPTION_PLANS.map((p) => (
-          <Card key={p.id} className={clsx('relative flex flex-col p-6', p.popular && 'border-ink-950 dark:border-brand-300/50')}>
-            {p.popular && <Badge color="amber" className="absolute left-5 top-5">پیشنهاد ما</Badge>}
-            <div className="text-[11px] tracking-[.25em] text-ink-400">KEYFIT</div>
-            <div className="mt-3 font-display text-[2rem] leading-none">{p.name}</div>
-            <div className="mt-4 font-display text-[2.2rem] leading-none"><Money value={p.price} unitClass="font-sans" /></div>
-            <div className="text-xs text-ink-400">{num(p.durationDays)} روزه · {num(Math.round(((p.credit - p.price) / p.price) * 100))}٪ اعتبار هدیه</div>
-            <ul className="mt-6 flex-1 space-y-3 border-t hairline pt-5 text-[13px] text-ink-600 dark:text-ink-300">
+        {SUBSCRIPTION_PLANS.map((p, i) => (
+          <div key={p.id} className={clsx('relative flex flex-col rounded-[30px] p-6 text-ink-950', ['card-mint', 'card-violet', 'card-peach'][i % 3], p.popular && 'ring-2 ring-ink-950 ring-offset-4 ring-offset-ink-50 dark:ring-white dark:ring-offset-ink-950')}>
+            {p.popular && <span className="absolute left-5 top-5 rounded-full bg-ink-950 px-3 py-1 text-[12px] font-bold text-white">پیشنهاد ما</span>}
+            <div className="text-[14px] font-bold opacity-70">اشتراک کی‌فیت</div>
+            <div className="mt-2 text-[28px] font-black leading-tight">{p.name}</div>
+            <div className="mt-3 text-[30px] font-black leading-none"><Money value={p.price} /></div>
+            <div className="mt-1 text-[13px] font-semibold opacity-70">{num(p.durationDays)} روزه · {num(Math.round(((p.credit - p.price) / p.price) * 100))}٪ اعتبار هدیه</div>
+            <ul className="mt-5 flex-1 space-y-2.5 border-t border-ink-950/10 pt-5 text-[14px]">
               {p.perks.map((perk) => (
-                <li key={perk} className="flex gap-2"><Check size={15} strokeWidth={1.5} className="mt-0.5 shrink-0 text-brand-500" /> {perk}</li>
+                <li key={perk} className="flex gap-2"><Check size={16} strokeWidth={2.2} className="mt-0.5 shrink-0" /> {perk}</li>
               ))}
             </ul>
-            <Button className="mt-6 w-full" variant={p.popular ? 'primary' : 'outline'} onClick={() => setBuy(p.id)}>
+            <Button className="mt-6 w-full" variant="dark" onClick={() => setBuy(p.id)}>
               {sub?.planId === p.id ? 'تمدید' : 'خرید'}
             </Button>
-          </Card>
+          </div>
         ))}
       </div>
 
@@ -157,7 +158,7 @@ export default function WalletPage() {
           >
             پرداخت از درگاه بانکی
           </Button>
-          <p className="text-center text-[11px] text-ink-400">{REMOTE ? 'پرداخت امن از طریق درگاه شاپرک' : 'در نسخه‌ی آزمایشی، پرداخت شبیه‌سازی می‌شود.'}</p>
+          <p className="text-center text-[12px] text-ink-400">{REMOTE ? 'پرداخت امن از طریق درگاه شاپرک' : 'در نسخه‌ی آزمایشی، پرداخت شبیه‌سازی می‌شود.'}</p>
         </div>
       </Sheet>
 
@@ -175,6 +176,7 @@ export default function WalletPage() {
               <div className="text-xs text-ink-400">موجودی: {toman(bal)}</div>
               <Button className="w-full" size="lg" onClick={async () => {
                 const ok = await runOk(() => buySubscription(p.id, couponAmt ? coupon : undefined), `اشتراک ${p.name} فعال شد`)
+                if (ok) celebrate()
                 if (ok) {
                   setBuy(undefined)
                   setCoupon('')

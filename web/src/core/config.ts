@@ -102,8 +102,14 @@ export const GRADIENTS = [
   'from-ink-900 via-ink-900 to-black',
 ]
 
-/** مرکز پیش‌فرض نقشه: تهران */
-export const DEFAULT_CENTER: [number, number] = [35.7219, 51.3347]
+/** رنگ کارت‌ها (پست‌ها و استوری‌های متنی، دسته‌ها) — کلاس‌های card-* در index.css */
+export const CARD_TONES = ['violet', 'pink', 'lilac', 'mint', 'peach', 'night'] as const
+export type CardTone = (typeof CARD_TONES)[number]
+export const toneClass = (t?: string) => `card-${(CARD_TONES as readonly string[]).includes(t ?? '') ? t : 'violet'}`
+
+/** مرکز پیش‌فرض نقشه و شهر پیش‌فرض: اصفهان */
+export const DEFAULT_CENTER: [number, number] = [32.6546, 51.668]
+export const DEFAULT_CITY = 'اصفهان'
 
 /** انواع مجموعه‌های ورزشی فیت‌یاب؛ با پیشرفت فازها، مدیر انواع جدید را فعال می‌کند */
 export const VENUE_KINDS: Record<VenueKind, { label: string; plural: string; booking: 'session' | 'rental'; desc: string }> = {

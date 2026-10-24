@@ -18,7 +18,7 @@ import type { CheckIn, Gym, GymClass, ID, User } from '../types'
 import { applyPayment, notify, reversePayment } from './ledger'
 import { addXP, completeMission } from './engagement'
 import { autoProgress } from './challenges'
-import { toman } from '../format'
+import { distanceKm, num, toman } from '../format'
 import { GRADIENTS, VENUE_KINDS } from '../config'
 import { trainTogetherBonus } from './teams'
 import { campaignOffer } from './members'
@@ -29,6 +29,9 @@ const HOUR = 3_600_000
 /** حداقل فاصله تا شروع کلاس برای لغو با بازگشت وجه */
 export const CLASS_CANCEL_HOURS = 2
 export const RENTAL_CANCEL_HOURS = 12
+/** هر بلیت تا این چند دقیقه پس از خرید، بدون توجه به زمان شروع، قابل لغو با بازگشت کامل وجه است */
+export const CANCEL_GRACE_MIN = 15
+export const inCancelGrace = (t: Pick<CheckIn, 'createdAt'>) => Date.now() - new Date(t.createdAt).getTime() < CANCEL_GRACE_MIN * 60_000
 /** پذیرش کلاس از این مقدار دقیقه قبل از شروع ممکن است */
 const CLASS_EARLY_MIN = 45
 const WEEKDAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه']
@@ -268,7 +271,7 @@ export const cancelTicket = svc('fityab.cancel', (ticketId: string) => {
   if (!t) throw new AppError('بلیت یافت نشد')
   if (ticketStatus(t) !== 'active') throw new AppError('فقط بلیت‌های فعال قابل لغو هستند')
   const window = t.rentalEnd ? RENTAL_CANCEL_HOURS : CLASS_CANCEL_HOURS
-  if (t.slotAt && new Date(t.slotAt).getTime() - Date.now() < window * HOUR) throw new AppError(`لغو ${t.rentalEnd ? 'اجاره' : 'کلاس'} فقط تا ${window} ساعت پیش از شروع امکان‌پذیر است`)
+  if (t.slotAt && !inCancelGrace(t) && new Date(t.slotAt).getTime() - Date.now() < window * HOUR) throw new AppError(`لغو ${t.rentalEnd ? 'اجاره' : 'کلاس'} فقط تا ${window} ساعت پیش از شروع امکان‌پذیر است`)
   let refunded = 0
   mutate((d) => {
     const x = d.checkins.find((c) => c.id === ticketId)!
@@ -320,6 +323,59 @@ export const verifyEntry = svc(
   },
   { roles: ['gym'] },
 )
+
+/* ───────── ورود با اسکن QR چاپی باشگاه ───────── */
+
+/** حداکثر فاصله‌ی گوشی ورزشکار از باشگاه هنگام اسکن QR (متر) */
+export const ENTRY_RADIUS_M = 300
+
+/** ساخت یا تعویض رمز QR ورودی باشگاه (QR قبلی باطل می‌شود) */
+export const rotateEntryCode = svc(
+  'fityab.rotateEntryCode',
+  (gymId: string) => {
+    const ownerId = currentUserId()
+    const gym = db().gyms.find((g) => g.id === gymId && g.ownerId === ownerId)
+    if (!gym) throw new AppError('باشگاه یافت نشد')
+    const code = uid('q').replace(/[^A-Za-z0-9]/g, '').slice(-12)
+    mutate((d) => {
+      d.gyms.find((g) => g.id === gymId)!.entryCode = code
+    })
+    return code
+  },
+  { roles: ['gym'] },
+)
+
+/** ورزشکار QR دم در باشگاه را اسکن می‌کند: موقعیت بررسی، بلیت امروز صادر (یا بلیت موجود استفاده) و ورود ثبت می‌شود */
+export const scanEntry = svc('fityab.scanEntry', (gymId: string, code: string, lat?: number, lng?: number) => {
+  const userId = currentUserId()
+  const gym = db().gyms.find((g) => g.id === gymId)
+  if (!gym || !gym.approved || !gym.entryCode || gym.entryCode !== String(code)) throw new AppError('این کد QR معتبر نیست؛ کد نصب‌شده دم در باشگاه را اسکن کنید')
+  if (typeof lat !== 'number' || typeof lng !== 'number' || !isFinite(lat) || !isFinite(lng)) throw new AppError('برای ثبت ورود، دسترسی به موقعیت مکانی گوشی را فعال کنید')
+  const meters = distanceKm([lat, lng], [gym.lat, gym.lng]) * 1000
+  if (meters > ENTRY_RADIUS_M) throw new AppError(`برای ثبت ورود باید در محل ${gym.name} باشید (فاصله‌ی فعلی حدود ${num(Math.round(meters))} متر)`)
+  const user = db().users.find((u) => u.id === userId)!
+  assertGymAccess(gym, user)
+  if (isRental(gym)) throw new AppError('این مجموعه به‌صورت اجاره‌ی ساعتی رزرو می‌شود؛ بلیت رزرو را به پذیرش نشان دهید')
+  const recent = db().checkins.find((t) => t.userId === userId && t.gymId === gymId && !t.memberId && t.status === 'used' && t.usedAt && Date.now() - new Date(t.usedAt).getTime() < 3 * HOUR)
+  if (recent) throw new AppError(`ورود شما به ${gym.name} همین امروز ثبت شده است`)
+  const open = db().checkins.find(
+    (t) => t.userId === userId && t.gymId === gymId && !t.memberId && ticketStatus(t) === 'active' && (!t.slotAt || new Date(t.slotAt).getTime() - Date.now() <= CLASS_EARLY_MIN * 60_000),
+  )
+  let ticketId = ''
+  mutate((d) => {
+    const x = open ? d.checkins.find((c) => c.id === open.id)! : issueTicket(d, user, gym, { prefer: 'subscription' })
+    x.status = 'used'
+    x.usedAt = now()
+    ticketId = x.id
+    completeMission(d, userId, 'workout')
+    autoProgress(d, userId, 'workouts', 1, 'checkin')
+    trainTogetherBonus(d, userId, gymId)
+    notify(d, gym.ownerId, 'ورود جدید با QR', `${user.name} وارد ${gym.name} شد.`, '', '/panel/gym/checkins')
+    notify(d, userId, `ورود به ${gym.name} ثبت شد`, 'تمرین خوبی داشته باشی! بعد از تمرین نظرت را ثبت کن.', '', '/tickets')
+  })
+  const t = db().checkins.find((c) => c.id === ticketId)!
+  return { ticketId, gymName: gym.name, paid: t.paid ?? t.price, paidWith: t.paidWith, at: t.usedAt! }
+})
 
 /** پذیرش برای ورزشکاری که بلیت نگرفته، با شماره موبایل درخواست ورود می‌فرستد */
 export const requestEntry = svc(
@@ -441,7 +497,7 @@ export const saveGym = svc(
       } else {
         id = uid('g-')
         d.gyms.unshift({
-          name: '', tagline: '', description: '', address: '', city: 'تهران', lat: 35.72, lng: 51.39, phone: '',
+          name: '', tagline: '', description: '', address: '', city: 'اصفهان', lat: 32.6546, lng: 51.668, phone: '',
           sessionPrice: 0, facilities: [], sports: [], hours: '', gender: 'mixed', media: [], capacity: 50, classes: [],
           ...data,
           id, ownerId, cover: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)], rating: 0, reviews: 0, approved: false, createdAt: now(),

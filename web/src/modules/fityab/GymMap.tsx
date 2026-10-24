@@ -1,16 +1,11 @@
 import { useEffect } from 'react'
-import { MapContainer, Marker, TileLayer, Popup, useMap, CircleMarker, Polyline } from 'react-leaflet'
+import { MapContainer, Marker, Popup, useMap, CircleMarker, Polyline } from 'react-leaflet'
+import { BaseTiles } from '@/ui/BaseTiles'
 import L from 'leaflet'
 import { Link } from 'react-router-dom'
 import type { Gym } from '@/core/types'
 import { num } from '@/core/format'
 import { useSession } from '@/core/db'
-
-// کاشی‌های کارتو: روشن برای تم روشن و سرمه‌ای برای تم تیره (مانند طرح ناوبری)
-const TILES = {
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-}
 
 const icon = (active: boolean, price: number, dark: boolean) => {
   const bg = active ? '#c4b5fd' : dark ? '#ffffff' : '#17141d'
@@ -39,8 +34,8 @@ export function GymMap({ gyms, center, user, selected, onSelect, className = 'h-
   const dark = useSession((s) => s.theme) === 'dark'
   const sel = gyms.find((g) => g.id === selected)
   return (
-    <MapContainer center={center} zoom={12} className={`w-full overflow-hidden rounded-[2rem] ${className}`} scrollWheelZoom attributionControl={false} zoomControl={false}>
-      <TileLayer key={dark ? 'd' : 'l'} url={dark ? TILES.dark : TILES.light} subdomains="abcd" />
+    <MapContainer center={center} zoom={12} className={`w-full overflow-hidden rounded-[2rem] ${className}`} scrollWheelZoom zoomControl={false}>
+      <BaseTiles dark={dark} />
       <Fly center={center} />
       {user && sel && <Polyline positions={[user, [sel.lat, sel.lng]]} pathOptions={{ color: '#a78bfa', weight: 3, dashArray: '2 9', lineCap: 'round' }} />}
       {user && (
@@ -50,7 +45,7 @@ export function GymMap({ gyms, center, user, selected, onSelect, className = 'h-
         </>
       )}
       {gyms.map((g) => (
-        <Marker key={g.id} position={[g.lat, g.lng]} icon={icon(g.id === selected, g.sessionPrice, dark)} eventHandlers={{ click: () => onSelect?.(g.id) }}>
+        <Marker key={g.id} position={[g.lat, g.lng]} icon={icon(g.id === selected, g.rental && !g.sessionPrice ? g.rental.hourlyPrice : g.sessionPrice, dark)} eventHandlers={{ click: () => onSelect?.(g.id) }}>
           {!onSelect && (
             <Popup>
               <Link to={`/fityab/${g.id}`} className="font-semibold">

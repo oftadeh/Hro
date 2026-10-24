@@ -6,7 +6,7 @@ import { canHaveIntroVideo, setIntroVideo } from '@/core/services/auth'
 import type { User } from '@/core/types'
 import { uploadVideo } from '@/core/client/remote'
 import { Button, Card } from '@/ui/kit'
-import { run, runOk } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
 
 export function VideoPlayer({ src, className }: { src: string; className?: string }) {
   return <video src={src} controls playsInline preload="metadata" className={className ?? 'aspect-video w-full rounded-3xl bg-black object-contain'} />
@@ -30,7 +30,7 @@ export function IntroVideoCard({ user, self }: { user: User; self?: boolean }) {
       <div className="mb-3 flex items-center gap-2 text-sm font-medium">
         <Video size={16} className="text-brand-500" /> ویدیوی معرفی
         {self && user.introVideo && (
-          <button className="mr-auto text-ink-300 hover:text-coral-500" onClick={() => confirm('ویدیو حذف شود؟') && run(() => setIntroVideo(null))} aria-label="حذف ویدیو">
+          <button className="mr-auto text-ink-300 hover:text-coral-500" onClick={async () => (await ask('ویدیو حذف شود؟')) && run(() => setIntroVideo(null))} aria-label="حذف ویدیو">
             <Trash2 size={15} />
           </button>
         )}

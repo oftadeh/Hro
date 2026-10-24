@@ -7,6 +7,8 @@
  *  /api/auth/*           کد تأیید پیامکی، ثبت‌نام، خروج
  *  /api/pay/*            درگاه زرین‌پال
  *  /api/upload           بارگذاری تصویر
+ *  /api/upload-doc       بارگذاری مدرک خصوصی (احراز کسب‌وکار)
+ *  /api/doc/<name>       دریافت مدرک (فقط صاحب حساب و مدیر)
  *  /api/ai/food-photo    تشخیص کالری از عکس
  *  /api/push/*           اعلان گوشی
  *  بقیه‌ی مسیرها         فایل‌های ساخته‌شده‌ی وب‌اپ (SPA)
@@ -16,7 +18,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { AppError, configureCore, mutate, registry } from '../src/core/store'
+import { AppError, assertServiceAllowed, configureCore, mutate, registry } from '../src/core/store'
 import type { Role } from '../src/core/types'
 import { setAI } from '../src/core/ai'
 // ثبت همه‌ی سرویس‌ها
@@ -232,6 +234,7 @@ async function api(req: Req, res: Res, url: URL) {
         const u = getState().users.find((x) => x.id === uid)!
         if (!roles.some((r) => u.roles.includes(r))) throw new AppError('دسترسی به این بخش ندارید')
       }
+      assertServiceAllowed(String(name), uid, roles)
       return await (entry.fn as (...a: unknown[]) => unknown)(...args)
     })
     return json(res, 200, { result: result ?? null, state: stateFor(uid) })
@@ -248,6 +251,38 @@ async function api(req: Req, res: Res, url: URL) {
     const name = `${crypto.randomUUID()}.${m[1] === 'jpeg' ? 'jpg' : m[1]}`
     fs.writeFileSync(path.join(env.dataDir, 'uploads', name), buf)
     return json(res, 200, { url: `/uploads/${name}` })
+  }
+
+  /* مدارک احراز کسب‌وکار: خصوصی، فقط صاحب حساب و مدیر */
+  if (p === '/api/upload-doc' && req.method === 'POST') {
+    const uid = requireUser(req, url)
+    limit('doc:' + uid, 30, 3_600_000)
+    const { dataUrl } = await readBody(req, 8_000_000)
+    const m = String(dataUrl ?? '').match(/^data:(image\/(jpeg|png|webp)|application\/pdf);base64,([A-Za-z0-9+/=]+)$/)
+    if (!m) throw new HttpError(400, 'فقط تصویر JPG، PNG، WebP یا فایل PDF')
+    const buf = Buffer.from(m[3], 'base64')
+    if (buf.length > 5_000_000) throw new HttpError(413, 'حداکثر حجم هر مدرک ۵ مگابایت است')
+    const ext = m[1] === 'application/pdf' ? 'pdf' : m[2] === 'jpeg' ? 'jpg' : m[2]
+    const name = `doc-${uid.replace(/[^A-Za-z0-9]/g, '')}-${crypto.randomUUID()}.${ext}`
+    const dir = path.join(env.dataDir, 'docs')
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, name), buf)
+    return json(res, 200, { name })
+  }
+
+  if (p.startsWith('/api/doc/') && req.method === 'GET') {
+    const uid = requireUser(req, url)
+    const name = path.basename(p.slice('/api/doc/'.length))
+    if (!/^doc-[A-Za-z0-9-]+\.(jpg|png|webp|pdf)$/.test(name)) throw new HttpError(404, 'یافت نشد')
+    const viewer = getState().users.find((x) => x.id === uid)!
+    // نام فایل با شناسه‌ی صاحب حساب شروع می‌شود؛ جز او فقط مدیر می‌بیند
+    if (!name.startsWith(`doc-${uid.replace(/[^A-Za-z0-9]/g, '')}-`) && !viewer.roles.includes('admin')) throw new HttpError(403, 'دسترسی ندارید')
+    const f = path.join(env.dataDir, 'docs', name)
+    if (!fs.existsSync(f)) throw new HttpError(404, 'یافت نشد')
+    const type = name.endsWith('.pdf') ? 'application/pdf' : name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg'
+    const buf = fs.readFileSync(f)
+    res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'private, no-store', 'Content-Length': buf.length })
+    return res.end(buf)
   }
 
   if (p === '/api/upload-video' && req.method === 'POST') {

@@ -1,6 +1,6 @@
 /* سرویس‌ورکر کی‌فیت: کش پوسته‌ی اپ برای باز شدن سریع/آفلاین و نمایش اعلان‌های Push */
-const CACHE = 'keyfit-v1'
-const SHELL = ['/', '/favicon.svg', '/manifest.webmanifest']
+const CACHE = 'keyfit-v3'
+const SHELL = ['/', '/favicon.svg', '/manifest.webmanifest', '/icon-192.png']
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()))
@@ -41,7 +41,7 @@ self.addEventListener('push', (e) => {
   } catch {
     /* متن ساده */
   }
-  e.waitUntil(self.registration.showNotification(data.title, { body: data.body, icon: '/favicon.svg', badge: '/favicon.svg', dir: 'rtl', lang: 'fa', data: { link: data.link } }))
+  e.waitUntil(self.registration.showNotification(data.title, { body: data.body, icon: '/icon-192.png', badge: '/icon-192.png', dir: 'rtl', lang: 'fa', data: { link: data.link } }))
 })
 
 self.addEventListener('notificationclick', (e) => {

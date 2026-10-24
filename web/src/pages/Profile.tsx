@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { Check, Eye, HeartPulse as HeartIcon, Lock, LogOut, Pencil, RotateCcw, Share2, ShoppingBag } from 'lucide-react'
+import { Check, Eye, HeartPulse as HeartIcon, Lock, LogOut, Moon, Pencil, RotateCcw, Share2, ShoppingBag, Sun } from 'lucide-react'
 import { useDB, useSession } from '@/core/db'
 import { LEVELS, ROLE_META } from '@/core/config'
 import { dec, num } from '@/core/format'
 import { ACTIVITY, GOALS, bodyOf, completeness } from '@/core/profile'
 import { activateRole, updateProfile } from '@/core/services/auth'
+import { isBusiness } from '@/core/roles'
 import { toggleBlock } from '@/core/services/fitzone'
 import { uid } from '@/core/id'
 import { logout, resetLocalDemo, REMOTE } from '@/core/client/session'
@@ -17,7 +18,7 @@ import { Button, Card, Field, IconTile, ImagePicker, Input, NumberInput, Progres
 import { RoleIcon } from '@/ui/icons'
 import { Runner, Scale, Yoga } from '@/ui/art'
 import { useMe } from '@/ui/hooks'
-import { run, runOk, toast } from '@/ui/toast'
+import { run, runOk, toast, ask } from '@/ui/toast'
 import { CycleCard, CycleHistory } from '@/modules/health/Cycle'
 import { IntroVideoCard } from '@/modules/profile/IntroVideo'
 import { Achievements, BmiGauge, ProfileHero, StatRow, achievementsOf } from '@/modules/profile/parts'
@@ -97,7 +98,7 @@ export default function Profile() {
               <span className="tabular-nums text-ink-500">{num(comp.pct * 100)}٪</span>
             </div>
             <Progress value={comp.pct} className="mt-2" />
-            <div className="mt-2 truncate text-[11px] text-ink-400">باقی‌مانده: {comp.missing.join('، ')}</div>
+            <div className="mt-2 truncate text-[12px] text-ink-400">باقی‌مانده: {comp.missing.join('، ')}</div>
           </div>
           <Button size="sm" variant="dark" onClick={() => setEdit(true)}>
             تکمیل
@@ -113,7 +114,7 @@ export default function Profile() {
           { value: 'body', label: 'مشخصات بدنی' },
           { value: 'health', label: 'سلامت' },
           { value: 'activity', label: 'فعالیت' },
-          { value: 'settings', label: 'حساب و حریم' },
+          { value: 'settings', label: 'تنظیمات' },
         ]}
       />
 
@@ -158,7 +159,7 @@ export default function Profile() {
               ] as const
             ).map(([l, v]) => (
               <div key={l} className="rounded-3xl bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
-                <div className="text-[11px] text-ink-400">{l}</div>
+                <div className="text-[12px] text-ink-400">{l}</div>
                 <div className="mt-1 text-sm font-medium tabular-nums">{v}</div>
               </div>
             ))}
@@ -205,11 +206,11 @@ export default function Profile() {
               <span className="tabular-nums text-ink-400">{num(me.xp)} XP</span>
             </div>
             <Progress value={lvl.progress} className="mt-2" />
-            {lvl.next && <div className="mt-2 text-[11px] text-ink-400">{num(lvl.next.xp - me.xp)} امتیاز تا «{lvl.next.title}»</div>}
+            {lvl.next && <div className="mt-2 text-[12px] text-ink-400">{num(lvl.next.xp - me.xp)} امتیاز تا «{lvl.next.title}»</div>}
             <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
               {LEVELS.map((l) => (
                 <div key={l.level} className={clsx('rounded-2xl border p-2.5 text-center text-xs', me.xp >= l.xp ? 'border-brand-300 text-ink-900 dark:border-brand-300/50 dark:text-brand-200' : 'hairline text-ink-400')}>
-                  <div className="text-[10px] tabular-nums text-ink-400">سطح {num(l.level)}</div>
+                  <div className="text-[12px] tabular-nums text-ink-400">سطح {num(l.level)}</div>
                   <div className="mt-0.5">{l.title}</div>
                 </div>
               ))}
@@ -225,7 +226,7 @@ export default function Profile() {
             ).map(([l, v]) => (
               <div key={l} className="rounded-3xl bg-white p-4 text-center shadow-card dark:bg-ink-850 dark:shadow-none">
                 <div className="font-display text-[2rem] leading-none tabular-nums">{num(v)}</div>
-                <div className="mt-1 text-[11px] text-ink-400">{l}</div>
+                <div className="mt-1 text-[12px] text-ink-400">{l}</div>
               </div>
             ))}
           </div>
@@ -243,7 +244,7 @@ export default function Profile() {
                         <div className="truncate text-sm">{c.title}</div>
                         <Progress value={score / c.goal} className="mt-2" />
                       </div>
-                      <span className="text-[11px] tabular-nums text-ink-400">{c.status === 'finished' ? 'پایان‌یافته' : `${num((score / c.goal) * 100)}٪`}</span>
+                      <span className="text-[12px] tabular-nums text-ink-400">{c.status === 'finished' ? 'پایان‌یافته' : `${num((score / c.goal) * 100)}٪`}</span>
                     </Link>
                   )
                 })}
@@ -255,6 +256,7 @@ export default function Profile() {
 
       {tab === 'settings' && (
         <div className="mt-4 space-y-3">
+          <ThemeCard />
           <Card className="p-5">
             <div className="mb-1 text-sm font-medium">حریم خصوصی</div>
             <Toggle
@@ -264,7 +266,7 @@ export default function Profile() {
               onChange={(v) => updateProfile({ privacy: { ...privacy, publicProfile: v } })}
             />
             <Toggle label="نمایش مشخصات بدنی" desc="قد، وزن و هدف در پروفایل عمومی نمایش داده شود" on={privacy.showBody} onChange={(v) => updateProfile({ privacy: { ...privacy, showBody: v } })} />
-            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-400">
+            <div className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-400">
               <Lock size={11} /> اطلاعات سلامت{me.gender === 'female' ? ' و چرخه‌ی قاعدگی' : ''} هرگز به‌صورت عمومی نمایش داده نمی‌شود.
             </div>
           </Card>
@@ -297,6 +299,12 @@ export default function Profile() {
           </div>
 
           <SectionTitle title="همکاری با کی‌فیت" />
+          {!isBusiness(me) && !me.roles.includes('admin') ? (
+            <Card className="text-xs leading-7 text-ink-500">
+              حساب ورزشکار و حساب کسب‌وکار در کی‌فیت جدا هستند. برای معرفی باشگاه، ارائه‌ی خدمات مربیگری، فروشگاه، مطب یا رستوران، از حساب خارج شوید و با یک شماره‌ی دیگر «حساب کسب‌وکار» بسازید.
+            </Card>
+          ) : (
+          <>
           <p className="-mt-2 mb-3 text-xs text-ink-500">با فعال‌کردن هر نقش، پنل مدیریت اختصاصی آن را دریافت می‌کنید و خدماتتان در ماژول مربوطه به کاربران نمایش داده می‌شود.</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[...PRO_ROLES, ...(me.roles.includes('admin') ? (['admin'] as const) : [])].map((r) => {
@@ -309,7 +317,7 @@ export default function Profile() {
                   </IconTile>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold">{meta.label}</div>
-                    <div className="truncate text-[11px] text-ink-500">{meta.desc}</div>
+                    <div className="truncate text-[12px] text-ink-500">{meta.desc}</div>
                   </div>
                   {has ? (
                     <Button
@@ -331,6 +339,8 @@ export default function Profile() {
               )
             })}
           </div>
+          </>
+          )}
 
           <div className="grid gap-2 pt-3 sm:grid-cols-3">
             <Link to="/orders">
@@ -342,8 +352,8 @@ export default function Profile() {
               <Button
                 variant="outline"
                 icon={<RotateCcw size={16} />}
-                onClick={() => {
-                  if (confirm('همه‌ی داده‌ها به حالت نمایشی اولیه برگردد؟')) resetLocalDemo()
+                onClick={async () => {
+                  if ((await ask('همه‌ی داده‌ها به حالت نمایشی اولیه برگردد؟'))) resetLocalDemo()
                 }}
               >
                 بازنشانی داده‌های نمایشی
@@ -385,7 +395,7 @@ function Toggle({ label, desc, on, onChange }: { label: string; desc: string; on
     <button type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)} className="flex w-full items-center gap-3 border-b hairline py-3 text-right last:border-0">
       <div className="min-w-0 flex-1">
         <div className="text-sm">{label}</div>
-        <div className="text-[11px] text-ink-400">{desc}</div>
+        <div className="text-[12px] text-ink-400">{desc}</div>
       </div>
       <span className={clsx('relative h-6 w-11 shrink-0 rounded-full transition', on ? 'bg-brand-400' : 'bg-ink-900/15 dark:bg-white/15')}>
         <span className={clsx('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all', on ? 'right-0.5' : 'right-[1.375rem]')} />
@@ -427,7 +437,7 @@ function HealthCard({ user }: { user: User }) {
           </div>
         ))}
       </div>
-      <p className="mt-3 text-[11px] leading-5 text-ink-400">این اطلاعات در برنامه‌ی تمرین مربی، پیشنهادهای فیت‌یار و فیلتر غذاهای بوفه استفاده می‌شود.</p>
+      <p className="mt-3 text-[12px] leading-5 text-ink-400">این اطلاعات در برنامه‌ی تمرین مربی، پیشنهادهای فیت‌یار و فیلتر غذاهای بوفه استفاده می‌شود.</p>
       <Sheet open={open} onClose={() => setOpen(false)} title="پرونده‌ی سلامت">
         <div className="space-y-3">
           {rows.map(([k, l, ph]) => (
@@ -449,7 +459,7 @@ function HealthCard({ user }: { user: User }) {
   )
 }
 
-const choice = (on: boolean) => clsx('rounded-full px-4 py-2 text-xs transition', on ? 'grad-lavender font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300')
+const choice = (on: boolean) => clsx('rounded-full px-4 py-2 text-xs transition', on ? 'card-violet font-medium text-ink-950' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300')
 
 export function EditProfileSheet({ open, onClose, user }: { open: boolean; onClose: () => void; user: User }) {
   const [form, setForm] = useState<Partial<User>>({})
@@ -520,7 +530,7 @@ export function EditProfileSheet({ open, onClose, user }: { open: boolean; onClo
               <NumberInput value={form.birthYear ?? 0} onChange={(v) => set('birthYear', v || undefined)} placeholder="۱۳۷۵" />
             </Field>
           </div>
-          <div className="mt-4 mb-2 text-[11px] text-ink-500">هدف</div>
+          <div className="mt-4 mb-2 text-[12px] text-ink-500">هدف</div>
           <div className="flex flex-wrap gap-2">
             {Object.entries(GOALS).map(([v, l]) => (
               <button key={v} type="button" className={choice(form.goal === v)} onClick={() => set('goal', v as User['goal'])}>
@@ -528,7 +538,7 @@ export function EditProfileSheet({ open, onClose, user }: { open: boolean; onClo
               </button>
             ))}
           </div>
-          <div className="mt-4 mb-2 text-[11px] text-ink-500">سطح فعالیت</div>
+          <div className="mt-4 mb-2 text-[12px] text-ink-500">سطح فعالیت</div>
           <div className="flex flex-wrap gap-2">
             {Object.entries(ACTIVITY).map(([v, l]) => (
               <button key={v} type="button" className={choice(form.activityLevel === v)} onClick={() => set('activityLevel', v as User['activityLevel'])}>
@@ -625,6 +635,38 @@ function BlockedCard({ ids }: { ids: string[] }) {
           </button>
         </div>
       ))}
+    </Card>
+  )
+}
+
+/** انتخاب تم (تیره پیش‌فرض) */
+function ThemeCard() {
+  const theme = useSession((s) => s.theme)
+  const toggle = useSession((s) => s.toggleTheme)
+  const opts = [
+    { id: 'dark' as const, label: 'تیره', icon: Moon, preview: 'bg-ink-950 border-ink-700' },
+    { id: 'light' as const, label: 'روشن', icon: Sun, preview: 'bg-ink-50 border-ink-200' },
+  ]
+  return (
+    <Card className="p-5">
+      <div className="mb-3 text-sm font-medium">ظاهر برنامه</div>
+      <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="تم">
+        {opts.map((o) => (
+          <button
+            key={o.id}
+            role="radio"
+            aria-checked={theme === o.id}
+            onClick={() => theme !== o.id && toggle()}
+            className={clsx('rounded-2xl border-2 p-2 transition', theme === o.id ? 'border-ink-950 dark:border-white' : 'border-transparent')}
+          >
+            <span className={clsx('flex h-16 items-end gap-1.5 rounded-xl border p-2', o.preview)}>
+              <span className="card-violet h-6 w-10 rounded-md" />
+              <span className="card-pink h-9 w-6 rounded-md" />
+            </span>
+            <span className="mt-2 flex items-center justify-center gap-1.5 text-[14px] font-semibold"><o.icon size={16} />{o.label}</span>
+          </button>
+        ))}
+      </div>
     </Card>
   )
 }

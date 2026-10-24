@@ -7,7 +7,7 @@ import { faDateTime, num } from '@/core/format'
 import { deleteTeamSession, inviteToTeam, leaveTeam, removeTeamMember, rsvpTeamSession, scheduleTeamSession, teamBoard, TEAM_MAX } from '@/core/services/teams'
 import { Avatar, Button, Card, Empty, Field, Input, PageHeader, SectionTitle, Select, Sheet } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
-import { run, runOk, toast } from '@/ui/toast'
+import { run, runOk, toast, ask } from '@/ui/toast'
 
 export default function TeamDetail() {
   const { id } = useParams()
@@ -58,9 +58,9 @@ export default function TeamDetail() {
               <Link to={`/u/${m}`} className="flex flex-1 items-center gap-2">
                 <Avatar name={userMap[m]?.name ?? ''} src={userMap[m]?.avatar} size={32} />
                 <span className="text-sm">{userMap[m]?.name}</span>
-                {m === team.ownerId && <span className="text-[10px] text-ink-400">سازنده</span>}
+                {m === team.ownerId && <span className="text-[12px] text-ink-400">سازنده</span>}
               </Link>
-              {owner && m !== me.id && <button className="text-[11px] text-coral-500" onClick={() => confirm('این عضو حذف شود؟') && run(() => removeTeamMember(team.id, m))}>حذف</button>}
+              {owner && m !== me.id && <button className="text-[12px] text-coral-500" onClick={async () => (await ask('این عضو حذف شود؟')) && run(() => removeTeamMember(team.id, m))}>حذف</button>}
             </div>
           ))}
         </div>
@@ -84,10 +84,10 @@ export default function TeamDetail() {
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold">{s.title}</div>
-                  <div className="text-[11px] text-ink-500">{faDateTime(s.at)}{g ? ` · ` : ''}{g && <Link to={`/fityab/${g.id}`} className="underline">{g.name}</Link>}</div>
-                  {s.note && <div className="mt-1 text-[11px] text-ink-400">{s.note}</div>}
+                  <div className="text-[12px] text-ink-500">{faDateTime(s.at)}{g ? ` · ` : ''}{g && <Link to={`/fityab/${g.id}`} className="underline">{g.name}</Link>}</div>
+                  {s.note && <div className="mt-1 text-[12px] text-ink-400">{s.note}</div>}
                 </div>
-                {(s.createdBy === me.id || owner) && <button className="text-ink-300 hover:text-coral-500" onClick={() => confirm('قرار لغو شود؟') && run(() => deleteTeamSession(team.id, s.id))} aria-label="لغو"><Trash2 size={14} /></button>}
+                {(s.createdBy === me.id || owner) && <button className="text-ink-300 hover:text-coral-500" onClick={async () => (await ask('قرار لغو شود؟')) && run(() => deleteTeamSession(team.id, s.id))} aria-label="لغو"><Trash2 size={14} /></button>}
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <Button size="sm" variant={going ? 'primary' : 'secondary'} icon={<Check size={13} />} onClick={() => run(() => rsvpTeamSession(team.id, s.id, true))}>می‌آیم</Button>
@@ -96,7 +96,7 @@ export default function TeamDetail() {
                   {s.going.map((m) => <Avatar key={m} name={userMap[m]?.name ?? ''} src={userMap[m]?.avatar} size={24} className="ring-2 ring-white dark:ring-ink-850" />)}
                 </div>
               </div>
-              {g && <Link to={`/fityab/${g.id}`} className="mt-2 block text-[11px] text-brand-600 dark:text-brand-300">رزرو بلیت / زمین در {g.name}</Link>}
+              {g && <Link to={`/fityab/${g.id}`} className="mt-2 block text-[12px] text-brand-600 dark:text-brand-300">رزرو بلیت / زمین در {g.name}</Link>}
             </Card>
           )
         })}
@@ -104,7 +104,7 @@ export default function TeamDetail() {
 
       <SectionTitle title="چالش‌های تیم" action={<Link to={`/challenges/new?team=${team.id}`}><Button size="sm" variant="secondary" icon={<Trophy size={14} />}>چالش تیمی</Button></Link>} />
       {teamChallenges.length === 0 ? <p className="text-xs text-ink-400">چالش تیمی بدون جایزه‌ی نقدی رایگان است.</p> : teamChallenges.map((c) => (
-        <Link key={c.id} to={`/challenges/${c.id}`}><Card className="mb-2 text-sm font-medium">{c.title} <span className="text-[11px] text-ink-400">· {num(c.participants.length)} شرکت‌کننده</span></Card></Link>
+        <Link key={c.id} to={`/challenges/${c.id}`}><Card className="mb-2 text-sm font-medium">{c.title} <span className="text-[12px] text-ink-400">· {num(c.participants.length)} شرکت‌کننده</span></Card></Link>
       ))}
 
       <SectionTitle title="رتبه‌بندی این هفته" />
@@ -119,7 +119,7 @@ export default function TeamDetail() {
         ))}
       </Card>
 
-      <Button variant="ghost" className="mt-6 w-full text-coral-500" onClick={async () => { if (confirm('از تیم خارج می‌شوید؟') && (await runOk(() => leaveTeam(team.id), 'از تیم خارج شدید'))) nav('/teams') }}>ترک تیم</Button>
+      <Button variant="ghost" className="mt-6 w-full text-coral-500" onClick={async () => { if ((await ask('از تیم خارج می‌شوید؟')) && (await runOk(() => leaveTeam(team.id), 'از تیم خارج شدید'))) nav('/teams') }}>ترک تیم</Button>
 
       <Sheet open={plan} onClose={() => setPlan(false)} title="قرار تمرین جدید">
         <div className="space-y-3">

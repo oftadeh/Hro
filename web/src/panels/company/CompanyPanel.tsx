@@ -7,7 +7,7 @@ import { SUBSCRIPTION_PLANS } from '@/core/config'
 import { addSeats, createOrg, orgLeaderboard, removeMember, renewOrg, seatPrice } from '@/core/services/org'
 import { Avatar, Button, Card, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Stat } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
-import { run, runOk, toast } from '@/ui/toast'
+import { run, runOk, toast, ask } from '@/ui/toast'
 
 /** پنل مسئول منابع انسانی: خرید صندلی، مدیریت اعضا و گزارش سلامت گروهی (بدون نمایش اطلاعات فردی سلامت) */
 export default function CompanyPanel() {
@@ -33,7 +33,7 @@ export default function CompanyPanel() {
           <Field label="تعداد کارکنان"><NumberInput value={f.seats} onChange={(v) => setF({ ...f, seats: v })} /></Field>
           <div className="flex justify-between rounded-2xl bg-ink-900/[.04] p-3 text-sm dark:bg-white/[.05]"><span>جمع</span><b>{toman(price * f.seats)}</b></div>
           <Button className="w-full" disabled={bal < price * f.seats} onClick={() => run(() => createOrg(f.name, f.planId, f.seats), 'سازمان ثبت شد')}>پرداخت و فعال‌سازی</Button>
-          <div className="text-center text-[11px] text-ink-400">موجودی کیف پول: {toman(bal)} · <Link to="/wallet" className="underline">شارژ</Link></div>
+          <div className="text-center text-[12px] text-ink-400">موجودی کیف پول: {toman(bal)} · <Link to="/wallet" className="underline">شارژ</Link></div>
         </Card>
       </div>
     )
@@ -47,9 +47,9 @@ export default function CompanyPanel() {
     <div className="animate-fade-up">
       <PageHeader title={org.name} subtitle={`پلن ${plan.name} · ${num(org.members.length)} از ${num(org.seats)} صندلی`} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="اعضا" value={`${num(org.members.length)}/${num(org.seats)}`} icon={<Users size={18} />} />
-        <Stat label="فعال این هفته" value={num(activeWeek)} icon={<Trophy size={18} />} tone="emerald" />
-        <Stat label="امتیاز فعالیت تیم (هفته)" value={num(weekXp)} tone="violet" />
+        <Stat tone="violet" label="اعضا" value={`${num(org.members.length)}/${num(org.seats)}`} icon={<Users size={18} />} />
+        <Stat label="فعال این هفته" value={num(activeWeek)} icon={<Trophy size={18} />} tone="sky" />
+        <Stat label="امتیاز فعالیت تیم (هفته)" value={num(weekXp)} tone="emerald" />
         <Stat label="موجودی کیف پول" value={toman(bal)} tone="amber" />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -59,12 +59,12 @@ export default function CompanyPanel() {
             <span className="flex-1 font-display text-3xl tracking-widest" dir="ltr">{org.code}</span>
             <Button size="sm" variant="secondary" icon={<Copy size={14} />} onClick={() => { navigator.clipboard?.writeText(org.code); toast.success('کد کپی شد') }}>کپی</Button>
           </div>
-          <p className="mt-2 text-[11px] leading-5 text-ink-500">کارکنان در اپ کی‌فیت ← پروفایل ← «اشتراک سازمانی» این کد را وارد می‌کنند و اشتراک‌شان فوراً فعال می‌شود.</p>
+          <p className="mt-2 text-[12px] leading-5 text-ink-500">کارکنان در اپ کی‌فیت ← پروفایل ← «اشتراک سازمانی» این کد را وارد می‌کنند و اشتراک‌شان فوراً فعال می‌شود.</p>
           <div className="mt-4 flex gap-2">
             <NumberInput value={more} onChange={setMore} />
             <Button variant="secondary" icon={<Plus size={14} />} onClick={() => runOk(() => addSeats(more), 'صندلی اضافه شد')}>افزودن صندلی ({toman(seatPrice(org.planId, state) * more)})</Button>
           </div>
-          <Button className="mt-2 w-full" variant="outline" onClick={() => confirm(`تمدید اشتراک ${org.members.length} عضو؟`) && runOk(() => renewOrg(), 'اشتراک همه‌ی اعضا تمدید شد')}>
+          <Button className="mt-2 w-full" variant="outline" onClick={async () => (await ask(`تمدید اشتراک ${org.members.length} عضو؟`)) && runOk(() => renewOrg(), 'اشتراک همه‌ی اعضا تمدید شد')}>
             تمدید دوره برای همه ({toman(seatPrice(org.planId, state) * org.members.length)})
           </Button>
           <Link to="/challenges/new"><Button className="mt-2 w-full" variant="secondary">ساخت چالش داخلی سازمان</Button></Link>
@@ -79,12 +79,12 @@ export default function CompanyPanel() {
                 <span className="flex-1 truncate">{x.user.name}</span>
                 <span className="text-xs tabular-nums">{num(x.xp)}</span>
                 {x.user.id !== me.id && (
-                  <button className="text-[11px] text-coral-500" onClick={() => confirm(`${x.user.name} از سازمان حذف شود؟`) && run(() => removeMember(x.user.id), 'عضو حذف شد')}>حذف</button>
+                  <button className="text-[12px] text-coral-500" onClick={async () => (await ask(`${x.user.name} از سازمان حذف شود؟`)) && run(() => removeMember(x.user.id), 'عضو حذف شد')}>حذف</button>
                 )}
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-ink-400">به احترام حریم خصوصی، اطلاعات سلامت فردی کارکنان به سازمان نمایش داده نمی‌شود؛ فقط آمار تجمیعی.</p>
+          <p className="mt-3 text-[12px] text-ink-400">به احترام حریم خصوصی، اطلاعات سلامت فردی کارکنان به سازمان نمایش داده نمی‌شود؛ فقط آمار تجمیعی.</p>
         </Card>
       </div>
     </div>

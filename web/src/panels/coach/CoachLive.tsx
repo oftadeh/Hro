@@ -7,7 +7,7 @@ import { LIVE_LEVEL, cancelLiveClass, createLiveClass, enterLiveClass, isLiveNow
 import type { LiveClass } from '@/core/types'
 import { Badge, Button, Card, Empty, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Sheet, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
-import { run, runOk } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
 
 const empty = { title: '', sport: 'یوگا', description: '', level: 'all' as LiveClass['level'], at: '', durationMin: 45, price: 100_000, capacity: 30 }
 
@@ -40,7 +40,7 @@ export default function CoachLive() {
             <div className="mt-1 text-xs text-ink-500">{num(c.attendees.length)}/{num(c.capacity)} ثبت‌نام · {num(c.durationMin)} دقیقه · {c.price ? toman(c.price) : 'رایگان'}</div>
             <div className="mt-3 flex gap-2">
               <Button size="sm" icon={<Video size={14} />} disabled={!isLiveNow(c)} onClick={async () => { const l = await run(() => enterLiveClass(c.id)); if (l) window.open(l, '_blank', 'noopener') }}>شروع کلاس</Button>
-              <Button size="sm" variant="ghost" className="text-coral-500" onClick={() => confirm('کلاس لغو و وجه همه‌ی شرکت‌کنندگان برگردانده شود؟') && run(() => cancelLiveClass(c.id), 'کلاس لغو شد')}>لغو کلاس</Button>
+              <Button size="sm" variant="ghost" className="text-coral-500" onClick={async () => (await ask('کلاس لغو و وجه همه‌ی شرکت‌کنندگان برگردانده شود؟')) && run(() => cancelLiveClass(c.id), 'کلاس لغو شد')}>لغو کلاس</Button>
             </div>
           </Card>
         ))}
@@ -52,7 +52,7 @@ export default function CoachLive() {
             {past.map((c) => (
               <Card key={c.id} className="flex items-center gap-2">
                 <span className="flex-1 text-sm">{c.title}</span>
-                <span className="text-[11px] text-ink-400">{faDateTime(c.at)}</span>
+                <span className="text-[12px] text-ink-400">{faDateTime(c.at)}</span>
                 {c.status === 'cancelled' ? <Badge color="rose">لغو</Badge> : <Badge color="emerald">{num(c.joined.length)} حاضر</Badge>}
               </Card>
             ))}

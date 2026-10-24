@@ -12,7 +12,7 @@ import type { WorkoutSet } from '@/core/types'
 import { Button, Card, Empty, Field, Input, NumberInput, PageHeader, Sheet, Tabs } from '@/ui/kit'
 import { Lifter } from '@/ui/art'
 import { useMe } from '@/ui/hooks'
-import { run, runOk, toast } from '@/ui/toast'
+import { run, runOk, toast, ask } from '@/ui/toast'
 
 type Draft = { title: string; durationMin: number; exercises: { exerciseId: string; sets: WorkoutSet[] }[]; program?: { orderId: string; week: number; day: number } }
 const empty = (): Draft => ({ title: '', durationMin: 45, exercises: [] })
@@ -75,7 +75,7 @@ export default function Workouts() {
   return (
     <div className="animate-fade-up">
       <PageHeader back title="تمرین‌های من" subtitle="ثبت ست‌ها، رکوردهای شخصی و کتابخانه‌ی حرکات" actions={<Button size="sm" icon={<Plus size={15} />} onClick={() => setDraft(empty())}>ثبت تمرین</Button>} />
-      <div className="relative mb-4 overflow-hidden rounded-[2rem] grad-lavender p-5 text-ink-950">
+      <div className="relative mb-4 overflow-hidden rounded-[2rem] card-violet p-5 text-ink-950">
         <Lifter size={120} className="pointer-events-none absolute -bottom-3 left-2" />
         <div className="relative max-w-[60%]">
           <div className="text-xs opacity-60">۷ روز اخیر</div>
@@ -95,8 +95,8 @@ export default function Workouts() {
                 <div className="flex items-center gap-2">
                   <Dumbbell size={16} className="text-ink-400" />
                   <span className="text-sm font-semibold">{w.title}</span>
-                  <span className="text-[11px] text-ink-400">{faDate(w.day + 'T12:00')} · {num(w.durationMin)} دقیقه{w.hr ? ` · ❤ ${num(w.hr.avg)}/${num(w.hr.max)}` : ''}</span>
-                  <button className="mr-auto text-ink-300 hover:text-coral-500" onClick={() => confirm('این تمرین حذف شود؟') && run(() => deleteWorkout(w.id))} aria-label="حذف"><Trash2 size={14} /></button>
+                  <span className="text-[12px] text-ink-400">{faDate(w.day + 'T12:00')} · {num(w.durationMin)} دقیقه{w.hr ? ` · ❤ ${num(w.hr.avg)}/${num(w.hr.max)}` : ''}</span>
+                  <button className="mr-auto text-ink-300 hover:text-coral-500" onClick={async () => (await ask('این تمرین حذف شود؟')) && run(() => deleteWorkout(w.id))} aria-label="حذف"><Trash2 size={14} /></button>
                 </div>
                 <div className="mt-2 space-y-1 text-xs text-ink-500">
                   {w.exercises.map((e) => (
@@ -121,10 +121,10 @@ export default function Workouts() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl grad-peach text-ink-950"><Trophy size={18} /></span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{exerciseById(id)?.name}</div>
-                  <div className="text-[11px] text-ink-500">{num(r.weight)} کیلو × {num(r.reps)} · {faDate(r.day + 'T12:00')}</div>
+                  <div className="text-[12px] text-ink-500">{num(r.weight)} کیلو × {num(r.reps)} · {faDate(r.day + 'T12:00')}</div>
                 </div>
                 <div className="text-left">
-                  <div className="text-[10px] text-ink-400">۱RM تخمینی</div>
+                  <div className="text-[12px] text-ink-400">۱RM تخمینی</div>
                   <div className="font-display text-2xl leading-none">{num(r.oneRm)}</div>
                 </div>
               </Card>
@@ -142,7 +142,7 @@ export default function Workouts() {
               <Card key={e.id}>
                 <div className="flex items-center justify-between text-sm font-medium">
                   {e.name}
-                  <span className="text-[10px] font-normal text-ink-400">{MUSCLE_LABEL[e.muscle]} · {EQUIPMENT_LABEL[e.equipment]}</span>
+                  <span className="text-[12px] font-normal text-ink-400">{MUSCLE_LABEL[e.muscle]} · {EQUIPMENT_LABEL[e.equipment]}</span>
                 </div>
                 <p className="mt-1 text-xs leading-6 text-ink-500">{e.cue}</p>
               </Card>
@@ -210,7 +210,7 @@ export default function Workouts() {
               className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-right text-sm hover:bg-ink-900/[.04] dark:hover:bg-white/[.05]"
             >
               {e.name}
-              <span className="text-[10px] text-ink-400">{MUSCLE_LABEL[e.muscle]}</span>
+              <span className="text-[12px] text-ink-400">{MUSCLE_LABEL[e.muscle]}</span>
             </button>
           ))}
         </div>
@@ -228,7 +228,7 @@ function ExerciseFilter({ q, setQ, muscle, setMuscle }: { q: string; setQ: (v: s
       </div>
       <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 no-scrollbar">
         {(['all', ...Object.keys(MUSCLE_LABEL)] as (Muscle | 'all')[]).map((m) => (
-          <button key={m} onClick={() => setMuscle(m)} className={clsx('shrink-0 rounded-full px-3 py-1.5 text-xs', muscle === m ? 'grad-lavender text-ink-950' : 'bg-ink-900/[.05] dark:bg-white/[.06]')}>
+          <button key={m} onClick={() => setMuscle(m)} className={clsx('shrink-0 rounded-full px-3 py-1.5 text-xs', muscle === m ? 'card-violet text-ink-950' : 'bg-ink-900/[.05] dark:bg-white/[.06]')}>
             {m === 'all' ? 'همه' : MUSCLE_LABEL[m]}
           </button>
         ))}

@@ -12,7 +12,7 @@ export function FoodRow({ f, restaurant, onAdd }: { f: Food; restaurant?: string
       </div>
       <div className="min-w-0 flex-1">
         <div className="font-semibold">{f.name}</div>
-        {restaurant && <div className="text-[11px] text-ink-400">{restaurant}</div>}
+        {restaurant && <div className="text-[12px] text-ink-400">{restaurant}</div>}
         <div className="line-clamp-1 text-xs text-ink-500">{f.description}</div>
         <div className="mt-1.5 flex flex-wrap gap-1">
           <Badge color="amber">{num(f.calories)} کالری</Badge>

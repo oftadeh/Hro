@@ -7,7 +7,7 @@ import { FAMILY_MAX, RELATION_LABEL, ageOf, removeFamilyMember, saveFamilyMember
 import type { FamilyMember } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Empty, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Sheet, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
-import { run, runOk } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
 
 type Draft = Omit<FamilyMember, 'id'> & { id?: string }
 const blank: Draft = { name: '', relation: 'child', birthYear: 1398, gender: 'female', notes: '' }
@@ -35,10 +35,10 @@ export default function Family() {
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold">{m.name}</div>
                 <div className="text-xs text-ink-500">{RELATION_LABEL[m.relation]} · {num(ageOf(m.birthYear))} ساله · {m.gender === 'female' ? 'دختر/خانم' : 'پسر/آقا'}</div>
-                {m.notes && <div className="mt-0.5 truncate text-[11px] text-ink-400">{m.notes}</div>}
+                {m.notes && <div className="mt-0.5 truncate text-[12px] text-ink-400">{m.notes}</div>}
               </div>
               <button onClick={() => setF({ ...m })} className="p-2 text-ink-400" aria-label="ویرایش"><Pencil size={15} /></button>
-              <button onClick={() => confirm(`${m.name} حذف شود؟`) && run(() => removeFamilyMember(m.id))} className="p-2 text-ink-400" aria-label="حذف"><Trash2 size={15} /></button>
+              <button onClick={async () => (await ask(`${m.name} حذف شود؟`)) && run(() => removeFamilyMember(m.id))} className="p-2 text-ink-400" aria-label="حذف"><Trash2 size={15} /></button>
             </Card>
           ))}
         </div>
@@ -65,7 +65,7 @@ export default function Family() {
                   <Card className="flex items-center gap-3">
                     <Badge color="violet">{t.memberName}</Badge>
                     <div className="flex-1 text-sm">{g?.classes?.find((c) => c.id === t.classId)?.title} · {g?.name}</div>
-                    <span className="text-[11px] text-ink-400">{t.slotAt && faDateTime(t.slotAt)}</span>
+                    <span className="text-[12px] text-ink-400">{t.slotAt && faDateTime(t.slotAt)}</span>
                   </Card>
                 </Link>
               )

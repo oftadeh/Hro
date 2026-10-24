@@ -24,7 +24,7 @@ export function WeekBars({ data, max, unit, format = num }: { data: { label: str
                 style={{ height: `${Math.max(4, (d.value / top) * 100)}%`, boxShadow: d.value ? `0 0 12px ${d.today ? '#a78bfa55' : '#6ee7c855'}` : undefined, animation: `kf-grow-y .9s cubic-bezier(.2,.8,.2,1) ${i * 0.07}s both` }}
               />
             </div>
-            <div className={clsx('mt-2 h-4 text-[10px]', d.today ? 'text-ink-900 dark:text-white' : 'text-ink-400')}>{d.label}</div>
+            <div className={clsx('mt-2 h-4 text-[12px]', d.today ? 'text-ink-900 dark:text-white' : 'text-ink-400')}>{d.label}</div>
           </div>
         ))}
       </div>
