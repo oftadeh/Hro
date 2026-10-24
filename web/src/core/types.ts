@@ -20,6 +20,9 @@ export interface User {
   email?: string
   /** false یعنی شماره هنوز با پیامک تأیید نشده (ثبت‌نام با ایمیل)؛ نبودنش = تأییدشده */
   phoneVerified?: boolean
+  /** زمان و نسخه‌ی قوانینی که کاربر هنگام ثبت‌نام پذیرفته است */
+  termsAcceptedAt?: string
+  termsVersion?: string
   avatar?: string
   bio?: string
   city: string

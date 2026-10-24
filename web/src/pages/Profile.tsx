@@ -257,6 +257,13 @@ export default function Profile() {
       {tab === 'settings' && (
         <div className="mt-4 space-y-3">
           <ThemeCard />
+          <Link to="/terms" className="press flex items-center justify-between rounded-[26px] bg-white p-5 shadow-card dark:bg-ink-850 dark:shadow-none">
+            <span>
+              <span className="block text-sm font-medium">قوانین و حریم خصوصی</span>
+              <span className="mt-0.5 block text-[13px] text-ink-500">قوانین استفاده، تعهدات هر نقش و نحوه‌ی نگهداری اطلاعات</span>
+            </span>
+            <span aria-hidden className="text-ink-400">‹</span>
+          </Link>
           <Card className="p-5">
             <div className="mb-1 text-sm font-medium">حریم خصوصی</div>
             <Toggle

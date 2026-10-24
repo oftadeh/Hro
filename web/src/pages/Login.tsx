@@ -68,7 +68,7 @@ export default function Login() {
         })
         .catch(() => setDemoUsers(null))
   }, [])
-  const [f, setF] = useState<Form>({ phone: '', kind: 'athlete', referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
+  const [f, setF] = useState<Form>({ accept: false, phone: '', kind: 'athlete', referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }))
   const n = (v: string) => Number(faDigitsToEn(v)) || undefined
 
@@ -94,7 +94,7 @@ export default function Login() {
       const r = await run(() => (byEmail ? verifyEmailOtp(email, otp) : verifyOtp(phone, otp)))
       if (r && !r.exists) setStep('profile')
     } else {
-      const ph = byEmail ? { phone: f.phone } : {}
+      const ph = { ...(byEmail ? { phone: f.phone } : {}), acceptTerms: f.accept }
       if (f.kind !== 'athlete') {
         await run(() => registerUser({ ...ph, name: f.name, gender: '', accountType: f.kind as BusinessRole }))
         setLoading(false)
@@ -228,6 +228,8 @@ export default function Login() {
 }
 
 type Form = {
+  /** پذیرش قوانین نقش انتخاب‌شده و حریم خصوصی */
+  accept: boolean
   /** شماره‌ی موبایل در ثبت‌نام با ایمیل */
   phone: string
   /** نوع حساب: ورزشکار یا یکی از انواع کسب‌وکار */
@@ -300,6 +302,7 @@ function Onboarding({ f, set, needPhone }: { f: Form; set: <K extends keyof Form
           <span className="text-xs text-white/50">نام {f.kind === 'company' ? 'سازمان' : 'مجموعه یا کسب‌وکار'}</span>
           <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً باشگاه آیرون‌من" className={field} autoFocus />
         </label>
+        <AcceptTerms f={f} set={set} />
       </div>
     )
   }
@@ -405,6 +408,24 @@ function Onboarding({ f, set, needPhone }: { f: Form; set: <K extends keyof Form
           )}
         </div>
       )}
+      <AcceptTerms f={f} set={set} />
     </div>
+  )
+}
+
+/** پذیرش قوانین همان نقش و حریم خصوصی (الزامی برای ساخت حساب) */
+function AcceptTerms({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void }) {
+  const key = f.kind === 'athlete' ? 'user' : f.kind
+  const role = f.kind === 'athlete' ? 'ورزشکاران' : ROLE_META[f.kind].label
+  const a = 'font-semibold text-white underline underline-offset-4'
+  return (
+    <label className="flex items-start gap-3 rounded-[18px] bg-white/[.05] p-3.5">
+      <input type="checkbox" checked={f.accept} onChange={(e) => set('accept', e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-lime-400" />
+      <span className="text-[13px] leading-7 text-white/70">
+        <Link to="/terms?t=general" target="_blank" className={a}>قوانین عمومی</Link>،{' '}
+        <Link to={`/terms?t=${key}`} target="_blank" className={a}>قوانین {role}</Link> و{' '}
+        <Link to="/privacy" target="_blank" className={a}>حریم خصوصی</Link> کی‌فیت را خواندم و می‌پذیرم.
+      </span>
+    </label>
   )
 }

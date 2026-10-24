@@ -7,6 +7,7 @@ import { hasBadge } from './perks'
 import { notify } from './ledger'
 import { faDigitsToEn } from '../format'
 import { ROLE_META } from '../config'
+import { TERMS_VERSION } from '../legal'
 import { setupCycleFor } from './cycle'
 import { type BusinessRole, isBusiness, isBusinessRole, needsVerification } from '../roles'
 
@@ -39,6 +40,8 @@ export interface ProfileInput {
   accountType?: BusinessRole
   /** فقط در ثبت‌نام با ایمیل: شماره‌ی موبایل (هنوز تأییدنشده) */
   phone?: string
+  /** پذیرش قوانین و حریم خصوصی (الزامی) */
+  acceptTerms?: boolean
 }
 
 /** ورود با ایمیل: ایمیل تأییدشده و شماره‌ای که هنوز با پیامک تأیید نشده */
@@ -62,6 +65,7 @@ export function createUser(phone: string, input: ProfileInput, extra: IdentityEx
   const clash = db().users.find((u) => u.phone === phone)
   if (clash && (extra.phoneVerified === false || clash.phoneVerified !== false)) throw new AppError('این شماره قبلاً ثبت‌نام کرده است؛ با همان حساب وارد شوید یا به پشتیبانی پیام دهید')
   if (extra.email && db().users.some((u) => u.email === extra.email)) throw new AppError('با این ایمیل قبلاً حساب ساخته شده است')
+  if (input.acceptTerms !== true) throw new AppError('برای ساخت حساب، قوانین و حریم خصوصی کی‌فیت را بپذیرید')
   const business = input.accountType
   if (business !== undefined && !isBusinessRole(business)) throw new AppError('نوع حساب معتبر نیست')
   const name = String(input.name ?? '').trim()
@@ -112,6 +116,8 @@ export function createUser(phone: string, input: ProfileInput, extra: IdentityEx
 }
 
 const identity = (extra: IdentityExtra): Partial<User> => ({
+  termsAcceptedAt: now(),
+  termsVersion: TERMS_VERSION,
   ...(extra.email ? { email: extra.email } : {}),
   ...(extra.phoneVerified === false ? { phoneVerified: false } : {}),
 })

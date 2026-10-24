@@ -270,6 +270,10 @@ export default function Landing() {
       </main>
 
       <footer className="border-t border-white/10 py-8 text-center text-[13px] text-white/40">
+        <nav aria-label="قوانین" className="mb-3 flex justify-center gap-5 text-[14px] text-white/60">
+          <Link to="/terms" className="hover:text-white">قوانین و مقررات</Link>
+          <Link to="/privacy" className="hover:text-white">حریم خصوصی</Link>
+        </nav>
         © {new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric' }).format(new Date())} کی‌فیت · اصفهان · keyfitapp.ir
       </footer>
     </div>

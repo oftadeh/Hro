@@ -20,6 +20,7 @@ import Home from '@/pages/Home'
 import { ViewTransitions } from '@/ui/ViewTransitions'
 const Services = lazy(() => import('@/pages/Services'))
 const Landing = lazy(() => import('@/pages/Landing'))
+const Legal = lazy(() => import('@/pages/Legal'))
 const Scan = lazy(() => import('@/pages/Scan'))
 const GymQr = lazy(() => import('@/panels/gym/GymQr'))
 const WalletPage = lazy(() => import('@/pages/Wallet'))
@@ -208,6 +209,8 @@ export default function App() {
           <Routes>
             {/* صفحه‌ی معرفی با موشن؛ ورود فقط با «شروع کن!» */}
             <Route path="/" element={<Landing />} />
+            <Route path="/terms" element={<Legal />} />
+            <Route path="/privacy" element={<Legal privacy />} />
             <Route path="*" element={<Login />} />
           </Routes>
         </Suspense>
@@ -228,6 +231,8 @@ export default function App() {
       <Suspense fallback={<div className="flex h-dvh items-center justify-center"><span className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" /></div>}>
       <Routes>
         <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/terms" element={<Legal />} />
+        <Route path="/privacy" element={<Legal privacy />} />
         <Route element={<BusinessGate><AppShell /></BusinessGate>}>
           <Route index element={<Home />} />
           <Route path="services" element={<Services />} />
