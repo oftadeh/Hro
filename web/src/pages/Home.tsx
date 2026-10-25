@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
-import { CalendarDays, ChevronDown, ChevronLeft, Droplet, Dumbbell, Footprints, Plus, QrCode, Radio, Ticket as TicketIcon, Timer, Trophy } from 'lucide-react'
+import { CalendarDays, ChevronDown, ChevronLeft, Droplet, Footprints, Plus, QrCode, Radio, Ticket as TicketIcon, Timer, Trophy } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { dayKey, daysLeft, faDateTime, num, toman } from '@/core/format'
 import { logActivity } from '@/core/services/engagement'
@@ -16,6 +16,7 @@ import { run } from '@/ui/toast'
 import { celebrate } from '@/ui/motion'
 import { vtName } from '@/ui/ViewTransitions'
 import { toneFor } from '@/ui/kit'
+import { CardIcon, LiveTiles, progressTiles, tileIcon } from '@/ui/live'
 
 /* ───────── عدد متحرک ───────── */
 function useCountUp(value: number, ms = 650) {
@@ -52,7 +53,6 @@ function ActivityCard({ log }: { log: { steps: number; water: number; workoutMin
   const value = log[m.k]
   const shown = useCountUp(value)
   const pct = Math.min(1, value / m.goal)
-  const C = 2 * Math.PI * 42
 
   const add = () => {
     const id = Date.now()
@@ -65,63 +65,43 @@ function ActivityCard({ log }: { log: { steps: number; water: number; workoutMin
     })
   }
 
+  const violet = m.tone === 'card-violet'
+  const accVars = { '--acc': violet ? '#dcff5a' : '#0d0b10', '--acc-on': violet ? '#0d0b10' : '#dcff5a' } as CSSProperties
+  const tiles = progressTiles(pct, tileIcon(m.k === 'steps' ? 'foot' : m.k === 'water' ? 'cup' : 'timer'))
+
   return (
-    <section aria-label="فعالیت امروز" className={clsx('relative overflow-hidden rounded-[32px] p-5 shadow-soft transition-colors duration-500', METRICS[i].tone === 'card-violet' ? 'text-white' : 'text-ink-950')}>
+    <section aria-label="فعالیت امروز" style={accVars} className={clsx('relative min-h-[236px] overflow-hidden rounded-[32px] p-5 shadow-soft transition-colors duration-500', violet ? 'text-white' : 'text-ink-950')}>
       {/* لایه‌های رنگ با محو شدن نرم بین شاخص‌ها */}
       {METRICS.map((x, j) => (
         <span key={x.k} aria-hidden className={clsx('absolute inset-0 transition-opacity duration-500', x.tone, j === i ? 'opacity-100' : 'opacity-0')} />
       ))}
-      {/* خط نوار قلب، امضای ورزشی */}
-      <svg aria-hidden viewBox="0 0 400 60" className="pointer-events-none absolute inset-x-0 bottom-6 h-16 w-full opacity-20" preserveAspectRatio="none">
-        <path d="M0 30 H120 L135 30 L145 8 L160 52 L172 22 L182 30 H260 L272 30 L280 14 L292 46 L300 30 H400" fill="none" stroke="currentColor" strokeWidth="2.5" strokeDasharray="240" style={{ animation: 'kf-dash 3.5s linear 2' }} />
-      </svg>
+      {/* کاشی‌های زنده: هر کاشی یک‌دوازدهم هدف امروز همین شاخص */}
+      <LiveTiles key={m.k} tiles={tiles} />
+      <CardIcon name={m.k === 'steps' ? 'steps' : m.k === 'water' ? 'drop' : 'timer'} playKey={`${m.k}-${value}`} />
 
-      <div className="relative">
-        <div className="flex items-center justify-between">
-          <span className="text-[14px] font-semibold opacity-70">امروز</span>
-          <div className="flex rounded-full bg-white/40 p-1" role="tablist" aria-label="شاخص">
-            {METRICS.map((x, j) => (
-              <button key={x.k} role="tab" aria-selected={j === i} onClick={() => setI(j)} className={clsx('h-9 rounded-full px-3.5 text-[13px] transition', j === i ? 'bg-ink-950 font-semibold text-white' : 'opacity-75')}>
-                {x.label}
-              </button>
-            ))}
-          </div>
+      <div className="relative max-w-[64%]">
+        <span className="text-[14px] font-semibold opacity-70">امروز · {m.label}</span>
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="text-[46px] font-black leading-none tabular-nums">{num(Math.round(shown))}</span>
+          <span className="text-[15px] font-semibold opacity-70">{m.unit}</span>
         </div>
-
-        <div className="mt-4 flex items-center gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[52px] font-black leading-none tabular-nums">{num(Math.round(shown))}</span>
-              <span className="text-[15px] font-semibold opacity-70">{m.unit}</span>
-            </div>
-            <p className="mt-2 text-[14px] opacity-75">
-              {pct >= 1 ? 'هدف امروز کامل شد!' : `${num(m.goal - value)} ${m.unit} تا هدف ${num(m.goal)}`}
-            </p>
-          </div>
-          <button onClick={() => setI((i + 1) % METRICS.length)} aria-label="شاخص بعدی" className="relative h-28 w-28 shrink-0">
-            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeOpacity=".15" strokeWidth="10" />
-              <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct)} style={{ transition: 'stroke-dashoffset .7s cubic-bezier(.2,.9,.25,1)' }} />
-            </svg>
-            <span className="absolute inset-0 flex flex-col items-center justify-center">
-              <m.icon size={22} strokeWidth={1.8} />
-              <span className="mt-0.5 text-[13px] font-bold tabular-nums">{num(Math.round(pct * 100))}٪</span>
-            </span>
-          </button>
+        <p className="mt-2 text-[14px] opacity-75">
+          {pct >= 1 ? 'هدف امروز کامل شد!' : `${num(Math.round(pct * 100))}٪ · ${num(m.goal - value)} ${m.unit} تا هدف`}
+        </p>
+        <div className="mt-3 flex gap-1.5" role="tablist" aria-label="شاخص">
+          {METRICS.map((x, j) => (
+            <button key={x.k} role="tab" aria-selected={j === i} onClick={() => setI(j)} className={clsx('press h-8 rounded-full px-3 text-[13px] transition', j === i ? 'bg-ink-950 font-semibold text-white' : 'bg-white/30')}>
+              {x.label}
+            </button>
+          ))}
         </div>
-
-        <div className="relative mt-5 flex items-center gap-3">
-          <button onClick={add} className="flex h-12 items-center gap-2 rounded-full bg-ink-950 px-5 text-[15px] font-bold text-white transition active:scale-95">
+        <div className="relative mt-3">
+          <button onClick={add} className="press flex h-11 items-center gap-2 rounded-full bg-ink-950 px-5 text-[15px] font-bold text-white">
             <Plus size={18} /> ثبت {num(m.add)} {m.unit}
           </button>
           {bursts.map((b) => (
             <span key={b} aria-hidden className="anim-float-up pointer-events-none absolute right-10 top-0 text-[18px] font-black">+{num(m.add)}</span>
           ))}
-          <div className="flex flex-1 justify-end gap-1.5">
-            {METRICS.map((x, j) => (
-              <span key={x.k} className={clsx('h-2 rounded-full bg-ink-950 transition-all', j === i ? 'w-6' : 'w-2 opacity-30')} />
-            ))}
-          </div>
         </div>
       </div>
     </section>
@@ -153,12 +133,20 @@ function TrainingCard() {
     return out
   }, [workouts, me.id])
   const weekCount = days.filter((d) => d.done).length
+  // ترتیب کاشی‌ها از کنار متن: امروز، دیروز، ...
+  const tiles = useMemo(() => Array.from({ length: 12 }, (_, k) => {
+    const key = dayKey(new Date(Date.now() - k * 86_400_000))
+    return { on: workouts.some((w) => w.userId === me.id && w.day === key), back: tileIcon('check'), glow: k === 0 }
+  }), [workouts, me.id])
+  const recent = tiles.filter((t) => t.on).length
 
   return (
     <section aria-label="تمرین امروز" className="card-night relative overflow-hidden rounded-[32px] p-5">
       <span aria-hidden className="pointer-events-none absolute -left-16 -top-20 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(140,110,255,.45),transparent_65%)]" />
-      <Dumbbell aria-hidden size={130} strokeWidth={1} className="pointer-events-none absolute -bottom-6 -left-4 -rotate-12 opacity-[.07]" />
-      <div className="relative">
+      {/* کاشی‌های زنده: ۱۲ روز اخیر، هر روزی که تمرین کردی تیک می‌خورد */}
+      <LiveTiles tiles={tiles} />
+      <CardIcon name="dumbbell" playKey={weekCount} />
+      <div className="relative max-w-[64%]">
         <span className="text-[13px] font-semibold text-white/60">تمرین امروز</span>
         {program && next ? (
           <>
@@ -174,16 +162,7 @@ function TrainingCard() {
           </>
         )}
 
-        <div className="mt-4 flex justify-between" aria-label={`${num(weekCount)} تمرین در ۷ روز اخیر`}>
-          {days.map((d, j) => (
-            <span key={d.key} className="flex flex-col items-center gap-1.5">
-              <span className={clsx('flex h-9 w-9 items-center justify-center rounded-full text-[12px] transition', d.done ? 'card-violet font-bold' : j === 6 ? 'border-2 border-dashed border-white/40' : 'bg-white/10')}>
-                {d.done ? '✓' : ''}
-              </span>
-              <span className="text-[12px] text-white/50">{d.label}</span>
-            </span>
-          ))}
-        </div>
+        <p className="mt-3 text-[13px] text-white/55">{num(recent)} جلسه در ۱۲ روز اخیر</p>
 
         <div className="mt-5 flex gap-2.5">
           <Link to={program && next ? `/program/${program.id}` : '/workouts'} className="flex h-12 flex-1 items-center justify-center rounded-full bg-white text-[15px] font-bold text-ink-950 transition active:scale-95">
