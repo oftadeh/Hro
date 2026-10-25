@@ -16,8 +16,8 @@ export function weekKey(d = new Date()) {
 export const LEAGUES = [
   { id: 'bronze', name: 'برنز', min: 0, color: '#d39a72' },
   { id: 'silver', name: 'نقره', min: 300, color: '#c0c4d6' },
-  { id: 'gold', name: 'طلا', min: 800, color: '#fcd679' },
-  { id: 'diamond', name: 'الماس', min: 1500, color: '#5eead4' },
+  { id: 'gold', name: 'طلا', min: 800, color: '#ff9a4d' },
+  { id: 'diamond', name: 'الماس', min: 1500, color: '#4ff3da' },
 ] as const
 
 /** لیگ هفتگی بر اساس امتیاز همین هفته */

@@ -8,6 +8,7 @@ import type { LiveClass } from '@/core/types'
 import { PerkPrice } from '@/ui/PerkPrice'
 import { Avatar, Badge, Button, Card, Empty, HeroHeader, PageHeader, SectionTitle } from '@/ui/kit'
 import { useBalance, useMe, useUserMap } from '@/ui/hooks'
+import { isBusiness } from '@/core/roles'
 import { run, runOk, ask } from '@/ui/toast'
 
 export function LiveCard({ c }: { c: LiveClass }) {
@@ -116,6 +117,8 @@ export function LiveDetail() {
                 </Button>
               )}
             </>
+          ) : isBusiness(me) ? (
+            <p className="text-center text-xs leading-6 text-ink-500">ثبت‌نام در کلاس‌ها فقط با حساب ورزشکار ممکن است.</p>
           ) : (
             <>
               {c.price > 0 && (

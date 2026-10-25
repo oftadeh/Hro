@@ -21,7 +21,7 @@ export const PHASES: Record<Phase, { label: string; color: string; intensity: st
   },
   follicular: {
     label: 'فولیکولار',
-    color: '#5eead4',
+    color: '#4ff3da',
     intensity: 'بالا',
     workout: 'انرژی و ریکاوری در بهترین حالت است؛ زمان مناسب تمرین قدرتی سنگین، HIIT و یادگیری حرکات جدید.',
     nutrition: 'پروتئین کافی و کربوهیدرات پیچیده پیش از تمرین؛ بدن در این فاز کربوهیدرات را بهتر مصرف می‌کند.',
@@ -29,7 +29,7 @@ export const PHASES: Record<Phase, { label: string; color: string; intensity: st
   },
   ovulation: {
     label: 'تخمک‌گذاری',
-    color: '#fcd679',
+    color: '#ff9a4d',
     intensity: 'اوج',
     workout: 'اوج قدرت است و می‌توانی رکورد بزنی؛ اما گرم‌کردن کامل را جدی بگیر، چون مفاصل و رباط‌ها شل‌ترند.',
     nutrition: 'فیبر و سبزیجات چلیپایی (کلم، بروکلی)، آب فراوان و پروتئین بعد از تمرین.',
@@ -37,7 +37,7 @@ export const PHASES: Record<Phase, { label: string; color: string; intensity: st
   },
   luteal: {
     label: 'لوتئال',
-    color: '#c4b5fd',
+    color: '#a48bff',
     intensity: 'متوسط',
     workout: 'تمرین استقامتی و قدرتی با شدت متوسط؛ در روزهای آخر شدت را کم کن و به خواب و ریکاوری توجه کن.',
     nutrition: 'نیاز کالری کمی بالاتر است؛ منیزیم (بادام، شکلات تلخ، موز) و کربوهیدرات پیچیده برای کنترل هوس شیرینی.',

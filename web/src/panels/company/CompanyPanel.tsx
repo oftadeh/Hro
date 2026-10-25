@@ -64,7 +64,7 @@ export default function CompanyPanel() {
             <NumberInput value={more} onChange={setMore} />
             <Button variant="secondary" icon={<Plus size={14} />} onClick={() => runOk(() => addSeats(more), 'صندلی اضافه شد')}>افزودن صندلی ({toman(seatPrice(org.planId, state) * more)})</Button>
           </div>
-          <Button className="mt-2 w-full" variant="outline" onClick={async () => (await ask(`تمدید اشتراک ${org.members.length} عضو؟`)) && runOk(() => renewOrg(), 'اشتراک همه‌ی اعضا تمدید شد')}>
+          <Button className="mt-2 w-full" variant="outline" onClick={async () => (await ask(`اشتراک ${num(org.members.length)} عضو تمدید شود؟`)) && runOk(() => renewOrg(), 'اشتراک همه‌ی اعضا تمدید شد')}>
             تمدید دوره برای همه ({toman(seatPrice(org.planId, state) * org.members.length)})
           </Button>
           <Link to="/challenges/new"><Button className="mt-2 w-full" variant="secondary">ساخت چالش داخلی سازمان</Button></Link>

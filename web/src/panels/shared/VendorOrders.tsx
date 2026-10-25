@@ -5,7 +5,7 @@ import type { Order } from '@/core/types'
 import { Badge, Button, Card, Empty, PageHeader } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 import { ORDER_STATUS, OrderSteps } from '@/pages/Orders'
-import { run, ask } from '@/ui/toast'
+import { run, ask, askText } from '@/ui/toast'
 
 const NEXT: Partial<Record<Order['status'], { to: Order['status']; label: string }>> = {
   paid: { to: 'preparing', label: 'شروع آماده‌سازی' },
@@ -54,9 +54,14 @@ export default function VendorOrders({ kind }: { kind: Order['kind'] }) {
                   {next && (
                     <Button
                       size="sm"
-                      onClick={() => {
-                        const code = next.to === 'shipped' && kind === 'shop' ? prompt('کد رهگیری مرسوله (اختیاری)') ?? undefined : undefined
-                        run(() => setOrderStatus(o.id, next.to, code || undefined))
+                      onClick={async () => {
+                        let code: string | undefined
+                        if (next.to === 'shipped' && kind === 'shop') {
+                          const r = await askText('کد رهگیری مرسوله (اختیاری)', 'مثلاً ۱۲۳۴۵۶۷۸۹۰')
+                          if (r === null) return
+                          code = r || undefined
+                        }
+                        run(() => setOrderStatus(o.id, next.to, code))
                       }}
                     >
                       {next.label}

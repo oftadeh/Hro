@@ -1,7 +1,7 @@
 /** نمودار خطی سبک برای روند وزن و نمره‌ی سلامت */
 import { num } from '@/core/format'
 
-export function LineChart({ data, height = 140, color = '#a78bfa', format = num }: { data: { label: string; value: number }[]; height?: number; color?: string; format?: (n: number) => string }) {
+export function LineChart({ data, height = 140, color = '#8a6bff', format = num }: { data: { label: string; value: number }[]; height?: number; color?: string; format?: (n: number) => string }) {
   if (data.length < 2) return <div className="flex h-28 items-center justify-center text-xs text-ink-400">برای نمایش روند حداقل دو ثبت لازم است</div>
   const W = 320
   const H = height

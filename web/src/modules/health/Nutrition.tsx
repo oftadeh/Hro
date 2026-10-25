@@ -45,7 +45,7 @@ export default function Nutrition() {
           <Donut
             size={128}
             stroke={10}
-            segments={[{ value: Math.min(1, n.kcal / t.kcal), color: n.kcal > t.kcal * 1.1 ? '#fb7a8c' : '#a78bfa' }, { value: Math.max(0, 1 - n.kcal / t.kcal), color: 'transparent' }]}
+            segments={[{ value: Math.min(1, n.kcal / t.kcal), color: n.kcal > t.kcal * 1.1 ? '#ff2f7d' : '#8a6bff' }, { value: Math.max(0, 1 - n.kcal / t.kcal), color: 'transparent' }]}
             center={
               <div className="text-center">
                 <div className="font-display text-3xl leading-none">{num(Math.abs(left))}</div>

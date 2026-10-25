@@ -25,7 +25,7 @@ export function ProfileHero({ user, actions, extra }: { user: User; actions?: Re
         <div className="flex items-start gap-4">
           {/* آواتار با حلقه‌ی پیشرفت سطح */}
           <div className="relative shrink-0">
-            <Donut size={96} stroke={4} segments={[{ value: Math.max(0.02, lvl.progress), color: '#c4b5fd' }, { value: 1 - Math.max(0.02, lvl.progress), color: 'rgba(255,255,255,.12)' }]} center={<Avatar name={user.name} src={user.avatar} size={80} />} />
+            <Donut size={96} stroke={4} segments={[{ value: Math.max(0.02, lvl.progress), color: '#a48bff' }, { value: 1 - Math.max(0.02, lvl.progress), color: 'rgba(255,255,255,.12)' }]} center={<Avatar name={user.name} src={user.avatar} size={80} />} />
             <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full card-violet px-2 py-0.5 text-[12px] font-medium text-ink-950">سطح {num(lvl.level)}</span>
           </div>
           <div className="min-w-0 flex-1 pt-1">
@@ -108,7 +108,7 @@ export function BmiGauge({ bmi }: { bmi: number }) {
   const pos = Math.min(1, Math.max(0, (bmi - 15) / (35 - 15)))
   return (
     <div className="mt-4">
-      <div className="relative h-2.5 rounded-full" style={{ background: 'linear-gradient(to left, #fcd679 0%, #5eead4 17.5%, #5eead4 50%, #fcd679 75%, #fb7a8c 100%)' }}>
+      <div className="relative h-2.5 rounded-full" style={{ background: 'linear-gradient(to left, #ff9a4d 0%, #4ff3da 17.5%, #4ff3da 50%, #ff9a4d 75%, #ff2f7d 100%)' }}>
         <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 translate-x-1/2 rounded-full border-4 border-white bg-ink-950 shadow-soft transition-all duration-700" style={{ right: `${pos * 100}%` }} />
       </div>
       <div className="relative mt-2 h-4 text-[12px] tabular-nums text-ink-400">

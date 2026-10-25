@@ -7,7 +7,7 @@ import { FoodIcon } from '@/ui/icons'
 export function FoodRow({ f, restaurant, onAdd }: { f: Food; restaurant?: string; onAdd: () => void }) {
   return (
     <div className="flex gap-3 rounded-2xl bg-white p-3 shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 text-5xl dark:bg-emerald-500/10">
+      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-aqua-50 text-5xl dark:bg-aqua-500/10">
         {f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : <FoodIcon size={28} className="text-ink-400" />}
       </div>
       <div className="min-w-0 flex-1">
@@ -21,7 +21,7 @@ export function FoodRow({ f, restaurant, onAdd }: { f: Food; restaurant?: string
         </div>
         <div className="mt-2 flex items-center justify-between">
           <b className="text-sm">{toman(f.price)}</b>
-          <button onClick={onAdd} className="flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white">
+          <button onClick={onAdd} className="flex items-center gap-1 rounded-xl bg-aqua-500 px-3 py-1.5 text-xs font-semibold text-white">
             <Plus size={14} /> افزودن
           </button>
         </div>

@@ -21,7 +21,7 @@ export function WeekBars({ data, max, unit, format = num }: { data: { label: str
             <div className="relative flex w-full flex-1 items-end justify-center pb-0">
               <div
                 className={clsx('w-[5px] origin-bottom rounded-full bg-gradient-to-b transition-all duration-700', d.today ? 'from-brand-300 to-brand-300/0' : 'from-aqua-300 to-aqua-300/0')}
-                style={{ height: `${Math.max(4, (d.value / top) * 100)}%`, boxShadow: d.value ? `0 0 12px ${d.today ? '#a78bfa55' : '#6ee7c855'}` : undefined, animation: `kf-grow-y .9s cubic-bezier(.2,.8,.2,1) ${i * 0.07}s both` }}
+                style={{ height: `${Math.max(4, (d.value / top) * 100)}%`, boxShadow: d.value ? `0 0 12px ${d.today ? '#8a6bff55' : '#4ff3da55'}` : undefined, animation: `kf-grow-y .9s cubic-bezier(.2,.8,.2,1) ${i * 0.07}s both` }}
               />
             </div>
             <div className={clsx('mt-2 h-4 text-[12px]', d.today ? 'text-ink-900 dark:text-white' : 'text-ink-400')}>{d.label}</div>

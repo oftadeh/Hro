@@ -22,6 +22,8 @@ export async function startPayment(userId: string, amount: number, mobile?: stri
   if (!Number.isInteger(amount) || amount < 10_000 || amount > 200_000_000) throw new HttpError(400, 'مبلغ معتبر نیست (حداقل ۱۰٬۰۰۰ تومان)')
   const id = crypto.randomUUID()
   if (!env.zarinpal.merchant) {
+    // پرداخت شبیه‌سازی‌شده فقط در حالت نمایشی؛ در نسخه‌ی واقعی بدون درگاه، شارژ رایگان ممنوع است
+    if (!env.demo) throw new HttpError(503, 'درگاه پرداخت هنوز فعال نشده است؛ به‌زودی امکان شارژ کیف پول فراهم می‌شود')
     sql.prepare('INSERT INTO payments (id, user_id, amount, authority, status, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(id, userId, amount, 'SIM-' + id, 'pending', Date.now())
     return { url: `${env.publicUrl}/api/pay/callback?Authority=SIM-${id}&Status=OK`, simulated: id }
   }
@@ -53,6 +55,7 @@ export async function verifyPayment(authority: string, status: string): Promise<
     return { payment: p, ok: false }
   }
   let refId: string
+  if (authority.startsWith('SIM-') && !env.demo) throw new HttpError(403, 'تراکنش آزمایشی در نسخه‌ی واقعی پذیرفته نمی‌شود')
   if (authority.startsWith('SIM-')) refId = 'SIM' + Math.floor(Math.random() * 1e8)
   else {
     const res = await fetch(`${base()}/pg/v4/payment/verify.json`, {

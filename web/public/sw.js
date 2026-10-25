@@ -1,5 +1,5 @@
 /* سرویس‌ورکر کی‌فیت: کش پوسته‌ی اپ برای باز شدن سریع/آفلاین و نمایش اعلان‌های Push */
-const CACHE = 'keyfit-v4'
+const CACHE = 'keyfit-v5'
 const SHELL = ['/', '/favicon.svg', '/manifest.webmanifest', '/icon-192.png']
 
 self.addEventListener('install', (e) => {

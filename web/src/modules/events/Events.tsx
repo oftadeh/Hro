@@ -3,13 +3,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CalendarDays, MapPin, Medal, Plus, ShieldCheck, Users } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { EVENT_KINDS } from '@/core/config'
-import { faDateTime, num, toman } from '@/core/format'
+import { faDateTime, faDigitsToEn, num, toman } from '@/core/format'
 import { EVENT_CANCEL_HOURS, cancelEvent, cancelRegistration, checkInEvent, createEvent, publishResults, registerEvent, type NewEvent } from '@/core/services/events'
 import { activePolicy } from '@/core/services/insurance'
 import type { SportEvent } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Cover, Empty, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
 import { useBalance, useMe, useUserMap } from '@/ui/hooks'
-import { run, runOk, ask } from '@/ui/toast'
+import { isBusiness } from '@/core/roles'
+import { run, runOk, ask, toast } from '@/ui/toast'
 
 const STATUS: Record<SportEvent['status'], [string, 'emerald' | 'amber' | 'slate' | 'rose']> = {
   open: ['ثبت‌نام باز', 'emerald'],
@@ -130,7 +131,7 @@ export function EventDetail() {
         </>
       )}
 
-      {!manager && e.approved && (e.status === 'open' || e.status === 'closed') && (
+      {!manager && !isBusiness(me) && e.approved && (e.status === 'open' || e.status === 'closed') && (
         <Card className="mt-4 space-y-3">
           {reg ? (
             <>
@@ -161,7 +162,7 @@ export function EventDetail() {
             {!started && e.status !== 'done' && (
               <div className="flex gap-2">
                 <Input inputMode="numeric" dir="ltr" placeholder="شماره‌ی سینه" value={bib} onChange={(x) => setBib(x.target.value)} />
-                <Button variant="secondary" onClick={async () => { const n = await run(() => checkInEvent(e.id, Number(bib))); if (n !== undefined) { setBib(''); alert(`حضور ${n} ثبت شد`) } }}>ثبت حضور</Button>
+                <Button variant="secondary" onClick={async () => { const n = await run(() => checkInEvent(e.id, Number(faDigitsToEn(bib)))); if (n !== undefined) { setBib(''); toast.success(`حضور ${n} ثبت شد`) } }}>ثبت حضور</Button>
               </div>
             )}
             <div className="text-xs text-ink-500">{num(e.registrations.filter((r) => r.checkedIn).length)} نفر حاضر از {num(e.registrations.length)} ثبت‌نام</div>
@@ -172,7 +173,7 @@ export function EventDetail() {
                   <span className="flex-1 truncate">{users[r.userId]?.name}{r.category ? ` · ${r.category}` : ''}</span>
                   {started && (
                     <>
-                      <Input className="!w-16 !py-1" inputMode="numeric" placeholder="رتبه" value={results[r.bib]?.rank ?? r.result?.rank ?? ''} onChange={(x) => setResults({ ...results, [r.bib]: { ...results[r.bib], rank: Number(x.target.value) || undefined } })} />
+                      <Input className="!w-16 !py-1" inputMode="numeric" placeholder="رتبه" value={results[r.bib]?.rank ?? r.result?.rank ?? ''} onChange={(x) => setResults({ ...results, [r.bib]: { ...results[r.bib], rank: Number(faDigitsToEn(x.target.value)) || undefined } })} />
                       <Input className="!w-20 !py-1" dir="ltr" placeholder="00:45:12" value={results[r.bib]?.time ?? r.result?.time ?? ''} onChange={(x) => setResults({ ...results, [r.bib]: { ...results[r.bib], time: x.target.value } })} />
                     </>
                   )}

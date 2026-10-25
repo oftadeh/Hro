@@ -7,7 +7,7 @@ import { healthScore } from '@/core/services/health'
 import { Donut, Progress } from '@/ui/kit'
 import { HeartPulse } from '@/ui/art'
 
-export const scoreColor = (s: number) => (s >= 75 ? '#5eead4' : s >= 50 ? '#c4b5fd' : s >= 30 ? '#fcd679' : '#fb7a8c')
+export const scoreColor = (s: number) => (s >= 75 ? '#4ff3da' : s >= 50 ? '#a48bff' : s >= 30 ? '#ff9a4d' : '#ff2f7d')
 export const scoreLabel = (s: number) => (s >= 75 ? 'عالی' : s >= 50 ? 'خوب' : s >= 30 ? 'متوسط' : 'نیاز به توجه')
 
 export function HealthScoreCard({ userId, compact }: { userId: string; compact?: boolean }) {

@@ -121,7 +121,7 @@ export default function Progress() {
         <>
           <SectionTitle title="دور کمر" />
           <Card className="p-4">
-            <LineChart data={waists} color="#5eead4" format={(n) => n.toLocaleString('fa-IR', { maximumFractionDigits: 1 })} />
+            <LineChart data={waists} color="#4ff3da" format={(n) => n.toLocaleString('fa-IR', { maximumFractionDigits: 1 })} />
           </Card>
         </>
       )}

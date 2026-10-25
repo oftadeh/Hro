@@ -76,8 +76,8 @@ export function CartSheet({ kind, open, onClose }: { kind: CartItem['kind']; ope
           </div>
           <div className="space-y-1.5 rounded-2xl border border-ink-100 p-3 text-sm dark:border-white/10">
             <div className="flex justify-between text-ink-500"><span>جمع کالاها</span><span>{toman(gross)}</span></div>
-            {pct > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>تخفیف اشتراک ({num(pct)}٪)</span><span>−{toman(discount)}</span></div>}
-            {q.coupon > 0 && <div className="flex justify-between text-emerald-600 dark:text-emerald-400"><span>کد تخفیف {applied?.code}</span><span>−{toman(q.coupon)}</span></div>}
+            {pct > 0 && <div className="flex justify-between text-aqua-600 dark:text-aqua-400"><span>تخفیف اشتراک ({num(pct)}٪)</span><span>−{toman(discount)}</span></div>}
+            {q.coupon > 0 && <div className="flex justify-between text-aqua-600 dark:text-aqua-400"><span>کد تخفیف {applied?.code}</span><span>−{toman(q.coupon)}</span></div>}
             {kind === 'product' && <div className="flex justify-between text-ink-500"><span>هزینه‌ی ارسال</span><span>{shipping ? toman(shipping) : 'رایگان'}</span></div>}
             <div className="flex items-center justify-between"><span>مبلغ قابل پرداخت</span><b className="text-lg">{toman(total)}</b></div>
           </div>

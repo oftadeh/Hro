@@ -7,7 +7,8 @@ import { toast } from '@/ui/toast'
 import { ArrowDownLeft, ArrowUpRight, Check, CreditCard, Plus, Ticket } from 'lucide-react'
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
-import { SUBSCRIPTION_PLANS } from '@/core/config'
+import { ROLE_META, SUBSCRIPTION_PLANS } from '@/core/config'
+import { isBusiness, primaryBusinessRole } from '@/core/roles'
 import { daysLeft, num, toman } from '@/core/format'
 import { activeSubscription, buySubscription, topUp } from '@/core/services/wallet'
 import { Button, Card, Field, HeroHeader, MetricRow, Money, NumberInput, PageHeader, SectionTitle, Sheet } from '@/ui/kit'
@@ -26,6 +27,10 @@ export default function WalletPage() {
   const txs = useDB((s) => s.transactions)
   useDB((s) => s.subscriptions)
   const sub = activeSubscription(me.id)
+  // حساب کسب‌وکار عضویت ورزشکاری نمی‌خرد؛ درآمد و تسویه‌اش در پنل است
+  const biz = isBusiness(me)
+  const bizRole = biz ? primaryBusinessRole(me) : undefined
+  const financeLink = bizRole ? (bizRole === 'company' ? ROLE_META.company.panel : `${ROLE_META[bizRole].panel}/finance`) : ''
   const [charge, setCharge] = useState(false)
   const [amount, setAmount] = useState(500_000)
   const [busy, setBusy] = useState(false)
@@ -63,9 +68,15 @@ export default function WalletPage() {
             <button onClick={() => setCharge(true)} className="flex h-11 items-center gap-1.5 rounded-full bg-white px-5 text-sm font-medium text-ink-950 transition hover:scale-[1.02]">
               <Plus size={16} strokeWidth={1.5} /> افزایش موجودی
             </button>
-            <a href="#plans" className="flex h-11 items-center gap-1.5 rounded-full bg-white/15 px-5 text-sm text-white backdrop-blur transition hover:bg-white/25">
-              <CreditCard size={16} strokeWidth={1.5} /> عضویت
-            </a>
+            {biz ? (
+              <Link to={financeLink} className="flex h-11 items-center gap-1.5 rounded-full bg-white/15 px-5 text-sm text-white backdrop-blur transition hover:bg-white/25">
+                <CreditCard size={16} strokeWidth={1.5} /> درآمد و تسویه
+              </Link>
+            ) : (
+              <a href="#plans" className="flex h-11 items-center gap-1.5 rounded-full bg-white/15 px-5 text-sm text-white backdrop-blur transition hover:bg-white/25">
+                <CreditCard size={16} strokeWidth={1.5} /> عضویت
+              </a>
+            )}
           </div>
           <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/15 pt-5 text-xs">
             <div>
@@ -78,6 +89,12 @@ export default function WalletPage() {
             </div>
           </div>
         </HeroHeader>
+        {biz ? (
+          <Card className="flex flex-col justify-center gap-3 text-sm leading-7 text-ink-500">
+            <p>درآمد فروش و خدمات شما بعد از کسر کمیسیون در «درآمد و تسویه»ی پنل نمایش داده می‌شود و از همان‌جا درخواست تسویه می‌دهید.</p>
+            <Link to={financeLink}><Button className="w-full">رفتن به درآمد و تسویه</Button></Link>
+          </Card>
+        ) : (
         <div className="space-y-3">
           {sub ? (
             <KeyCard
@@ -96,8 +113,10 @@ export default function WalletPage() {
             </Card>
           )}
         </div>
+        )}
       </div>
 
+      {!biz && (<>
       <div id="plans" /><SectionTitle title="عضویت‌ها" />
       <div className="grid gap-4 md:grid-cols-3">
         {SUBSCRIPTION_PLANS.map((p, i) => (
@@ -118,6 +137,7 @@ export default function WalletPage() {
           </div>
         ))}
       </div>
+      </>)}
 
       <SectionTitle title="تراکنش‌ها" />
       <Card>
@@ -172,7 +192,7 @@ export default function WalletPage() {
                 <Input value={coupon} onChange={(e) => { setCoupon(e.target.value.toUpperCase()); setCouponAmt(0) }} placeholder="کد تخفیف (اختیاری)" dir="ltr" className="text-left" />
                 <Button variant="secondary" onClick={async () => setCouponAmt((await run(() => previewCoupon(coupon, 'subscription', p.price))) ?? 0)}>اعمال</Button>
               </div>
-              {couponAmt > 0 && <div className="text-xs text-emerald-600 dark:text-emerald-400">تخفیف کد: {toman(couponAmt)} — مبلغ نهایی {toman(p.price - couponAmt)}</div>}
+              {couponAmt > 0 && <div className="text-xs text-aqua-600 dark:text-aqua-400">تخفیف کد: {toman(couponAmt)} — مبلغ نهایی {toman(p.price - couponAmt)}</div>}
               <div className="text-xs text-ink-400">موجودی: {toman(bal)}</div>
               <Button className="w-full" size="lg" onClick={async () => {
                 const ok = await runOk(() => buySubscription(p.id, couponAmt ? coupon : undefined), `اشتراک ${p.name} فعال شد`)

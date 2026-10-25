@@ -26,13 +26,13 @@ const C = {
   navy: '#2f2a5e',
   navy2: '#3d3775',
   violet: '#8b5cf6',
-  violet2: '#7c4fe0',
-  lav: '#c4b5fd',
-  mint: '#5eead4',
+  violet2: '#5b37f5',
+  lav: '#a48bff',
+  mint: '#4ff3da',
   mint2: '#2dd4bf',
   teal: '#22b8a5',
-  peach: '#fcd679',
-  coral: '#fb7a8c',
+  peach: '#ff9a4d',
+  coral: '#ff2f7d',
   coral2: '#ef5f74',
   pink: '#f0a6d8',
   white: '#ffffff',
@@ -357,8 +357,8 @@ export function Trophy(p: ArtProps) {
       <g className="kf-float" style={{ animationDuration: '3.6s' }}>
         <path d="M50 44 H36 Q34 70 56 74 M110 44 H124 Q126 70 104 74" fill="none" stroke={C.peach} strokeWidth="7" strokeLinecap="round" />
         <path d="M50 34 H110 V62 Q110 94 80 98 Q50 94 50 62Z" fill={C.peach} />
-        <path d="M80 34 H110 V62 Q110 94 80 98Z" fill="#f8c25c" />
-        <rect x="72" y="96" width="16" height="16" fill="#f8c25c" />
+        <path d="M80 34 H110 V62 Q110 94 80 98Z" fill="#ff9a4d" />
+        <rect x="72" y="96" width="16" height="16" fill="#ff9a4d" />
         <rect x="56" y="110" width="48" height="16" rx="5" fill={C.ink} />
         <path d="M80 50 l4 8 9 1.3 -6.5 6.3 1.5 9 -8 -4.2 -8 4.2 1.5 -9 -6.5 -6.3 9 -1.3z" fill={C.white} />
       </g>
@@ -380,7 +380,7 @@ export function SaladBowl(p: ArtProps) {
         <circle cx="72" cy="82" r="8" fill={C.pink} />
         <circle cx="96" cy="84" r="7" fill={C.peach} />
         <path d="M30 84 H130 Q128 128 80 130 Q32 128 30 84Z" fill={C.violet} />
-        <path d="M80 84 H130 Q128 128 80 130Z" fill="#7c4fe0" />
+        <path d="M80 84 H130 Q128 128 80 130Z" fill="#5b37f5" />
         <rect x="30" y="80" width="100" height="8" rx="4" fill={C.lav} />
       </g>
     </Frame>
@@ -433,11 +433,11 @@ export function WalletCoins(p: ArtProps) {
       <Floor y={136} w={44} />
       <g className="kf-float" style={{ animationDuration: '3.6s', animationDelay: '-1s' }}>
         <circle cx="104" cy="44" r="14" fill={C.peach} />
-        <circle cx="104" cy="44" r="8" fill="none" stroke="#f8c25c" strokeWidth="3" />
+        <circle cx="104" cy="44" r="8" fill="none" stroke="#ff9a4d" strokeWidth="3" />
       </g>
       <g className="kf-float" style={{ animationDuration: '3.6s' }}>
         <rect x="30" y="62" width="100" height="64" rx="14" fill={C.violet} />
-        <rect x="30" y="62" width="100" height="18" rx="9" fill="#7c4fe0" />
+        <rect x="30" y="62" width="100" height="18" rx="9" fill="#5b37f5" />
         <rect x="88" y="88" width="42" height="24" rx="10" fill={C.lav} />
         <circle cx="102" cy="100" r="5" fill={C.white} />
         <rect x="40" y="110" width="30" height="5" rx="2.5" fill={C.white} opacity=".5" />
@@ -482,7 +482,7 @@ export function MapPin(p: ArtProps) {
       <ellipse className="kf-ripple" cx="80" cy="134" rx="30" ry="8" fill="none" stroke={C.white} strokeWidth="2" style={{ animationDuration: '3s' }} />
       <g className="kf-float" style={{ animationDuration: '3s' }}>
         <path d="M80 128 C54 96 44 82 44 60 A36 36 0 0 1 116 60 C116 82 106 96 80 128Z" fill={C.violet} />
-        <path d="M80 128 C106 96 116 82 116 60 A36 36 0 0 0 80 24Z" fill="#7c4fe0" />
+        <path d="M80 128 C106 96 116 82 116 60 A36 36 0 0 0 80 24Z" fill="#5b37f5" />
         <circle cx="80" cy="60" r="14" fill={C.white} />
       </g>
     </Frame>

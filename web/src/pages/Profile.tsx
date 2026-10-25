@@ -7,7 +7,7 @@ import { LEVELS, ROLE_META } from '@/core/config'
 import { dec, num } from '@/core/format'
 import { ACTIVITY, GOALS, bodyOf, completeness } from '@/core/profile'
 import { activateRole, updateProfile } from '@/core/services/auth'
-import { isBusiness } from '@/core/roles'
+import { isBusiness, isBusinessPathAllowed } from '@/core/roles'
 import { toggleBlock } from '@/core/services/fitzone'
 import { uid } from '@/core/id'
 import { logout, resetLocalDemo, REMOTE } from '@/core/client/session'
@@ -50,7 +50,9 @@ export default function Profile() {
   const kcal = calories(me, body.age)
   const wins = myCh.filter((c) => (c.participants.find((p) => p.userId === me.id)?.score ?? 0) >= c.goal).length
   const ach = achievementsOf(me, { checkins, challenges: myCh.length, wins, posts, followers })
-  const tab = (params.get('tab') as Tab) || 'body'
+  const biz = isBusiness(me)
+  // حساب کسب‌وکار فقط تب تنظیمات را دارد (مشخصات بدنی و سلامت مخصوص ورزشکار است)
+  const tab: Tab = biz ? 'settings' : (params.get('tab') as Tab) || 'body'
   const setTab = (t: Tab) => setParams({ tab: t }, { replace: true })
   const [edit, setEdit] = useState(false)
   const [activate, setActivate] = useState<Exclude<Role, 'admin' | 'user'>>()
@@ -90,7 +92,7 @@ export default function Profile() {
       <StatRow items={[['پست', posts], ['دنبال‌کننده', followers], ['دنبال‌شونده', me.following.length], ['ورود به باشگاه', checkins]]} />
       <IntroVideoCard user={me} self />
 
-      {comp.pct < 1 && (
+      {comp.pct < 1 && !biz && (
         <Card className="mt-3 flex items-center gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between text-sm">
@@ -111,9 +113,13 @@ export default function Profile() {
         value={tab}
         onChange={setTab}
         items={[
-          { value: 'body', label: 'مشخصات بدنی' },
-          { value: 'health', label: 'سلامت' },
-          { value: 'activity', label: 'فعالیت' },
+          ...(biz
+            ? []
+            : ([
+                { value: 'body', label: 'مشخصات بدنی' },
+                { value: 'health', label: 'سلامت' },
+                { value: 'activity', label: 'فعالیت' },
+              ] as const)),
           { value: 'settings', label: 'تنظیمات' },
         ]}
       />
@@ -298,7 +304,7 @@ export default function Profile() {
               ['/support', 'پشتیبانی'],
               ['/orders', 'سفارش‌ها'],
               ['/wallet', 'کیف پول'],
-            ].map(([to, l]) => (
+            ].filter(([to]) => !biz || isBusinessPathAllowed(to)).map(([to, l]) => (
               <Link key={to} to={to} className="rounded-2xl bg-white px-4 py-3 text-center text-xs shadow-card transition hover:-translate-y-0.5 dark:bg-ink-850 dark:shadow-none">
                 {l}
               </Link>
@@ -350,11 +356,13 @@ export default function Profile() {
           )}
 
           <div className="grid gap-2 pt-3 sm:grid-cols-3">
-            <Link to="/orders">
-              <Button variant="outline" className="w-full" icon={<ShoppingBag size={16} />}>
-                سفارش‌های من
-              </Button>
-            </Link>
+            {!biz && (
+              <Link to="/orders">
+                <Button variant="outline" className="w-full" icon={<ShoppingBag size={16} />}>
+                  سفارش‌های من
+                </Button>
+              </Link>
+            )}
             {!REMOTE && (
               <Button
                 variant="outline"

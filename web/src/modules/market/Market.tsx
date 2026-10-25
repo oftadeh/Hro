@@ -9,7 +9,7 @@ import { reportContent } from '@/core/services/fitzone'
 import type { Listing } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, SectionTitle, Select, Sheet, Textarea } from '@/ui/kit'
 import { useBalance, useMe, useUserMap } from '@/ui/hooks'
-import { run, runOk, ask } from '@/ui/toast'
+import { run, runOk, ask, askText } from '@/ui/toast'
 
 type Cat = Listing['category']
 const DEAL: Record<NonNullable<Listing['deal']>['status'], string> = { paid: 'پرداخت‌شده؛ در انتظار ارسال', shipped: 'ارسال شد؛ در انتظار تأیید خریدار', done: 'تحویل و تسویه شد', cancelled: 'لغو شد' }
@@ -129,7 +129,7 @@ export function ListingDetail() {
         </div>
       )}
       {!mineSell && (
-        <button className="mt-4 flex items-center gap-1 text-[12px] text-ink-400" onClick={() => { const r = prompt('دلیل گزارش (کالای تقلبی، کلاهبرداری…)'); if (r) run(() => reportContent('listing', l.id, r), 'گزارش ثبت شد') }}><Flag size={12} /> گزارش آگهی</button>
+        <button className="mt-4 flex items-center gap-1 text-[12px] text-ink-400" onClick={async () => { const r = await askText('دلیل گزارش این آگهی چیست؟', 'کالای تقلبی، کلاهبرداری…'); if (r) run(() => reportContent('listing', l.id, r), 'گزارش ثبت شد') }}><Flag size={12} /> گزارش آگهی</button>
       )}
 
       <Sheet open={buy} onClose={() => setBuy(false)} title="خرید امن">

@@ -46,7 +46,7 @@ export async function runOk(fn: () => unknown, success?: string): Promise<boolea
 }
 
 /* ───── پنجره‌ی تأیید درون‌برنامه‌ای (جایگزین window.confirm که در بعضی مرورگرهای داخل‌برنامه‌ای کار نمی‌کند) ───── */
-interface Ask { id: number; text: string; resolve: (v: boolean) => void }
+interface Ask { id: number; text: string; resolve: (v: boolean) => void; input?: { placeholder: string; value: string } }
 const useAsk = create<{ q: Ask | null; set: (q: Ask | null) => void }>((set) => ({ q: null, set: (q) => set({ q }) }))
 
 /** پرسیدن تأیید از کاربر؛ نتیجه true/false */
@@ -54,6 +54,15 @@ export function ask(text: string): Promise<boolean> {
   return new Promise((resolve) => {
     useAsk.getState().q?.resolve(false)
     useAsk.getState().set({ id: Date.now(), text, resolve })
+  })
+}
+
+/** گرفتن یک متن کوتاه از کاربر (جایگزین window.prompt)؛ با انصراف null برمی‌گردد */
+export function askText(text: string, placeholder = ''): Promise<string | null> {
+  return new Promise((resolve) => {
+    useAsk.getState().q?.resolve(false)
+    const input = { placeholder, value: '' }
+    useAsk.getState().set({ id: Date.now(), text, input, resolve: (ok) => resolve(ok ? input.value.trim() : null) })
   })
 }
 
@@ -69,8 +78,20 @@ function AskHost() {
     <div className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center" role="alertdialog" aria-modal="true" aria-label={q.text} onClick={() => close(false)}>
       <div className="animate-sheet-up w-full max-w-sm rounded-[28px] bg-white p-6 text-center shadow-soft dark:bg-ink-850" onClick={(e) => e.stopPropagation()}>
         <p className="text-[16px] font-semibold leading-8">{q.text}</p>
+        {q.input && (
+          <input
+            key={q.id}
+            autoFocus
+            dir="auto"
+            defaultValue=""
+            placeholder={q.input.placeholder}
+            onChange={(e) => { if (q.input) q.input.value = e.target.value }}
+            onKeyDown={(e) => { if (e.key === 'Enter') close(true) }}
+            className="mt-4 h-12 w-full rounded-[18px] bg-ink-100 px-4 text-[15px] outline-none ring-brand-400 focus:ring-2 dark:bg-ink-800"
+          />
+        )}
         <div className="mt-5 flex gap-2.5">
-          <button autoFocus onClick={() => close(true)} className="h-12 flex-1 rounded-full bg-ink-950 text-[15px] font-bold text-white dark:bg-white dark:text-ink-950">بله</button>
+          <button autoFocus={!q.input} onClick={() => close(true)} className="h-12 flex-1 rounded-full bg-ink-950 text-[15px] font-bold text-white dark:bg-white dark:text-ink-950">{q.input ? 'ثبت' : 'بله'}</button>
           <button onClick={() => close(false)} className="h-12 flex-1 rounded-full bg-ink-100 text-[15px] font-semibold dark:bg-ink-800">انصراف</button>
         </div>
       </div>
@@ -89,7 +110,7 @@ export function Toaster() {
           key={t.id}
           className="pointer-events-auto flex animate-pop items-center gap-2.5 rounded-full bg-ink-950 py-2.5 pl-5 pr-4 text-[13px] text-white shadow-soft ring-1 ring-white/10 dark:bg-white dark:text-ink-950"
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${t.kind === 'success' ? 'bg-emerald-400' : t.kind === 'error' ? 'bg-coral-400' : 'bg-brand-300'}`} />
+          <span className={`h-1.5 w-1.5 rounded-full ${t.kind === 'success' ? 'bg-aqua-400' : t.kind === 'error' ? 'bg-coral-400' : 'bg-brand-300'}`} />
           {t.text}
         </div>
       ))}

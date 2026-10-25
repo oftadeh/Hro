@@ -26,7 +26,7 @@ export function TxList({ txs, userId, showCommission }: { txs: Transaction[]; us
                 {showCommission && incoming && t.commission > 0 && (platformView ? ` · مبلغ کل ${toman(t.amount)}` : ` · کمیسیون ${toman(t.commission)}`)}
               </div>
             </div>
-            <div className={`text-sm font-semibold ${incoming ? 'text-emerald-600' : t.from === 'subscription' ? 'text-ink-500' : 'text-coral-500'}`} dir="ltr">
+            <div className={`text-sm font-semibold ${incoming ? 'text-aqua-600' : t.from === 'subscription' ? 'text-ink-500' : 'text-coral-500'}`} dir="ltr">
               {incoming ? '+' : '−'}
               {toman(net)}
             </div>

@@ -72,7 +72,7 @@ export default function Orders() {
                   </div>
                 )}
                 {!!o.discount && (
-                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                  <div className="flex justify-between text-aqua-600 dark:text-aqua-400">
                     <span>تخفیف{o.coupon ? ` (${o.coupon})` : ''}</span>
                     <span>−{toman(o.discount)}</span>
                   </div>

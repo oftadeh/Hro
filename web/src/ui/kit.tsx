@@ -219,7 +219,7 @@ export function Avatar({ name, src, size = 40, ring, className }: { name: string
   const initial = name.replace('دکتر ', '').trim()[0] ?? ''
   const bg = AVATAR_BG[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_BG.length]
   return (
-    <div className={clsx('shrink-0 rounded-full', ring && 'bg-[conic-gradient(from_200deg,#6ee7c8,#a78bfa,#f2a3e2,#fcd679,#6ee7c8)] p-[2px]', className)} style={{ width: size, height: size }}>
+    <div className={clsx('shrink-0 rounded-full', ring && 'bg-[conic-gradient(from_200deg,#4ff3da,#8a6bff,#ff6fa8,#ff9a4d,#4ff3da)] p-[2px]', className)} style={{ width: size, height: size }}>
       <div className={clsx('h-full w-full overflow-hidden rounded-full', ring && 'border-2 border-ink-50 dark:border-ink-950')}>
         {src ? (
           <img src={src} alt={name} className="h-full w-full object-cover" />
@@ -235,11 +235,11 @@ export function Avatar({ name, src, size = 40, ring, className }: { name: string
 
 /** گوی‌های رنگی محو (مِش) — امضای بصری طرح */
 const ORBS: [string, string, string][] = [
-  ['#a78bfa', '#6ee7c8', '#fcd679'],
-  ['#f2a3e2', '#a78bfa', '#6ee7c8'],
-  ['#6ee7c8', '#a78bfa', '#f2a3e2'],
-  ['#fcd679', '#f2a3e2', '#a78bfa'],
-  ['#a78bfa', '#f2a3e2', '#fcd679'],
+  ['#8a6bff', '#4ff3da', '#ff9a4d'],
+  ['#ff6fa8', '#8a6bff', '#4ff3da'],
+  ['#4ff3da', '#8a6bff', '#ff6fa8'],
+  ['#ff9a4d', '#ff6fa8', '#8a6bff'],
+  ['#8a6bff', '#ff6fa8', '#ff9a4d'],
 ]
 export const orbsFor = (seed: string) => ORBS[[...seed].reduce((a, c) => a + c.charCodeAt(0), 0) % ORBS.length]
 
@@ -488,7 +488,7 @@ export function Progress({ value, className, tone = 'violet' }: { value: number;
   )
 }
 
-export function Ring({ value, size = 64, stroke = 4, children, color = '#a78bfa' }: { value: number; size?: number; stroke?: number; children?: ReactNode; color?: string }) {
+export function Ring({ value, size = 64, stroke = 4, children, color = '#8a6bff' }: { value: number; size?: number; stroke?: number; children?: ReactNode; color?: string }) {
   return <Donut size={size} stroke={stroke} segments={[{ value: Math.min(1, value), color }, { value: Math.max(0, 1 - value), color: 'transparent' }]} center={children} />
 }
 

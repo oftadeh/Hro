@@ -48,7 +48,7 @@ export default function RestaurantPanel() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {menu.map((f) => (
               <Card key={f.id} className="flex gap-3">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 text-3xl dark:bg-emerald-500/10">{f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : <FoodIcon size={24} className="text-ink-400" />}</div>
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-aqua-50 text-3xl dark:bg-aqua-500/10">{f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : <FoodIcon size={24} className="text-ink-400" />}</div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold">{f.name}</div>
                   <div className="text-xs text-ink-500">{toman(f.price)} · {num(f.calories)} کالری</div>
