@@ -34,6 +34,7 @@ export default function ChallengeDetail() {
   const [note, setNote] = useState('')
   const [proof, setProof] = useState<string>()
   const [share, setShare] = useState(false)
+  const [postText, setPostText] = useState<string>()
   const [join, setJoin] = useState(false)
 
   if (!c) return <Empty icon="" title="چالش یافت نشد" />
@@ -172,11 +173,15 @@ export default function ChallengeDetail() {
             </Card>
           )}
 
-          {related.length > 0 && (
-            <>
-              <SectionTitle title="پست‌های این چالش در فیت‌زون" />
-              {related.map((p) => <PostCard key={p.id} post={p} />)}
-            </>
+          {/* دیوار چالش: عکس، متن و ایموجی شرکت‌کننده‌ها با واکنش‌های ایموجی */}
+          <SectionTitle title="دیوار چالش" />
+          {mine && (
+            <Button variant="secondary" className="mb-3 w-full" onClick={() => { setPostText(''); setShare(true) }}>
+              امروز چطور پیش رفت؟ عکس یا متن بگذار
+            </Button>
+          )}
+          {related.length > 0 ? related.map((p) => <PostCard key={p.id} post={p} />) : (
+            <p className="py-4 text-center text-[13px] text-ink-500">{mine ? 'هنوز پستی نیست؛ اولین نفر باش.' : 'با پیوستن به چالش، روی دیوار آن پست بگذار.'}</p>
           )}
         </div>
 
@@ -267,7 +272,7 @@ export default function ChallengeDetail() {
         </div>
       </Sheet>
 
-      <CreatePostSheet open={share} onClose={() => setShare(false)} challengeId={c.id} initialText={`من توی چالش «${c.title}» هستم ${c.emoji} تو هم بیا!`} />
+      <CreatePostSheet open={share} onClose={() => { setShare(false); setPostText(undefined) }} challengeId={c.id} initialText={postText ?? `من توی چالش «${c.title}» هستم ${c.emoji} تو هم بیا!`} />
     </div>
   )
 }

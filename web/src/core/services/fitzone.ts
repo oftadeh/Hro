@@ -63,6 +63,26 @@ export const createStory = svc('zone.story', (input: { text: string; image?: str
   })
 })
 
+/** شش واکنش ثابت ورزشی */
+export const REACTIONS = ['🔥', '💪', '👏', '🏆', '😍', '🙌'] as const
+
+/** واکنش ایموجی به پست؛ هر کاربر یک واکنش، زدن دوباره‌ی همان واکنش آن را برمی‌دارد */
+export const reactPost = svc('zone.react', (postId: string, emoji: string) => {
+  const me = currentUserId()
+  if (!(REACTIONS as readonly string[]).includes(emoji)) throw new AppError('واکنش نامعتبر است')
+  mutate((d) => {
+    const p = d.posts.find((x) => x.id === postId)
+    if (!p) throw new AppError('پست یافت نشد')
+    const r = (p.reactions ??= {})
+    const had = (r[emoji] ?? []).includes(me)
+    for (const k of Object.keys(r)) {
+      r[k] = r[k].filter((x) => x !== me)
+      if (!r[k].length) delete r[k]
+    }
+    if (!had) (r[emoji] ??= []).push(me)
+  })
+})
+
 export const toggleLike = svc('zone.like', (postId: string) => {
   const me = currentUserId()
   mutate((d) => {

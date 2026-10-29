@@ -15,7 +15,7 @@ import { useMe } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 import { vtName } from '@/ui/ViewTransitions'
 import { toneFor } from '@/ui/kit'
-import { CardIcon, LiveTiles, progressTiles, tileIcon } from '@/ui/live'
+import { CardIcon, LiveTiles, boardTiles, progressTiles, tileIcon } from '@/ui/live'
 import { moment } from '@/ui/moments'
 
 /* ───────── عدد متحرک ───────── */
@@ -191,13 +191,14 @@ function ChallengeCard({ c, meId, tone }: { c: Challenge; meId: string; tone: st
   const pct = mine ? Math.min(1, mine.score / Math.max(1, c.goal)) : 0
   const left = Math.max(0, daysLeft(c.endAt))
   return (
-    <Link to={`/challenges/${c.id}`} style={vtName(`ch-${c.id}`)} className={clsx('press flex h-[176px] w-[232px] shrink-0 snap-start flex-col rounded-[28px] p-4', tone)}>
-      <div className="flex items-center justify-between text-[12px] font-semibold opacity-70">
-        <span>{left ? `${num(left)} روز مانده` : 'روز آخر'}</span>
-        <span>{num(c.participants.length)} نفر</span>
+    <Link to={`/challenges/${c.id}`} style={vtName(`ch-${c.id}`)} className={clsx('press kf-sel relative flex h-[176px] w-[232px] shrink-0 snap-start flex-col overflow-hidden rounded-[28px] p-4', tone)}>
+      <LiveTiles tiles={boardTiles({ score: mine?.score ?? 0, goal: c.goal, rank: rank + 1, joined: !!mine })} />
+      <CardIcon name="trophy" playKey={`${mine?.score ?? 0}-${rank}`} />
+      <div className="relative text-[12px] font-semibold opacity-70">
+        {left ? `${num(left)} روز مانده` : 'روز آخر'} · {num(c.participants.length)} نفر
       </div>
-      <h3 className="mt-2 line-clamp-2 text-[18px] font-extrabold leading-7">{c.title}</h3>
-      <div className="mt-auto">
+      <h3 className="relative mt-2 line-clamp-2 max-w-[74%] text-[18px] font-extrabold leading-7">{c.title}</h3>
+      <div className="relative mt-auto max-w-[64%]">
         {mine ? (
           <>
             <div className="flex justify-between text-[12px] font-semibold">

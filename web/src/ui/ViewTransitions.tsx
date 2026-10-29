@@ -8,9 +8,10 @@ type VTDoc = Document & { startViewTransition?: (cb: () => void) => unknown }
 export const vtName = (name: string): CSSProperties => ({ viewTransitionName: name }) as CSSProperties
 
 /**
- * ناوبری با انتقال یکسان سیستم طراحی: push = صفحه‌ی جدید از چپ (RTL رو به جلو)، back = برعکس، tab = محو نرم.
+ * ناوبری با انتقال یکسان سیستم طراحی: push = صفحه‌ی جدید از چپ (RTL رو به جلو)، back = برعکس، tab = محو نرم،
+ * open = کارت به صفحه‌ی جزئیات بزرگ می‌شود و صفحه‌ی پشت کوچک و تیره می‌شود.
  */
-export function vtNavigate(go: () => void, dir: 'push' | 'back' | 'tab' = 'push') {
+export function vtNavigate(go: () => void, dir: 'push' | 'back' | 'tab' | 'open' = 'push') {
   const doc = document as VTDoc
   if (!doc.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return go()
   const root = document.documentElement
@@ -44,7 +45,9 @@ export function ViewTransitions() {
       if (to === location.pathname + location.search + location.hash) return
       // لینک Link خودش ناوبری نمی‌کند چون defaultPrevented است؛ onClick خود لینک همچنان اجرا می‌شود
       e.preventDefault()
-      vtNavigate(() => nav(to), a.closest('nav') ? 'tab' : 'push')
+      // کارتی که عنصر مشترک با صفحه‌ی مقصد دارد: خود کارت بزرگ می‌شود (open)، نه اسلاید صفحه
+      const card = a.style.viewTransitionName || a.querySelector('[style*="view-transition-name"]')
+      vtNavigate(() => nav(to), a.closest('nav') ? 'tab' : card ? 'open' : 'push')
     }
     document.addEventListener('click', onClick, true)
     return () => document.removeEventListener('click', onClick, true)

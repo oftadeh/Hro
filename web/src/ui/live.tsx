@@ -121,6 +121,10 @@ export interface Tile {
   y?: boolean
   glow?: boolean
   soft?: boolean
+  /** کلید محتوای روی کاشی؛ با تغییرش کاشی مثل تابلوی فرودگاه ورق می‌خورد */
+  flap?: string
+  /** کاشی برجسته‌ی «شما» */
+  me?: boolean
 }
 
 /** آیکون کوچک پشت کاشی */
@@ -131,6 +135,7 @@ export const TILE_ICONS = {
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   dumb: <path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11" />,
   trophy: <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4.5a3 3 0 0 0 3 4M17 6h2.5a3 3 0 0 1-3 4" />,
+  up: <path d="M12 19V5M6 11l6-6 6 6" />,
 }
 export const tileIcon = (n: keyof typeof TILE_ICONS) => <svg viewBox="0 0 24 24">{TILE_ICONS[n]}</svg>
 
@@ -161,11 +166,11 @@ export function LiveTiles({ tiles, round, className }: { tiles: Tile[]; round?: 
         return (
           <span
             key={slot}
-            className={clsx('t', t.y && 'y', t.on && 'on', t.glow && 'glow', first && 'enter')}
+            className={clsx('t', t.y && 'y', t.on && 'on', t.glow && 'glow', t.me && 'me', first && 'enter')}
             style={{ gridColumn: col + 1, gridRow: row + 1, '--d': `${first ? (row + (3 - col)) * 55 : delays[slot]}ms` } as CSSProperties}
           >
             <span className="in">
-              <span className="f">{t.front}</span>
+              <span key={t.flap} className={clsx('f', t.flap !== undefined && 'flapf', t.flap !== undefined && !first && 'flap')}>{t.front}</span>
               <span className={clsx('b', t.soft && 'soft')}>{t.back}</span>
             </span>
           </span>
@@ -179,4 +184,39 @@ export function LiveTiles({ tiles, round, className }: { tiles: Tile[]; round?: 
 export const progressTiles = (pct: number, back: ReactNode, total = 12): Tile[] => {
   const on = Math.round(Math.max(0, Math.min(1, pct)) * total)
   return Array.from({ length: total }, (_, i) => ({ on: i < on, back }))
+}
+
+const fa2 = (n: number) => String(Math.max(0, Math.min(99, Math.round(n)))).padStart(2, '0').replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d])
+
+/**
+ * تابلوی امتیاز چالش: ردیف بالا امتیاز (یا درصد)، ردیف میانی هدف، پایین جام و رتبه‌ی شما.
+ * هر رقم یک کاشی است و با تغییر عدد ورق می‌خورد.
+ */
+export function boardTiles({ score, goal, rank, joined }: { score: number; goal: number; rank: number; joined: boolean }): Tile[] {
+  const t: Tile[] = Array.from({ length: 12 }, () => ({ on: false }))
+  t[3] = { on: false, front: tileIcon('trophy') }
+  if (!joined) return t
+  const small = goal < 100
+  const top = small ? fa2(score) : fa2((score / Math.max(1, goal)) * 100)
+  const mid = small ? fa2(goal) : ' ٪'
+  // ستون ۳ = نزدیک متن (یکان)، ستون ۲ = دهگان
+  t[5] = { on: false, front: top[0], flap: `s0${top[0]}` }
+  t[2] = { on: false, front: top[1], flap: `s1${top[1]}` }
+  t[4] = { on: false, front: mid[0] }
+  t[1] = { on: false, front: mid[1] }
+  t[0] = { on: false, front: rank > 0 ? (rank > 99 ? '+' : String(rank).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d])) : '–', flap: `r${rank}`, me: true }
+  return t
+}
+
+/**
+ * شلوغی باشگاه: ۴ ستون = ورودهای چهار بازه‌ی ۴۵ دقیقه‌ای اخیر (ستون کنار متن = الان)،
+ * ارتفاع هر ستون ۰ تا ۳ نسبت به ظرفیت. ستون «الان» می‌درخشد.
+ */
+export function crowdTiles(levels: number[]): Tile[] {
+  const t: Tile[] = []
+  for (let k = 0; k < 4; k++) {
+    const lv = levels[k] ?? 0
+    for (let r = 0; r < 3; r++) t.push({ on: r < lv, glow: k === 0 && r === Math.max(0, lv - 1) })
+  }
+  return t
 }

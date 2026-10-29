@@ -321,6 +321,9 @@ html[data-vt='push']::view-transition-old(root) { animation: kf-vt-push-old .42s
 html[data-vt='push']::view-transition-new(root) { animation: kf-vt-push-new .42s cubic-bezier(.2,.9,.1,1) both; }
 html[data-vt='back']::view-transition-old(root) { animation: kf-vt-back-old .36s cubic-bezier(.2,.9,.1,1) both; z-index: 2; }
 html[data-vt='back']::view-transition-new(root) { animation: kf-vt-back-new .36s cubic-bezier(.2,.9,.1,1) both; }
+html[data-vt='open']::view-transition-old(root) { animation: kf-vt-open-old .42s cubic-bezier(.2,.9,.1,1) both; }
+html[data-vt='open']::view-transition-new(root) { animation: kf-vt-in .3s .12s cubic-bezier(.2,.9,.1,1) both; }
+@keyframes kf-vt-open-old { to { transform: scale(.96); filter: brightness(.6); } }
 @keyframes kf-vt-push-old { to { transform: translateX(28%); filter: brightness(.55); } }
 @keyframes kf-vt-push-new { from { transform: translateX(-100%); } }
 @keyframes kf-vt-back-old { to { transform: translateX(-100%); } }
@@ -407,4 +410,18 @@ body, .sport-bg {
 .kf-field.kf-round .f, .kf-field.kf-round .b { border-radius: 9999px; }
 .kf-field .t.enter { animation: kf-tile-in .62s cubic-bezier(.34,1.45,.64,1) var(--d, 0ms) both; }
 @keyframes kf-tile-in { from { opacity: 0; transform: scale(.6) rotateX(-70deg); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .kf-field .in { transition: none; } .kf-field .t.enter { animation: none; } }
+.kf-field .t.me .f { background: var(--acc); color: var(--acc-on); box-shadow: none; }
+/* تابلوی امتیاز: خط وسط کاشی و ورق خوردن رقم */
+.kf-field .f.flapf { font-size: 15px; font-variant-numeric: tabular-nums; }
+.kf-field .f.flapf::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: color-mix(in srgb, currentColor 18%, transparent); }
+.kf-field .f.flap { animation: kf-flap .5s cubic-bezier(.34,1.45,.64,1) both; }
+@keyframes kf-flap { 0% { transform: rotateX(-90deg); opacity: .4; } 100% { transform: none; opacity: 1; } }
+/* نسخه‌ی کوچک روی سطح سفید/تیره (شلوغی باشگاه) */
+.kf-field.kf-mini { position: relative; left: auto; bottom: auto; width: 44px; max-width: none; height: 28px; gap: 2px; }
+.kf-mini .f, .kf-mini .b { border-radius: 3px; }
+.kf-surface { --acc: #5b37f5; --acc-on: #fff; }
+.dark .kf-surface { --acc: #dcff5a; --acc-on: #0d0b10; }
+/* انتخاب کارت: هاله‌ی کوتاه لیمویی هنگام لمس */
+.kf-sel { transition: transform .2s cubic-bezier(.23,1,.32,1), box-shadow .25s ease; }
+.kf-sel:active { box-shadow: 0 0 0 3px rgb(220 255 90 / .6); }
+@media (prefers-reduced-motion: reduce) { .kf-field .in { transition: none; } .kf-field .t.enter, .kf-field .f.flap { animation: none; } }

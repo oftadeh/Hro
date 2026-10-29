@@ -548,6 +548,8 @@ export interface Post {
   likes: ID[]
   saves: ID[]
   comments: Comment[]
+  /** واکنش‌های ایموجی (هر کاربر یکی برای هر پست) */
+  reactions?: Record<string, ID[]>
   challengeId?: ID
   gymId?: ID
   tags?: string[]

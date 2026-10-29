@@ -95,6 +95,23 @@ export function occupancy(gym: Gym, s: Pick<DBState, 'checkins'> = db(), at = ne
   return { count, capacity, ratio, label: ratio < 0.35 ? 'خلوت' : ratio < 0.7 ? 'متوسط' : 'شلوغ', tone: ratio < 0.35 ? 'emerald' : ratio < 0.7 ? 'amber' : 'rose' } as const
 }
 
+/** شلوغی چهار بازه‌ی ۴۵ دقیقه‌ای اخیر (اول = الان)، هر کدام در سطح ۰ تا ۳ نسبت به ظرفیت */
+export function crowdLevels(gym: Gym, s: Pick<DBState, 'checkins'> = db(), at = new Date()): number[] {
+  const W = 45 * 60_000
+  const capacity = gym.capacity || 50
+  const counts = [0, 0, 0, 0]
+  for (const t of s.checkins) {
+    if (t.gymId !== gym.id || t.status !== 'used' || !t.usedAt) continue
+    const k = Math.floor((at.getTime() - new Date(t.usedAt).getTime()) / W)
+    if (k >= 0 && k < 4) counts[k]++
+  }
+  // ورودهای هر بازه، تقریباً نیمی از حضور هم‌زمان (هر جلسه حدود ۹۰ دقیقه)
+  return counts.map((c) => {
+    const r = (c * 2) / capacity
+    return c === 0 ? 0 : r < 0.35 ? 1 : r < 0.7 ? 2 : 3
+  })
+}
+
 const endOfDay = (d = new Date()) => {
   const e = new Date(d)
   e.setHours(23, 59, 59, 0)

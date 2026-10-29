@@ -4,7 +4,7 @@ import { BadgeCheck, Ban, Bookmark, Flag, Heart, MessageCircle, MoreHorizontal, 
 import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { num, timeAgo, toman } from '@/core/format'
-import { addComment, deleteComment, deletePost, reportContent, toggleBlock, toggleLike, toggleSave } from '@/core/services/fitzone'
+import { REACTIONS, addComment, deleteComment, deletePost, reactPost, reportContent, toggleBlock, toggleLike, toggleSave } from '@/core/services/fitzone'
 import { hasBadge } from '@/core/services/perks'
 import type { Post } from '@/core/types'
 import { ROLE_META, toneClass } from '@/core/config'
@@ -107,6 +107,8 @@ export function PostCard({ post }: { post: Post }) {
           )}
         </div>
       )}
+
+      {post.challengeId && <Reactions post={post} />}
 
       <div className="mt-2 flex items-center gap-1 px-2.5 pb-1">
         <button onClick={like} aria-pressed={liked} aria-label="پسندیدن" className={clsx(action, liked ? 'text-coral-600' : 'text-ink-500 hover:text-ink-950 dark:hover:text-white')}>
@@ -212,5 +214,34 @@ export function PostCard({ post }: { post: Post }) {
         </div>
       </Sheet>
     </Card>
+  )
+}
+
+/** واکنش‌های ایموجی پست‌های چالش: شش ایموجی ثابت، هر نفر یکی، با جهش کوتاه هنگام لمس */
+function Reactions({ post }: { post: Post }) {
+  const me = useMe()!
+  const [bump, setBump] = useState('')
+  const r = post.reactions ?? {}
+  return (
+    <div className="mx-3 mt-3 flex flex-wrap gap-1.5" aria-label="واکنش‌ها">
+      {REACTIONS.map((e) => {
+        const n = r[e]?.length ?? 0
+        const mine = !!r[e]?.includes(me.id)
+        return (
+          <button
+            key={e}
+            onClick={() => {
+              setBump(e + Date.now())
+              run(() => reactPost(post.id, e))
+            }}
+            aria-pressed={mine}
+            className={clsx('press flex h-8 items-center gap-1 rounded-full border px-2.5 text-[13px] font-bold tabular-nums transition-colors', mine ? 'border-lime-400 bg-lime-300/20' : 'hairline')}
+          >
+            <span key={bump.startsWith(e) ? bump : e} className={clsx('text-[16px] leading-none', bump.startsWith(e) && 'anim-pop')}>{e}</span>
+            {n > 0 && num(n)}
+          </button>
+        )
+      })}
+    </div>
   )
 }

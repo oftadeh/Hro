@@ -9,6 +9,9 @@ import { useMe } from '@/ui/hooks'
 import { runOk } from '@/ui/toast'
 import { MediaInput, TonePicker } from './Media'
 
+/** ایموجی‌های ورزشی پرکاربرد برای نوشتن سریع */
+const EMOJIS = ['🔥', '💪', '🏃‍♀️', '🏃', '🏆', '🥇', '🚴', '🏊', '⚽', '🧘', '🏋️', '👏', '😅', '💦', '🎯', '❤️']
+
 export type PostMode = 'text' | 'image' | 'video'
 
 export const MODES: { id: PostMode; label: string; icon: typeof Type }[] = [
@@ -108,6 +111,13 @@ export function CreatePostSheet({ open, onClose, challengeId, gymId, initialText
             <Textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="توضیح (اختیاری)… می‌توانی #هشتگ هم بگذاری" />
           </>
         )}
+        <div className="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1" aria-label="افزودن ایموجی">
+          {EMOJIS.map((e) => (
+            <button key={e} type="button" onClick={() => setText((t) => t + e)} className="press h-10 w-10 shrink-0 rounded-xl bg-ink-900/[.05] text-[20px] dark:bg-white/[.06]" aria-label={`افزودن ${e}`}>
+              {e}
+            </button>
+          ))}
+        </div>
         {mode === 'text' && <TonePicker value={bg} onChange={setBg} />}
 
         <details className="rounded-2xl bg-ink-50 px-4 py-3 dark:bg-ink-800/60">
