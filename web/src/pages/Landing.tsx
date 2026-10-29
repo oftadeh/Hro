@@ -109,16 +109,51 @@ function TrainingMini({ className }: { className?: string }) {
   )
 }
 
+const ZONE_PEOPLE = [
+  { n: 'استوری تو', add: true },
+  { n: 'مینا', i: 'م', c: 'card-violet' },
+  { n: 'علی', i: 'ع', c: 'card-peach' },
+  { n: 'سارا', i: 'س', c: 'card-mint' },
+  { n: 'رضا', i: 'ر', c: 'card-pink' },
+]
+
+/** فیت‌زون: استوری ورزشکارها با حلقه‌ی «تازه»، یک پست واقعی و واکنش‌های ایموجی که زنده بالا می‌روند */
 function ZoneMini({ className }: { className?: string }) {
+  const t = useTick(2900)
+  const live = 1 + (t % 4) // استوری‌ای که الان تازه منتشر شده
+  const fire = 24 + (t % 6)
   return (
     <div className={clsx('flex flex-col rounded-[30px] bg-white/[.06] p-4', className)}>
-      <div className="flex gap-2">
-        {['card-violet', 'card-pink', 'card-peach', 'card-mint'].map((t) => <span key={t} className={clsx('h-[58px] w-[46px] rounded-[16px] p-[2px]', t)}><span className="block h-full w-full rounded-[14px] bg-ink-900/70" /></span>)}
+      <div className="flex justify-between gap-1">
+        {ZONE_PEOPLE.map((p, k) => (
+          <span key={p.n} className="flex w-[52px] flex-col items-center gap-1">
+            <span className={clsx('relative grid h-11 w-11 place-items-center rounded-full p-[2.5px]', p.add ? 'border-2 border-dashed border-white/25' : k === live ? 'bg-[conic-gradient(#dcff5a,#8a6bff,#ff6fa8,#dcff5a)]' : 'bg-white/15')}>
+              {p.add ? (
+                <Plus size={18} className="text-white/70" />
+              ) : (
+                <span className={clsx('grid h-full w-full place-items-center rounded-full text-[15px] font-black text-ink-950 ring-2 ring-[#1d1a23]', p.c)}>{p.i}</span>
+              )}
+              {k === live && <span key={t} className="anim-pop absolute -bottom-0.5 rounded-full bg-[#dcff5a] px-1.5 text-[9px] font-black text-ink-950">تازه</span>}
+            </span>
+            <span className={clsx('truncate text-[11px]', k === live ? 'font-bold text-white' : 'text-white/55')}>{p.n}</span>
+          </span>
+        ))}
       </div>
-      <div className="card-pink mt-3 flex flex-1 items-center justify-center rounded-[22px] p-4 text-center text-[18px] font-extrabold text-ink-950">امروز ۵ کیلومتر کنار زاینده‌رود دویدم!</div>
+      <div className="mt-3 flex items-center gap-2 text-[12px]">
+        <span className="card-pink grid h-7 w-7 place-items-center rounded-full text-[12px] font-black text-ink-950">ن</span>
+        <span className="font-bold">نگار احمدی</span>
+        <span className="text-white/45">۲۰ دقیقه پیش</span>
+        <span className="mr-auto rounded-full bg-[#dcff5a]/15 px-2 py-0.5 text-[11px] font-bold text-[#dcff5a]">ماراتن ۴۲ کیلومتر</span>
+      </div>
+      <div className="card-pink relative mt-2 flex min-h-0 flex-1 items-center overflow-hidden rounded-[20px] px-4 py-3 text-[15px] font-extrabold leading-7 text-ink-950">
+        <LiveTiles tiles={progressTiles(29 / 42, tileIcon('foot'))} />
+        <span className="relative max-w-[66%]">امروز ۵ کیلومتر کنار زاینده‌رود دویدم!</span>
+      </div>
       <div className="mt-2 flex flex-wrap gap-1.5 text-[13px] font-bold">
-        {[['🔥', '۲۴'], ['💪', '۱۱'], ['👏', '۶'], ['🏆', '۳']].map(([e, n]) => (
-          <span key={e} className="flex h-8 items-center gap-1 rounded-full border border-white/10 px-2.5"><span className="text-[15px]">{e}</span>{n}</span>
+        {[['🔥', fire], ['💪', 11], ['👏', 6], ['🏆', 3]].map(([e, n], k) => (
+          <span key={String(e)} className={clsx('flex h-8 items-center gap-1 rounded-full border px-2.5', k === 0 ? 'border-[#dcff5a]/60 bg-[#dcff5a]/10' : 'border-white/10')}>
+            <span key={k === 0 ? fire : String(e)} className={clsx('text-[15px]', k === 0 && t > 0 && 'anim-pop')}>{e}</span>{fa(Number(n))}
+          </span>
         ))}
       </div>
     </div>
@@ -178,7 +213,7 @@ const BENTO = [
       <ChallengeMini tone="card-peach" title="ماراتن ۴۲ کیلومتر" score={29} goal={42} rank={1} unit="کیلومتر" />
     </div>
   ) },
-  { cap: 'فیت‌زون', d: 'عکس، ویدیو و استوری تمرینت را بگذار و ورزشکارهای شهرت را دنبال کن.', el: <ZoneMini /> },
+  { cap: 'فیت‌زون', d: 'استوری و پست تمرینت را بگذار، روی دیوار چالش‌ها بنویس و با ایموجی به ورزشکارهای شهرت انرژی بده.', el: <ZoneMini /> },
 ]
 
 function Bento() {
