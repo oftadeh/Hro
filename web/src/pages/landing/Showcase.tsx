@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import clsx from 'clsx'
-import { Bell, Check, Dumbbell, Heart, Home, LayoutGrid, MapPin, MessageCircle, Play, Plus, QrCode, Star, Trophy, Users } from 'lucide-react'
+import { Bell, Check, Dumbbell, Heart, Home, LayoutGrid, MapPin, Play, Plus, QrCode, Star, Trophy, Users } from 'lucide-react'
 import { Emblem } from '@/layouts/Logo'
 import { useInView } from '@/ui/motion'
+import { CardIcon, LiveTiles, boardTiles, crowdTiles, progressTiles, tileIcon } from '@/ui/live'
 
 /*
  * «در حرکت ببین»: نسخه‌ی کوچک صفحه‌های واقعی اپ داخل قاب گوشی.
@@ -129,16 +130,6 @@ function Sheet({ on, children }: { on: boolean; children: ReactNode }) {
   )
 }
 
-function Ring({ value, size = 64, stroke = 9, color = 'currentColor' }: { value: number; size?: number; stroke?: number; color?: string }) {
-  const C = 2 * Math.PI * 42
-  return (
-    <svg viewBox="0 0 100 100" style={{ width: size, height: size }} className="-rotate-90" aria-hidden>
-      <circle cx="50" cy="50" r="42" fill="none" stroke={color} strokeOpacity=".18" strokeWidth={stroke} />
-      <circle cx="50" cy="50" r="42" fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - value)} style={{ transition: 'stroke-dashoffset .9s cubic-bezier(.23,1,.32,1)' }} />
-    </svg>
-  )
-}
-
 function Bar({ value, className }: { value: number; className?: string }) {
   return (
     <div className={clsx('h-1.5 overflow-hidden rounded-full bg-white/45', className)}>
@@ -178,8 +169,10 @@ function HomeScreen({ s }: { s: number }) {
             <QrCode size={12} /> ورود
           </span>
         </div>
-        <div className="card-mint anim-enter mt-2 h-[150px] rounded-[22px] p-3.5 text-ink-950">
-          <div className="flex items-center justify-between text-[10px]">
+        <div className="card-mint anim-enter relative mt-2 h-[150px] overflow-hidden rounded-[22px] p-3.5 text-ink-950">
+          <LiveTiles tiles={progressTiles(s >= 3 ? 1 : done ? 0.93 : 0.62, tileIcon('foot'))} />
+          <CardIcon name="steps" playKey={done} />
+          <div className="relative flex items-center gap-2 text-[10px]">
             <span className="font-bold opacity-70">امروز</span>
             <span className="flex rounded-full bg-white/45 p-0.5">
               <span className="rounded-full bg-ink-950 px-2 py-0.5 font-bold text-white">قدم</span>
@@ -187,28 +180,23 @@ function HomeScreen({ s }: { s: number }) {
               <span className="px-2 py-0.5 opacity-60">تمرین</span>
             </span>
           </div>
-          <div className="mt-2 flex items-center justify-between">
+          <div className="relative mt-2 flex items-center justify-between">
             <div>
               <div key={done ? 'b' : 'a'} className={clsx('text-[30px] font-black leading-none', done && 'sc-pop')}>{done ? '۷٬۴۸۰' : '۶٬۴۸۰'}</div>
               <div className="mt-1 text-[10px] opacity-70">{s >= 3 ? 'هدف امروز کامل شد!' : 'از هدف ۸٬۰۰۰ قدم'}</div>
             </div>
-            <Ring value={s >= 3 ? 1 : done ? 0.93 : 0.62} />
           </div>
-          <span className={clsx('mt-2.5 inline-flex h-8 items-center gap-1 rounded-full bg-ink-950 px-3 text-[11px] font-bold text-white transition-transform duration-150', s === 2 && 'scale-95')}>
+          <span className={clsx('relative mt-2.5 inline-flex h-8 items-center gap-1 rounded-full bg-ink-950 px-3 text-[11px] font-bold text-white transition-transform duration-150', s === 2 && 'scale-95')}>
             <Plus size={13} /> ثبت ۱٬۰۰۰ قدم
           </span>
         </div>
-        <div className="card-night anim-enter relative mt-2.5 overflow-hidden rounded-[22px] p-3.5" style={{ animationDelay: '80ms' }}>
+        <div className="card-night anim-enter relative mt-2.5 h-[104px] overflow-hidden rounded-[22px] p-3.5" style={{ animationDelay: '80ms' }}>
           <span className="pointer-events-none absolute -left-10 -top-10 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(140,110,255,.5),transparent_65%)]" />
           <div className="relative text-[10px] text-white/55">تمرین امروز</div>
           <div className="relative text-[14px] font-extrabold">روز ۳: پا و سرینی</div>
-          <div className="relative mt-2 flex justify-between">
-            {['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'].map((d, i) => (
-              <span key={d} className={clsx('flex h-6 w-6 items-center justify-center rounded-full text-[9px]', i < 3 ? 'card-lime font-bold text-ink-950' : i === 3 ? 'border border-dashed border-white/40' : 'bg-white/10')}>
-                {i < 3 ? <Check size={11} strokeWidth={3} /> : d}
-              </span>
-            ))}
-          </div>
+          <div className="relative mt-1 text-[10px] text-white/55">۳ جلسه در ۱۲ روز اخیر</div>
+          <LiveTiles tiles={Array.from({ length: 12 }, (_, k) => ({ on: [0, 2, 3].includes(k), back: tileIcon('check'), glow: k === 0 }))} />
+          <CardIcon name="dumbbell" />
         </div>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-[14px] font-extrabold">چالش‌ها</span>
@@ -216,14 +204,14 @@ function HomeScreen({ s }: { s: number }) {
         </div>
         <div className="sc-t mt-2 flex gap-2" style={{ transform: `translateX(${s >= 5 ? 96 : 0}px)` }}>
           {[
-            { t: '۳۰ روز، ۳۰ تمرین', tone: 'card-violet', v: 0.7 },
-            { t: '۳۰۰ هزار قدم', tone: 'card-lime', v: 0.6 },
-            { t: 'ماراتن ۴۲ کیلومتر', tone: 'card-peach', v: 0.45 },
+            { t: '۳۰ روز، ۳۰ تمرین', tone: 'card-violet', sc: 21, g: 30, r: 2 },
+            { t: '۳۰۰ هزار قدم', tone: 'card-lime', sc: 180, g: 300, r: 5 },
+            { t: 'ماراتن ۴۲ کیلومتر', tone: 'card-peach', sc: 19, g: 42, r: 1 },
           ].map((c) => (
-            <div key={c.t} className={clsx('flex h-[112px] w-[132px] shrink-0 flex-col rounded-[20px] p-3 text-ink-950', c.tone)}>
-              <span className="text-[9px] font-bold opacity-60">۱۲ روز مانده</span>
-              <span className="mt-1 text-[12px] font-extrabold leading-5">{c.t}</span>
-              <Bar value={s >= 4 ? c.v : 0} className="mt-auto" />
+            <div key={c.t} className={clsx('relative flex h-[112px] w-[132px] shrink-0 flex-col overflow-hidden rounded-[20px] p-3 text-ink-950', c.tone)}>
+              <LiveTiles tiles={boardTiles({ score: c.sc + (s >= 4 ? 1 : 0), goal: c.g, rank: c.r, joined: true })} />
+              <span className="relative text-[9px] font-bold opacity-60">۱۲ روز مانده</span>
+              <span className="relative mt-1 max-w-[80%] text-[12px] font-extrabold leading-5">{c.t}</span>
             </div>
           ))}
         </div>
@@ -291,7 +279,10 @@ function FitYabScreen({ s }: { s: number }) {
                 <span className="block text-[12px] font-bold">{g.n}</span>
                 <span className="block text-[10px] text-white/50">{g.d}</span>
               </span>
-              <span className="text-[10px] font-bold text-[#c6ff3d]">{g.p}</span>
+              <span className="flex flex-col items-end gap-1">
+                <span className="text-[10px] font-bold text-[#c6ff3d]">{g.p}</span>
+                <span style={{ '--acc': '#dcff5a', '--acc-on': '#0d0b10' } as CSSProperties}><LiveTiles tiles={crowdTiles(i === 0 ? [2, 2, 1, 1] : [1, 0, 1, 0])} className="kf-mini" /></span>
+              </span>
             </div>
           ))}
         </div>
@@ -402,7 +393,7 @@ function ChallengesScreen({ s }: { s: number }) {
         </div>
         <div className="mt-3 space-y-2">
           {CH.map((c, i) => (
-            <div key={c.t} className={clsx('anim-enter rounded-[20px] p-3 text-ink-950 transition-transform duration-150', c.tone, i === 1 && s === 2 && 'scale-[.97]')} style={{ animationDelay: `${i * 90}ms` }}>
+            <div key={c.t} className={clsx('anim-enter relative overflow-hidden rounded-[20px] p-3 text-ink-950 transition-[transform,box-shadow] duration-150', c.tone, i === 1 && s === 2 && 'scale-[.97] shadow-[0_0_0_3px_rgba(220,255,90,.65)]')} style={{ animationDelay: `${i * 90}ms` }}>
               <div className="flex justify-between text-[9px] font-bold opacity-60">
                 <span>۱۲ روز مانده</span>
                 <span>{c.p}</span>
@@ -484,11 +475,12 @@ function ZoneScreen({ s }: { s: number }) {
             </span>
           )}
         </div>
-        <div className="mt-2 flex items-center gap-3 px-1 text-[11px] text-white/70">
-          <span className="flex items-center gap-1">
-            <Heart size={16} className={clsx('transition-colors duration-300', liked ? 'sc-pop fill-[#ff2f7d] text-[#ff2f7d]' : '')} /> {liked ? '۱۲۹' : '۱۲۸'}
-          </span>
-          <span className="flex items-center gap-1"><MessageCircle size={15} /> ۱۴</span>
+        <div className="mt-2 flex flex-wrap gap-1 px-0.5 text-[10px] font-bold">
+          {[['🔥', liked ? '۲۵' : '۲۴'], ['💪', '۱۱'], ['👏', '۶'], ['🏆', '']].map(([e, n], k) => (
+            <span key={e} className={clsx('flex h-6 items-center gap-0.5 rounded-full border px-1.5', k === 0 && liked ? 'sc-pop border-[#dcff5a] bg-[#dcff5a]/15' : 'border-white/10')}>
+              <span className="text-[12px]">{e}</span>{n}
+            </span>
+          ))}
         </div>
       </div>
       <div className="mt-3 rounded-[22px] bg-white/[.05] p-2.5">
@@ -591,7 +583,7 @@ export function Showcase() {
       <div className="order-1 mx-auto lg:order-2" aria-hidden>
         <div className="relative h-[560px] w-[290px] rounded-[48px] bg-[#0b0a0e] p-3 shadow-[0_40px_120px_-30px_rgba(91,55,245,.6)] ring-1 ring-white/10">
           <div className="absolute left-1/2 top-4 z-50 h-6 w-24 -translate-x-1/2 rounded-full bg-black" />
-          <div className="sport-bg relative h-full w-full overflow-hidden rounded-[38px] bg-[#131118] text-white">
+          <div className="kf-sm sport-bg relative h-full w-full overflow-hidden rounded-[38px] bg-[#131118] text-white">
             <div className="absolute inset-x-0 top-0 z-30 flex h-[34px] items-center justify-between px-6 pt-1 text-[10px] font-semibold text-white/70">
               <span>۱۸:۴۲</span>
               <span className="flex items-center gap-1">

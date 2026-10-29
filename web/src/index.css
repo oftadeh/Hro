@@ -421,6 +421,12 @@ body, .sport-bg {
 .kf-mini .f, .kf-mini .b { border-radius: 3px; }
 .kf-surface { --acc: #5b37f5; --acc-on: #fff; }
 .dark .kf-surface { --acc: #dcff5a; --acc-on: #0d0b10; }
+/* نسخه‌ی کوچک داخل قاب گوشی نمایشی */
+.kf-sm .kic { left: 9px; top: 9px; width: 28px; height: 28px; }
+.kf-sm .kic .ai { width: 17px; height: 17px; }
+.kf-sm .kf-field:not(.kf-mini) { left: 9px; bottom: 9px; gap: 3px; }
+.kf-sm .kf-field:not(.kf-mini) .f, .kf-sm .kf-field:not(.kf-mini) .b { border-radius: 6px; font-size: 9px; }
+.kf-sm .kf-field .f.flapf { font-size: 10px; }
 /* انتخاب کارت: هاله‌ی کوتاه لیمویی هنگام لمس */
 .kf-sel { transition: transform .2s cubic-bezier(.23,1,.32,1), box-shadow .25s ease; }
 .kf-sel:active { box-shadow: 0 0 0 3px rgb(220 255 90 / .6); }

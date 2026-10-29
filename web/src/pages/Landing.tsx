@@ -1,8 +1,26 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
-import { ArrowLeft, BadgeCheck, Check, Droplet, Dumbbell, Footprints, Heart, MapPin, MessageCircle, Plus, QrCode, Trophy, Wallet } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Check, Droplet, Footprints, MapPin, Plus, QrCode, Trophy, Wallet } from 'lucide-react'
 import { Emblem, Logo } from '@/layouts/Logo'
 import { Showcase } from './landing/Showcase'
+import { CardIcon, LiveTiles, boardTiles, crowdTiles, progressTiles, tileIcon } from '@/ui/live'
+import { moment } from '@/ui/moments'
+
+/**
+ * شمارنده‌ی نمایشی: هر چند ثانیه یک «داده‌ی تازه» تا بازدیدکننده زنده بودن کارت‌ها را ببیند.
+ * فقط وقتی صفحه دیده می‌شود جلو می‌رود؛ در حالت کاهش حرکت ثابت می‌ماند.
+ */
+function useTick(ms: number) {
+  const [t, setT] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const iv = setInterval(() => { if (document.visibilityState === 'visible') setT((x) => x + 1) }, ms)
+    return () => clearInterval(iv)
+  }, [ms])
+  return t
+}
+const fa = (n: number) => n.toLocaleString('fa-IR')
 
 /* ───────── قطعه‌های واقعی داشبورد (نسخه‌ی نمایشی) ───────── */
 
@@ -29,10 +47,15 @@ function PassCard({ className }: { className?: string }) {
 }
 
 function ActivityMini({ className }: { className?: string }) {
-  const C = 2 * Math.PI * 42
+  const t = useTick(3300)
+  const steps = 4200 + ((t * 700) % 4200)
+  const pct = Math.min(1, steps / 8000)
   return (
-    <div className={clsx('card-mint flex flex-col justify-between rounded-[30px] p-5 text-ink-950', className)}>
-      <div className="flex items-center justify-between">
+    <div className={clsx('card-mint relative flex flex-col justify-between overflow-hidden rounded-[30px] p-5 text-ink-950', className)}>
+      {/* هر کاشی یک‌دوازدهم هدف قدم امروز */}
+      <LiveTiles tiles={progressTiles(pct, tileIcon('foot'))} />
+      <CardIcon name="steps" playKey={t} />
+      <div className="relative flex items-center gap-2">
         <span className="text-[13px] font-bold opacity-70">امروز</span>
         <span className="flex rounded-full bg-white/45 p-1 text-[12px]">
           <span className="rounded-full bg-ink-950 px-3 py-1 font-bold text-white">قدم</span>
@@ -40,51 +63,47 @@ function ActivityMini({ className }: { className?: string }) {
           <span className="px-3 py-1 opacity-70">تمرین</span>
         </span>
       </div>
-      <div className="mt-4 flex items-center gap-4">
-        <div className="flex-1">
-          <div className="text-[44px] font-black leading-none">۶٬۴۸۰</div>
-          <div className="mt-2 text-[13px] opacity-70">هدف امروز کامل شد</div>
-        </div>
-        <svg viewBox="0 0 100 100" className="h-24 w-24 -rotate-90" aria-hidden>
-          <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeOpacity=".15" strokeWidth="10" />
-          <circle className="m-ring" cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * 0.12} />
-        </svg>
+      <div className="relative mt-4 max-w-[62%]">
+        <div key={steps} className="anim-pop text-[44px] font-black leading-none tabular-nums">{fa(steps)}</div>
+        <div className="mt-2 text-[13px] opacity-70">{fa(Math.round(pct * 100))}٪ هدف ۸٬۰۰۰ قدم</div>
       </div>
-      <div className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-ink-950 px-4 text-[14px] font-bold text-white"><Plus size={16} /> ثبت ۱٬۰۰۰ قدم</div>
+      <div className="relative mt-4 inline-flex h-11 w-fit items-center gap-2 rounded-full bg-ink-950 px-4 text-[14px] font-bold text-white"><Plus size={16} /> ثبت ۱٬۰۰۰ قدم</div>
     </div>
   )
 }
 
-function ChallengeMini({ tone, title, score, goal, rank, className }: { tone: string; title: string; score: string; goal: number; rank: string; className?: string }) {
+function ChallengeMini({ tone, title, score, goal, rank, unit, className }: { tone: string; title: string; score: number; goal: number; rank: number; unit: string; className?: string }) {
+  const t = useTick(4100)
+  const now = Math.min(goal, score + (t % 4))
   return (
-    <div className={clsx('flex flex-col rounded-[28px] p-4 text-ink-950', tone, className)}>
-      <div className="flex justify-between text-[12px] font-bold opacity-70"><span>۱۲ روز مانده</span><span>۴۸ نفر</span></div>
-      <div className="mt-2 text-[18px] font-extrabold leading-7">{title}</div>
-      <div className="mt-auto pt-4">
-        <div className="flex justify-between text-[12px] font-bold"><span>{rank}</span><span>{score}</span></div>
-        <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/45"><div className="m-fill h-full rounded-full bg-ink-950" style={{ width: `${goal}%` }} /></div>
+    <div className={clsx('relative flex flex-col overflow-hidden rounded-[28px] p-4 text-ink-950', tone, className)}>
+      {/* تابلوی امتیاز: با هر ثبت تازه رقم‌ها ورق می‌خورند */}
+      <LiveTiles tiles={boardTiles({ score: now, goal, rank, joined: true })} />
+      <CardIcon name="trophy" playKey={now} />
+      <div className="relative text-[12px] font-bold opacity-70">۱۲ روز مانده · ۴۸ نفر</div>
+      <div className="relative mt-2 max-w-[72%] text-[18px] font-extrabold leading-7">{title}</div>
+      <div className="relative mt-auto max-w-[56%] pt-4">
+        <div className="flex justify-between text-[12px] font-bold"><span>رتبه‌ی {fa(rank)}</span><span>{fa(now)} {unit}</span></div>
+        <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/45"><div className="h-full rounded-full bg-ink-950 transition-[width] duration-700" style={{ width: `${(now / goal) * 100}%` }} /></div>
       </div>
     </div>
   )
 }
 
 function TrainingMini({ className }: { className?: string }) {
+  const t = useTick(5200)
+  const done = [0, 2, 3, 5, 6, 8].slice(0, 3 + (t % 4))
   return (
-    <div className={clsx('card-night relative flex flex-col justify-center overflow-hidden rounded-[30px] p-5', className)}>
+    <div className={clsx('card-night relative flex flex-col overflow-hidden rounded-[30px] p-5', className)}>
       <span aria-hidden className="pointer-events-none absolute -left-14 -top-16 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(140,110,255,.45),transparent_65%)]" />
-      <Dumbbell aria-hidden size={110} strokeWidth={1} className="pointer-events-none absolute -bottom-5 -left-3 -rotate-12 opacity-[.07]" />
-      <div className="relative">
+      {/* هر کاشی یک روز از ۱۲ روز اخیر؛ روزهای تمرین تیک دارند */}
+      <LiveTiles tiles={Array.from({ length: 12 }, (_, k) => ({ on: done.includes(k), back: tileIcon('check'), glow: k === 0 }))} />
+      <CardIcon name="dumbbell" playKey={done.length} />
+      <div className="relative max-w-[62%]">
         <div className="text-[13px] font-semibold text-white/60">تمرین امروز</div>
         <div className="mt-1 text-[22px] font-extrabold">روز ۳: پا و سرینی</div>
         <div className="text-[13px] text-white/60">برنامه‌ی مربی · ۶ حرکت</div>
-        <div className="mt-4 flex justify-between">
-          {['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'].map((d, i) => (
-            <span key={d} className="flex flex-col items-center gap-1">
-              <span className={clsx('flex h-8 w-8 items-center justify-center rounded-full text-[12px]', i < 3 ? 'card-violet font-bold text-ink-950' : i === 3 ? 'border-2 border-dashed border-white/40' : 'bg-white/10')}>{i < 3 ? '✓' : ''}</span>
-              <span className="text-[12px] text-white/45">{d}</span>
-            </span>
-          ))}
-        </div>
+        <div className="mt-3 text-[13px] font-bold text-[#dcff5a]">{fa(done.length)} جلسه در ۱۲ روز اخیر</div>
       </div>
     </div>
   )
@@ -97,21 +116,28 @@ function ZoneMini({ className }: { className?: string }) {
         {['card-violet', 'card-pink', 'card-peach', 'card-mint'].map((t) => <span key={t} className={clsx('h-[58px] w-[46px] rounded-[16px] p-[2px]', t)}><span className="block h-full w-full rounded-[14px] bg-ink-900/70" /></span>)}
       </div>
       <div className="card-pink mt-3 flex flex-1 items-center justify-center rounded-[22px] p-4 text-center text-[18px] font-extrabold text-ink-950">امروز ۵ کیلومتر کنار زاینده‌رود دویدم!</div>
-      <div className="mt-2 flex items-center gap-4 px-1 text-[13px] text-white/70"><Heart size={18} className="fill-[#ff2f7d] text-[#ff2f7d]" /> ۱۲۸ <MessageCircle size={17} /> ۱۴</div>
+      <div className="mt-2 flex flex-wrap gap-1.5 text-[13px] font-bold">
+        {[['🔥', '۲۴'], ['💪', '۱۱'], ['👏', '۶'], ['🏆', '۳']].map(([e, n]) => (
+          <span key={e} className="flex h-8 items-center gap-1 rounded-full border border-white/10 px-2.5"><span className="text-[15px]">{e}</span>{n}</span>
+        ))}
+      </div>
     </div>
   )
 }
 
 function EntryMini({ className }: { className?: string }) {
+  const t = useTick(3700)
+  const now = 1 + (t % 3)
   return (
-    <div className={clsx('card-peach flex flex-col justify-between rounded-[30px] p-5 text-ink-950', className)}>
-      <div className="flex items-center justify-between">
-        <span className="text-[13px] font-bold opacity-70">ورود به باشگاه</span>
-        <QrCode size={22} />
-      </div>
-      <div>
+    <div className={clsx('card-peach relative flex flex-col justify-between overflow-hidden rounded-[30px] p-5 text-ink-950', className)}>
+      {/* شلوغی زنده: چهار بازه‌ی اخیر، ستون کنار متن = الان */}
+      <LiveTiles tiles={crowdTiles([now, 2, 1, 1])} />
+      <CardIcon name="check" playKey={t} />
+      <div className="relative text-[13px] font-bold opacity-70">ورود به باشگاه</div>
+      <div className="relative max-w-[62%]">
         <div className="text-[20px] font-extrabold leading-snug">باشگاه پارس، چهارباغ</div>
-        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-ink-950 px-3 py-1.5 text-[13px] font-bold text-white"><Check size={15} strokeWidth={3} /> ورود ثبت شد · ۱۸:۴۲</div>
+        <div className="mt-1 text-[13px] font-semibold opacity-75">شلوغی الان: {['خلوت', 'کم‌جمعیت', 'متوسط', 'شلوغ'][now]}</div>
+        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-ink-950 px-3 py-1.5 text-[13px] font-bold text-white"><Check size={15} strokeWidth={3} /> ورود ثبت شد</div>
       </div>
     </div>
   )
@@ -133,7 +159,7 @@ function HeroVisual() {
         <path d="M34 560 V232 C34 140 140 78 200 44 C260 78 366 140 366 232 V560" fill="none" stroke="rgba(160,140,255,.15)" strokeWidth="1.5" />
       </svg>
       <div className="hero-fan">
-        <ChallengeMini tone="card-pink" title="۳۰ روز، ۳۰ تمرین" score="۲۱ / ۳۰ جلسه" goal={70} rank="رتبه‌ی ۲" className="fan-1 relative z-0 mx-8 h-[150px]" />
+        <ChallengeMini tone="card-pink" title="۳۰ روز، ۳۰ تمرین" score={21} goal={30} rank={2} unit="جلسه" className="fan-1 z-0 mx-8 h-[150px]" />
         <ActivityMini className="fan-2 relative z-10 mx-3 -mt-14" />
         <PassCard className="fan-3 relative z-20 -mt-16" />
       </div>
@@ -148,8 +174,8 @@ const BENTO = [
   { cap: 'برنامه‌ی تمرینی', d: 'از مربیان تأییدشده برنامه بگیر و هر روز ببین کجای برنامه هستی.', el: <TrainingMini /> },
   { cap: 'چالش و جایزه', d: 'در چالش‌های قدم، تمرین و دویدن شرکت کن، رتبه بگیر و جایزه ببر.', el: (
     <div className="grid h-full grid-cols-2 gap-3">
-      <ChallengeMini tone="card-lilac" title="۳۰۰ هزار قدم" score="۱۸۰ هزار" goal={60} rank="رتبه‌ی ۵" />
-      <ChallengeMini tone="card-peach" title="ماراتن ۴۲ کیلومتر" score="۲۹ کیلومتر" goal={69} rank="رتبه‌ی ۱" />
+      <ChallengeMini tone="card-lilac" title="۳۰ روز تمرین" score={18} goal={30} rank={5} unit="جلسه" />
+      <ChallengeMini tone="card-peach" title="ماراتن ۴۲ کیلومتر" score={29} goal={42} rank={1} unit="کیلومتر" />
     </div>
   ) },
   { cap: 'فیت‌زون', d: 'عکس، ویدیو و استوری تمرینت را بگذار و ورزشکارهای شهرت را دنبال کن.', el: <ZoneMini /> },
@@ -182,12 +208,27 @@ const STEPS = [
   { t: 'اسکن کن و تمرین کن', d: 'QR دم در را بزن؛ ورودت ثبت و امتیازت به چالش‌ها اضافه می‌شود.', icon: QrCode },
 ]
 
-export default function Landing() {
-  const start = (
-    <Link to="/login" className="card-lime inline-flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-extrabold text-ink-950 shadow-glow transition hover:brightness-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+/** «شروع کن!»: لحظه‌ی «باز شد» با لوگو و بعد صفحه‌ی ورود */
+function StartButton() {
+  const nav = useNavigate()
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        moment('unlock', { title: 'به کی‌فیت خوش آمدی', sub: 'قفل انرژی‌ات را باز کن' })
+        const go = () => nav('/login')
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) go()
+        else setTimeout(go, 1100)
+      }}
+      className="card-lime inline-flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-extrabold text-ink-950 shadow-glow transition hover:brightness-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+    >
       شروع کن! <ArrowLeft size={18} />
-    </Link>
+    </button>
   )
+}
+
+export default function Landing() {
+  const start = <StartButton />
   return (
     <div className="sport-bg min-h-dvh overflow-x-clip bg-[#131118] text-white">
       <header className="sticky top-0 z-50 bg-[#131118]/80 backdrop-blur-xl">
