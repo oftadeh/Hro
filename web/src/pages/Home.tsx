@@ -198,7 +198,7 @@ function ChallengeCard({ c, meId, tone }: { c: Challenge; meId: string; tone: st
         {left ? `${num(left)} روز مانده` : 'روز آخر'} · {num(c.participants.length)} نفر
       </div>
       <h3 className="relative mt-2 line-clamp-2 max-w-[74%] text-[18px] font-extrabold leading-7">{c.title}</h3>
-      <div className="relative mt-auto max-w-[64%]">
+      <div className="relative mt-auto max-w-[56%]">
         {mine ? (
           <>
             <div className="flex justify-between text-[12px] font-semibold">
