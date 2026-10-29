@@ -223,7 +223,7 @@ export function Avatar({ name, src, size = 40, ring, className }: { name: string
     <div className={clsx('shrink-0 rounded-full', ring && 'bg-[conic-gradient(from_200deg,#4ff3da,#8a6bff,#ff6fa8,#ff9a4d,#4ff3da)] p-[2px]', className)} style={{ width: size, height: size }}>
       <div className={clsx('h-full w-full overflow-hidden rounded-full', ring && 'border-2 border-ink-50 dark:border-ink-950')}>
         {src ? (
-          <img src={src} alt={name} className="h-full w-full object-cover" />
+          <img loading="lazy" decoding="async" src={src} alt={name} className="h-full w-full object-cover" />
         ) : (
           <div className={clsx('flex h-full w-full items-center justify-center font-display text-ink-950', bg)} style={{ fontSize: size * 0.48 }}>
             {initial}
@@ -521,7 +521,7 @@ export function ImagePicker({ value, onChange, label = 'افزودن تصویر'
       <input ref={ref} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
       {value ? (
         <div className="relative overflow-hidden rounded-2xl">
-          <img src={value} alt="" className="max-h-64 w-full object-cover" />
+          <img loading="lazy" decoding="async" src={value} alt="" className="max-h-64 w-full object-cover" />
           <button onClick={() => onChange(undefined)} className="absolute left-2 top-2 rounded-full bg-ink-950/70 p-1.5 text-white backdrop-blur" aria-label="حذف">
             <X size={14} />
           </button>

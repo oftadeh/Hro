@@ -132,7 +132,7 @@ export default function Progress() {
           <div className="grid grid-cols-3 gap-2">
             {photos.map((p) => (
               <div key={p.id} className="relative aspect-[3/4] overflow-hidden rounded-2xl">
-                <img src={p.photo} alt="" className="h-full w-full object-cover" />
+                <img loading="lazy" decoding="async" src={p.photo} alt="" className="h-full w-full object-cover" />
                 <span className="absolute bottom-1 right-1 rounded-full bg-black/50 px-2 py-0.5 text-[12px] text-white">{faDate(p.day + 'T12:00')}</span>
               </div>
             ))}

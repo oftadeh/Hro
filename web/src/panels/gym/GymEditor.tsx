@@ -134,7 +134,7 @@ export default function GymEditor() {
             <div className="grid grid-cols-3 gap-2">
               {media.map((m, i) => (
                 <div key={i} className="relative aspect-square overflow-hidden rounded-2xl bg-ink-900">
-                  {m.type === 'image' ? <img src={m.url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-2xl text-white"></div>}
+                  {m.type === 'image' ? <img loading="lazy" decoding="async" src={m.url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-2xl text-white"></div>}
                   <button onClick={() => set('media', media.filter((_, j) => j !== i))} className="absolute left-1 top-1 rounded-full bg-black/60 p-1 text-white" aria-label="حذف"><Trash2 size={12} /></button>
                 </div>
               ))}

@@ -8,7 +8,7 @@ export function FoodRow({ f, restaurant, onAdd }: { f: Food; restaurant?: string
   return (
     <div className="flex gap-3 rounded-2xl bg-white p-3 shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-aqua-50 text-5xl dark:bg-aqua-500/10">
-        {f.image ? <img src={f.image} alt="" className="h-full w-full object-cover" /> : <FoodIcon size={28} className="text-ink-400" />}
+        {f.image ? <img loading="lazy" decoding="async" src={f.image} alt="" className="h-full w-full object-cover" /> : <FoodIcon size={28} className="text-ink-400" />}
       </div>
       <div className="min-w-0 flex-1">
         <div className="font-semibold">{f.name}</div>

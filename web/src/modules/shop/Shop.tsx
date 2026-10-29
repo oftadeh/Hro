@@ -62,7 +62,7 @@ function ProductCard({ p }: { p: Product }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-card dark:border dark:border-white/[.07] dark:bg-ink-900/70 dark:shadow-none">
       <Link to={`/shop/${p.id}`} className="relative flex aspect-[4/3] items-center justify-center bg-ink-900/[.035] dark:bg-white/[.04]">
-        {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
+        {p.image ? <img loading="lazy" decoding="async" src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
         {p.discount > 0 && <Badge color="rose" className="absolute right-2 top-2">٪{num(p.discount)}</Badge>}
       </Link>
       <div className="flex flex-1 flex-col p-3">

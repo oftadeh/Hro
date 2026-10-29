@@ -36,7 +36,7 @@ export default function SellerDashboard() {
         {mine.map((p) => (
           <Card key={p.id} className="flex gap-3">
             <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-ink-50 text-4xl dark:bg-ink-500/10">
-              {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
+              {p.image ? <img loading="lazy" decoding="async" src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
             </div>
             <div className="min-w-0 flex-1">
               <div className="line-clamp-2 text-sm font-semibold">{p.name}</div>

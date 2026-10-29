@@ -43,7 +43,7 @@ export default function AdminInsurance() {
               <p className="mt-2 text-sm leading-7">{c.description}</p>
               {c.documents.length > 0 && (
                 <div className="mt-2 flex gap-2">
-                  {c.documents.map((d, i) => <a key={i} href={d} target="_blank" rel="noreferrer"><img src={d} alt="مدرک" className="h-16 w-16 rounded-xl object-cover" /></a>)}
+                  {c.documents.map((d, i) => <a key={i} href={d} target="_blank" rel="noreferrer"><img loading="lazy" decoding="async" src={d} alt="مدرک" className="h-16 w-16 rounded-xl object-cover" /></a>)}
                 </div>
               )}
               <div className="mt-2 text-xs">درخواست: {toman(c.amount)} · حداکثر قابل پرداخت (فرانشیز {plan?.deductiblePct}٪): {toman(max)}{c.approvedAmount ? ` · تأییدشده: ${toman(c.approvedAmount)}` : ''}</div>

@@ -15,7 +15,7 @@ import { ModeSwitch, type PostMode } from './CreatePost'
 
 /** پیش‌نمایش کوچک یک استوری (عکس، فریم ویدیو یا کارت رنگی متن) */
 function StoryThumb({ s }: { s: Story }) {
-  if (s.image) return <img src={s.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+  if (s.image) return <img loading="lazy" decoding="async" src={s.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
   if (s.video) return <video src={s.video} muted playsInline preload="metadata" className="absolute inset-0 h-full w-full object-cover" />
   return (
     <div className={clsx('absolute inset-0 flex items-center justify-center p-2 text-center text-[12px] font-bold leading-5', toneClass(s.bg ?? 'violet'))}>
@@ -45,7 +45,7 @@ export function StoriesBar() {
     <>
       <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 no-scrollbar" aria-label="استوری‌ها">
         <button onClick={() => setCreate(true)} className="relative h-[136px] w-[92px] shrink-0 overflow-hidden rounded-[22px] bg-white text-start shadow-card dark:bg-ink-850 dark:shadow-none">
-          {me.avatar ? <img src={me.avatar} alt="" className="h-[86px] w-full object-cover" /> : <div className="card-lilac h-[86px] w-full" />}
+          {me.avatar ? <img loading="lazy" decoding="async" src={me.avatar} alt="" className="h-[86px] w-full object-cover" /> : <div className="card-lilac h-[86px] w-full" />}
           <span className="absolute right-1/2 top-[70px] flex h-8 w-8 translate-x-1/2 items-center justify-center rounded-full bg-ink-950 text-white ring-4 ring-white dark:bg-white dark:text-ink-950 dark:ring-ink-850">
             <Plus size={17} />
           </span>
@@ -114,7 +114,7 @@ function StoryViewer({ groups, startAuthor, onClose }: { groups: { authorId: str
   return createPortal(
     <div className="fixed inset-0 z-[950] flex items-center justify-center bg-black" role="dialog" aria-label={`استوری ${u?.name ?? ''}`}>
       <div className={clsx('relative h-full w-full max-w-md overflow-hidden sm:h-[90dvh] sm:rounded-[28px]', textOnly ? toneClass(story.bg ?? 'violet') : 'bg-ink-900')}>
-        {story.image && <img src={story.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+        {story.image && <img loading="lazy" decoding="async" src={story.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         {story.video && (
           <video
             key={story.id}

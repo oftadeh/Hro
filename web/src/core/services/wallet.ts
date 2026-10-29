@@ -112,8 +112,10 @@ export function activeSubscription(userId: string, s: Pick<DBState, 'subscriptio
   return { ...x, plan: planById(x.planId)! }
 }
 
-export const requestWithdraw = svc('wallet.withdraw', (amount: number, iban: string) => {
+export const requestWithdraw = svc('wallet.withdraw', (rawAmount: number, iban: string) => {
   const userId = currentUserId()
+  const amount = Math.floor(Number(rawAmount))
+  if (!Number.isFinite(amount)) throw new AppError('مبلغ معتبر نیست')
   const { minWithdraw } = db().settings
   if (!(amount >= minWithdraw)) throw new AppError(`حداقل مبلغ برداشت ${toman(minWithdraw)} است`)
   const clean = String(iban ?? '').replace(/\s/g, '').toUpperCase()

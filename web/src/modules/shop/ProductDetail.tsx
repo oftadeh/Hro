@@ -22,7 +22,7 @@ export default function ProductDetail() {
       <PageHeader back="/shop" title={p.name} subtitle={p.brand} actions={<CartButton kind="product" onClick={() => setCart(true)} />} />
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-ink-900/[.035] dark:bg-white/[.04]">
-          {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
+          {p.image ? <img loading="lazy" decoding="async" src={p.image} alt="" className="h-full w-full object-cover" /> : <CategoryIcon category={p.category} size={36} className="text-ink-400" />}
         </div>
         <div className="space-y-4">
           <Card>

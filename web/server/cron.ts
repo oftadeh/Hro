@@ -7,6 +7,7 @@ import { autoReleaseDeals } from '../src/core/services/market'
 import { cycleStatusIn } from '../src/core/services/cycle'
 import { notify } from '../src/core/services/ledger'
 import { dayKey } from '../src/core/format'
+import { dailyCleanup, refreshDemoStories } from './maintenance'
 
 export function startCron(ctx: AsyncLocalStorage<{ userId: string | null }>) {
   const tick = () => {
@@ -16,6 +17,8 @@ export function startCron(ctx: AsyncLocalStorage<{ userId: string | null }>) {
         autoReleaseDeals()
         reminders()
         dailyBackup()
+        dailyCleanup(dayKey())
+        refreshDemoStories()
         sql.prepare("DELETE FROM kv WHERE key LIKE 'rem:%' AND key NOT LIKE ?").run(`%${dayKey()}%`)
       } catch (e) {
         console.error('cron', e)

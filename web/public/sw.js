@@ -1,5 +1,12 @@
 /* سرویس‌ورکر کی‌فیت: کش پوسته‌ی اپ برای باز شدن سریع/آفلاین و نمایش اعلان‌های Push */
-const CACHE = 'keyfit-v5'
+const CACHE = 'keyfit-v6'
+/** حداکثر فایل‌های ساخت که روی گوشی نگه داشته می‌شود؛ نسخه‌های قدیمی‌تر پاک می‌شوند */
+const MAX_ASSETS = 160
+
+async function trimAssets(c) {
+  const keys = (await c.keys()).filter((r) => new URL(r.url).pathname.startsWith('/assets/'))
+  await Promise.all(keys.slice(0, Math.max(0, keys.length - MAX_ASSETS)).map((r) => c.delete(r)))
+}
 const SHELL = ['/', '/favicon.svg', '/manifest.webmanifest', '/icon-192.png']
 
 self.addEventListener('install', (e) => {
@@ -26,7 +33,7 @@ self.addEventListener('fetch', (e) => {
           hit ||
           fetch(e.request).then((res) => {
             const copy = res.clone()
-            caches.open(CACHE).then((c) => c.put(e.request, copy))
+            if (res.ok) caches.open(CACHE).then((c) => c.put(e.request, copy).then(() => trimAssets(c)))
             return res
           }),
       ),

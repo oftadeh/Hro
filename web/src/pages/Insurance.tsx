@@ -135,7 +135,7 @@ export default function Insurance() {
             <div className="grid grid-cols-3 gap-2">
               {f.docs.map((d, i) => (
                 <div key={i} className="relative aspect-square overflow-hidden rounded-xl">
-                  <img src={d} alt="" className="h-full w-full object-cover" />
+                  <img loading="lazy" decoding="async" src={d} alt="" className="h-full w-full object-cover" />
                   <button className="absolute left-1 top-1 rounded-full bg-black/60 p-1 text-white" onClick={() => setF({ ...f, docs: f.docs.filter((_, j) => j !== i) })} aria-label="حذف"><Trash2 size={11} /></button>
                 </div>
               ))}

@@ -18,7 +18,7 @@ function ListingCard({ l }: { l: Listing }) {
   return (
     <Link to={`/market/${l.id}`}>
       <Card className="overflow-hidden p-0 transition hover:-translate-y-0.5">
-        <img src={l.photos[0]} alt="" className="aspect-[4/3] w-full object-cover" />
+        <img loading="lazy" decoding="async" src={l.photos[0]} alt="" className="aspect-[4/3] w-full object-cover" />
         <div className="p-3">
           <div className="truncate text-sm font-semibold">{l.title}</div>
           <div className="mt-0.5 text-[12px] text-ink-400">{LISTING_CONDITION[l.condition]} · {l.city} · {timeAgo(l.createdAt)}</div>
@@ -82,10 +82,10 @@ export function ListingDetail() {
   return (
     <div className="animate-fade-up">
       <PageHeader back="/market" title={l.title} subtitle={`${LISTING_CATEGORY[l.category]} · ${LISTING_CONDITION[l.condition]}`} />
-      <img src={l.photos[photo]} alt="" className="aspect-[4/3] w-full rounded-[2rem] object-cover" />
+      <img loading="lazy" decoding="async" src={l.photos[photo]} alt="" className="aspect-[4/3] w-full rounded-[2rem] object-cover" />
       {l.photos.length > 1 && (
         <div className="mt-2 flex gap-2">
-          {l.photos.map((p, i) => <button key={i} onClick={() => setPhoto(i)}><img src={p} alt="" className={`h-14 w-14 rounded-xl object-cover ${i === photo ? 'ring-2 ring-aqua-500' : 'opacity-70'}`} /></button>)}
+          {l.photos.map((p, i) => <button key={i} onClick={() => setPhoto(i)}><img loading="lazy" decoding="async" src={p} alt="" className={`h-14 w-14 rounded-xl object-cover ${i === photo ? 'ring-2 ring-aqua-500' : 'opacity-70'}`} /></button>)}
         </div>
       )}
       <Card className="mt-3">

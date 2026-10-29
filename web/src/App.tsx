@@ -21,6 +21,7 @@ import { ViewTransitions } from '@/ui/ViewTransitions'
 const Services = lazy(() => import('@/pages/Services'))
 const Landing = lazy(() => import('@/pages/Landing'))
 const Legal = lazy(() => import('@/pages/Legal'))
+const NotFound = lazy(() => import('@/pages/NotFound'))
 const Scan = lazy(() => import('@/pages/Scan'))
 const GymQr = lazy(() => import('@/panels/gym/GymQr'))
 const WalletPage = lazy(() => import('@/pages/Wallet'))
@@ -333,7 +334,7 @@ export default function App() {
           <Route path="support" element={<AdminSupport />} />
           <Route path="insurance" element={<AdminInsurance />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
     </>

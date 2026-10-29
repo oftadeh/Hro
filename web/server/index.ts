@@ -137,7 +137,8 @@ setInterval(() => {
   for (const [k, b] of buckets) if (now - b.at > 3_600_000) buckets.delete(k)
 }, 600_000)
 
-const ipOf = (req: Req) => String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '').split(',')[0].trim()
+/** آی‌پی واقعی: آخرین مقدار X-Forwarded-For را Caddy می‌گذارد؛ مقدارهای قبلی را خود کاربر می‌تواند جعل کند */
+const ipOf = (req: Req) => String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '').split(',').pop()!.trim()
 
 /** سرویس‌هایی که فقط در حالت نمایشی مجازند */
 const DEMO_ONLY = new Set(['demo.topUp'])
@@ -436,11 +437,18 @@ function statics(req: Req, res: Res, url: URL) {
   serveFile(res, path.join(root, 'index.html'), 'no-cache')
 }
 
+/** فقط اسکریپت‌های خود سایت؛ تصویر و ویدیو از هر منبع امن (کاشی نقشه، ویدیوهای نمونه) */
+const CSP = [
+  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob: https:", "media-src 'self' data: blob: https:",
+  "font-src 'self' data:", "connect-src 'self' data: blob:", "frame-src 'self' blob:", "worker-src 'self' blob:", "object-src 'none'", "base-uri 'self'", "frame-ancestors 'self'",
+].join('; ')
+
 const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff')
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
   res.setHeader('X-Frame-Options', 'SAMEORIGIN')
   res.setHeader('Permissions-Policy', 'camera=(self), geolocation=(self), microphone=()')
+  res.setHeader('Content-Security-Policy', CSP)
   const url = new URL(req.url ?? '/', 'http://local')
   try {
     if (url.pathname.startsWith('/api/')) await api(req, res, url)

@@ -109,7 +109,7 @@ export function MediaInput({
         <div className="grid grid-cols-3 gap-2">
           {images.map((src, i) => (
             <div key={src.slice(-40) + i} className="anim-item relative aspect-square overflow-hidden rounded-2xl">
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              <img loading="lazy" decoding="async" src={src} alt="" className="h-full w-full object-cover" />
               <button type="button" onClick={() => onImages(images.filter((_, j) => j !== i))} className="absolute left-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white" aria-label="حذف تصویر"><X size={13} /></button>
             </div>
           ))}

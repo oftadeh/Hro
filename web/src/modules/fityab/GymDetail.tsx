@@ -128,7 +128,7 @@ export default function GymDetail() {
         <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
           {gym.media.map((m, i) => (
             <button key={i} onClick={() => setMedia(i)} className={`h-16 w-24 shrink-0 overflow-hidden rounded-xl border-2 ${i === media ? 'border-brand-500' : 'border-transparent'}`}>
-              {m.type === 'video' ? <div className="flex h-full items-center justify-center bg-ink-900 text-xl text-white"></div> : <img src={m.url} alt="" className="h-full w-full object-cover" />}
+              {m.type === 'video' ? <div className="flex h-full items-center justify-center bg-ink-900 text-xl text-white"></div> : <img loading="lazy" decoding="async" src={m.url} alt="" className="h-full w-full object-cover" />}
             </button>
           ))}
         </div>

@@ -142,7 +142,7 @@ export default function ChallengeDetail() {
               <div className="space-y-3">
                 {pending.map(({ userId, log: l }) => (
                   <div key={l.id} className="flex gap-3 rounded-2xl bg-ink-900/[.03] p-3 dark:bg-white/[.04]">
-                    {l.proof ? <a href={l.proof} target="_blank" rel="noreferrer"><img src={l.proof} alt="مدرک" className="h-20 w-20 rounded-xl object-cover" /></a> : <div className="h-20 w-20 rounded-xl bg-ink-900/10" />}
+                    {l.proof ? <a href={l.proof} target="_blank" rel="noreferrer"><img loading="lazy" decoding="async" src={l.proof} alt="مدرک" className="h-20 w-20 rounded-xl object-cover" /></a> : <div className="h-20 w-20 rounded-xl bg-ink-900/10" />}
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium">{users[userId]?.name}</div>
                       <div className="text-xs text-ink-500">{num(l.value)} {c.unit} · {faDateTime(l.at)}</div>
