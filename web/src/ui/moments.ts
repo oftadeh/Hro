@@ -47,6 +47,11 @@ export function moment(kind: Kind, opts: { title?: string; sub?: string } = {}) 
   navigator.vibrate?.(kind === 'debit' ? 12 : [18, 40, 26])
   if (reduced()) return
   const host = layer()
+  // «باز شد» روی هر زمینه‌ای خوانا باشد: پرده‌ی تیره‌ی کوتاه
+  if (kind === 'unlock') {
+    host.style.background = 'rgb(13 11 16 / .62)'
+    host.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, fill: 'backwards' })
+  }
   const center = document.createElement('div')
   center.style.cssText = 'position:relative;display:grid;place-items:center'
   host.appendChild(center)

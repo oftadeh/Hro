@@ -83,7 +83,7 @@ function ChallengeMini({ tone, title, score, goal, rank, unit, className }: { to
       <div className="relative text-[12px] font-bold opacity-70">۱۲ روز مانده · ۴۸ نفر</div>
       <div className="relative mt-2 max-w-[72%] text-[18px] font-extrabold leading-7">{title}</div>
       <div className="relative mt-auto max-w-[56%] pt-4">
-        <div className="flex justify-between text-[12px] font-bold"><span>رتبه‌ی {fa(rank)}</span><span>{fa(now)} {unit}</span></div>
+        <div className="truncate text-[12px] font-bold">رتبه‌ی {fa(rank)} · {fa(now)} {unit}</div>
         <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/45"><div className="h-full rounded-full bg-ink-950 transition-[width] duration-700" style={{ width: `${(now / goal) * 100}%` }} /></div>
       </div>
     </div>
