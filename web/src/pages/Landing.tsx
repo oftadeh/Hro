@@ -24,18 +24,72 @@ const fa = (n: number) => n.toLocaleString('fa-IR')
 
 /* ───────── قطعه‌های واقعی داشبورد (نسخه‌ی نمایشی) ───────── */
 
+/** باشگاه‌های روی نقشه‌ی شماتیک کارت اشتراک (مختصات در کادر ۴۰۰×۲۵۰) */
+const PASS_PINS = [
+  { x: 92, y: 74 }, { x: 196, y: 120 }, { x: 160, y: 40 }, { x: 108, y: 200 }, { x: 290, y: 146 }, { x: 40, y: 132 },
+]
+
+/** نقشه‌ی ساده‌ی شهر پشت کارت اشتراک: خیابان‌ها، زاینده‌رود، میدان و باشگاه‌ها؛ هر چند ثانیه یک باشگاه «ورود تازه» می‌گیرد */
+function PassMap({ active }: { active: number }) {
+  const you = { x: 134, y: 150 }
+  const pin = PASS_PINS[active]
+  return (
+    <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
+      <defs>
+        {/* نقشه از سمت نوشته‌ها محو می‌شود تا متن خوانا بماند */}
+        <linearGradient id="passFade" x1="1" y1="0" x2="0" y2="0">
+          <stop offset="0" stopColor="#fff" stopOpacity=".25" />
+          <stop offset=".55" stopColor="#fff" stopOpacity="1" />
+        </linearGradient>
+        <mask id="passMask"><rect width="400" height="250" fill="url(#passFade)" /></mask>
+      </defs>
+      <g mask="url(#passMask)" fill="none" strokeLinecap="round">
+        {/* خیابان‌ها */}
+        <g stroke="rgb(19 17 24 / .13)" strokeWidth="7">
+          <path d="M-10 86 L410 70" />
+          <path d="M-10 168 L410 140" />
+          <path d="M92 -10 L130 260" />
+          <path d="M262 -10 L232 260" />
+          <path d="M-10 20 L180 260" />
+        </g>
+        <g stroke="rgb(19 17 24 / .08)" strokeWidth="3">
+          <path d="M-10 122 L410 104" />
+          <path d="M180 -10 L186 260" />
+          <path d="M330 -10 L320 260" />
+          <path d="M40 -10 L60 260" />
+        </g>
+        {/* زاینده‌رود */}
+        <path d="M-10 244 C70 230 120 254 200 242 S330 224 410 238" stroke="rgb(255 255 255 / .38)" strokeWidth="13" />
+        {/* میدان */}
+        <rect x="196" y="82" width="34" height="56" rx="6" fill="rgb(255 255 255 / .16)" stroke="rgb(19 17 24 / .14)" strokeWidth="2" />
+        {/* مسیر تو تا باشگاه فعال */}
+        <path key={active} d={`M${you.x} ${you.y} Q ${(you.x + pin.x) / 2} ${Math.min(you.y, pin.y) - 30} ${pin.x} ${pin.y}`} stroke="rgb(19 17 24 / .55)" strokeWidth="2.5" strokeDasharray="5 6" className="pass-route" />
+      </g>
+      {PASS_PINS.map((p, i) => (
+        <g key={i} transform={`translate(${p.x} ${p.y})`}>
+          {i === active && <circle r="9" fill="#dcff5a" className="pass-ping" />}
+          <circle r={i === active ? 7 : 5} fill={i === active ? '#dcff5a' : 'rgb(19 17 24 / .55)'} stroke="#131118" strokeWidth={i === active ? 2.5 : 0} />
+        </g>
+      ))}
+      <circle cx={you.x} cy={you.y} r="6" fill="#fff" stroke="#131118" strokeWidth="3" />
+    </svg>
+  )
+}
+
 /** کارت اشتراک: «کلید» ورود به باشگاه‌ها */
 function PassCard({ className }: { className?: string }) {
+  const t = useTick(2600)
   return (
     <div className={clsx('card-violet relative flex flex-col justify-between overflow-hidden rounded-[30px] p-5 text-ink-950 shadow-[0_30px_80px_-30px_rgba(91,55,245,.8)]', className)}>
-      <div className="flex items-start justify-between">
+      <PassMap active={t % PASS_PINS.length} />
+      <div className="relative flex items-start justify-between">
         <div>
           <div className="text-[13px] font-bold opacity-70">اشتراک کی‌فیت</div>
           <div className="mt-1 text-[24px] font-black leading-tight">طلایی · ۳۰ روزه</div>
         </div>
         <Emblem size={40} />
       </div>
-      <div className="mt-5 flex items-end justify-between gap-3">
+      <div className="relative mt-5 flex items-end justify-between gap-3">
         <div className="space-y-1 text-[13px] font-semibold">
           <div className="flex items-center gap-1.5"><MapPin size={14} /> همه‌ی باشگاه‌های منتخب اصفهان</div>
           <div className="opacity-70">۲۲ روز مانده · اعتبار ۱٬۴۲۰٬۰۰۰ تومان</div>
@@ -72,9 +126,27 @@ function ActivityMini({ className }: { className?: string }) {
   )
 }
 
-function ChallengeMini({ tone, title, score, goal, rank, unit, className }: { tone: string; title: string; score: number; goal: number; rank: number; unit: string; className?: string }) {
+function ChallengeMini({ tone, title, score, goal, rank, unit, className, row, left = 12, people = 48 }: { tone: string; title: string; score: number; goal: number; rank: number; unit: string; className?: string; row?: boolean; left?: number; people?: number }) {
   const t = useTick(4100)
   const now = Math.min(goal, score + (t % 4))
+  if (row)
+    return (
+      // نسخه‌ی افقی: تابلوی امتیاز تمام‌قد در لبه، متن کنار آن
+      <div className={clsx('kf-row relative flex flex-col justify-between overflow-hidden rounded-[26px] px-4 py-3.5 text-ink-950', tone, className)}>
+        <LiveTiles tiles={boardTiles({ score: now, goal, rank, joined: true })} />
+        <div className="relative max-w-[58%]">
+          <div className="text-[12px] font-bold opacity-70">{fa(left)} روز مانده · {fa(people)} نفر</div>
+          <div className="mt-0.5 truncate text-[17px] font-extrabold leading-7">{title}</div>
+        </div>
+        <div className="relative max-w-[58%]">
+          <div className="flex items-baseline justify-between gap-2 text-[12px] font-bold">
+            <span>رتبه‌ی {fa(rank)}</span>
+            <span className="tabular-nums opacity-70">{fa(now)} از {fa(goal)} {unit}</span>
+          </div>
+          <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/45"><div className="h-full rounded-full bg-ink-950 transition-[width] duration-700" style={{ width: `${(now / goal) * 100}%` }} /></div>
+        </div>
+      </div>
+    )
   return (
     <div className={clsx('relative flex flex-col overflow-hidden rounded-[28px] p-4 text-ink-950', tone, className)}>
       {/* تابلوی امتیاز: با هر ثبت تازه رقم‌ها ورق می‌خورند */}
@@ -208,9 +280,9 @@ const BENTO = [
   { cap: 'فعالیت روزانه', d: 'قدم، آب و دقیقه‌های تمرین را با یک لمس ثبت کن و پر شدن هدفت را ببین.', el: <ActivityMini /> },
   { cap: 'برنامه‌ی تمرینی', d: 'از مربیان تأییدشده برنامه بگیر و هر روز ببین کجای برنامه هستی.', el: <TrainingMini /> },
   { cap: 'چالش و جایزه', d: 'در چالش‌های قدم، تمرین و دویدن شرکت کن، رتبه بگیر و جایزه ببر.', el: (
-    <div className="grid h-full grid-cols-2 gap-3">
-      <ChallengeMini tone="card-lilac" title="۳۰ روز تمرین" score={18} goal={30} rank={5} unit="جلسه" />
-      <ChallengeMini tone="card-peach" title="ماراتن ۴۲ کیلومتر" score={29} goal={42} rank={1} unit="کیلومتر" />
+    <div className="grid h-full grid-rows-2 gap-3">
+      <ChallengeMini row tone="card-lilac" title="۳۰ روز تمرین" score={18} goal={30} rank={5} unit="جلسه" left={12} people={48} />
+      <ChallengeMini row tone="card-peach" title="ماراتن ۴۲ کیلومتر" score={29} goal={42} rank={1} unit="کیلومتر" left={9} people={126} />
     </div>
   ) },
   { cap: 'فیت‌زون', d: 'استوری و پست تمرینت را بگذار، روی دیوار چالش‌ها بنویس و با ایموجی به ورزشکارهای شهرت انرژی بده.', el: <ZoneMini /> },
