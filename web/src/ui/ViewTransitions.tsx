@@ -8,6 +8,24 @@ type VTDoc = Document & { startViewTransition?: (cb: () => void) => unknown }
 export const vtName = (name: string): CSSProperties => ({ viewTransitionName: name }) as CSSProperties
 
 /**
+ * ناوبری با انتقال یکسان سیستم طراحی: push = صفحه‌ی جدید از چپ (RTL رو به جلو)، back = برعکس، tab = محو نرم.
+ */
+export function vtNavigate(go: () => void, dir: 'push' | 'back' | 'tab' = 'push') {
+  const doc = document as VTDoc
+  if (!doc.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return go()
+  const root = document.documentElement
+  root.dataset.vt = dir
+  const t = doc.startViewTransition(() => {
+    flushSync(go)
+  }) as { finished?: Promise<void> } | undefined
+  const done = () => {
+    if (root.dataset.vt === dir) delete root.dataset.vt
+  }
+  if (t?.finished) t.finished.then(done, done)
+  else setTimeout(done, 600)
+}
+
+/**
  * انتقال نرم بین صفحه‌ها با View Transitions API: کلیک روی هر لینک داخلی،
  * ناوبری را داخل یک ترنزیشن انجام می‌دهد. مرورگرهای بدون پشتیبانی یا
  * حالت «کاهش حرکت» همان ناوبری عادی را دارند.
@@ -26,9 +44,7 @@ export function ViewTransitions() {
       if (to === location.pathname + location.search + location.hash) return
       // لینک Link خودش ناوبری نمی‌کند چون defaultPrevented است؛ onClick خود لینک همچنان اجرا می‌شود
       e.preventDefault()
-      doc.startViewTransition(() => {
-        flushSync(() => nav(to))
-      })
+      vtNavigate(() => nav(to), a.closest('nav') ? 'tab' : 'push')
     }
     document.addEventListener('click', onClick, true)
     return () => document.removeEventListener('click', onClick, true)

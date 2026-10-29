@@ -22,7 +22,7 @@ import { PostCard } from '@/modules/fitzone/PostCard'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
 import { vtName } from '@/ui/ViewTransitions'
 import { SportArt } from '@/ui/art'
-import { celebrate } from '@/ui/motion'
+import { moment } from '@/ui/moments'
 
 export default function GymDetail() {
   const { id } = useParams()
@@ -69,8 +69,8 @@ export default function GymDetail() {
   const daySlots = slots.filter((x) => x.at.toDateString() === days[dayIdx].toDateString())
 
   const doCheckIn = async (prefer: 'subscription' | 'wallet') => {
-    const ci = await run(() => checkIn(gym.id, prefer), 'بلیت صادر شد')
-    if (ci) celebrate(undefined, { pieces: 18 })
+    const ci = await run(() => checkIn(gym.id, prefer))
+    if (ci) moment('pay', { title: 'بلیت صادر شد', sub: prefer === 'wallet' ? 'مبلغ از کیف پول کسر شد' : 'از اعتبار اشتراک کم شد' })
     if (ci) {
       setConfirm(false)
       setTicketId(ci.id)
@@ -79,8 +79,8 @@ export default function GymDetail() {
   const doBook = async (prefer: 'subscription' | 'wallet') => {
     if (!book) return
     const forMember = book.cls.audience === 'kids' ? memberId || kidsOk[0]?.id : undefined
-    const ci = await run(() => bookClass(gym.id, book.cls.id, book.at.toISOString(), prefer, forMember), 'کلاس رزرو شد')
-    if (ci) celebrate(undefined, { pieces: 18 })
+    const ci = await run(() => bookClass(gym.id, book.cls.id, book.at.toISOString(), prefer, forMember), )
+    if (ci) moment('pay', { title: 'کلاس رزرو شد', sub: prefer === 'wallet' ? 'مبلغ از کیف پول کسر شد' : 'از اعتبار اشتراک کم شد' })
     if (ci) {
       setBook(undefined)
       setMemberId('')

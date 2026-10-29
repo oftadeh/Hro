@@ -3,6 +3,7 @@
  * و یک قانون حرکت واحد (۱۸۰ تا ۳۰۰ میلی‌ثانیه، منحنی ease-out، فشردن ۰٫۹۷).
  */
 import { uploadImage } from '@/core/client/remote'
+import { vtNavigate } from './ViewTransitions'
 import clsx from 'clsx'
 import { ArrowLeft, ArrowRight, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type PointerEvent as RPointerEvent, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
@@ -365,7 +366,7 @@ export function PageHeader({ title, subtitle, back, actions }: { title: ReactNod
     <div className="mb-6 flex items-center gap-3">
       {back && (
         <button
-          onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))}
+          onClick={() => (typeof back === 'string' ? vtNavigate(() => nav(back), 'back') : nav(-1))}
           className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink-900/[.05] text-ink-700 hover:bg-ink-900/10 dark:bg-white/[.06] dark:text-ink-200"
           aria-label="بازگشت"
         >

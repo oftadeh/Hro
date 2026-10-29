@@ -11,7 +11,7 @@ import { Button, Select } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run } from '@/ui/toast'
 import { PaySheet } from './TicketView'
-import { celebrate } from '@/ui/motion'
+import { moment } from '@/ui/moments'
 
 export function RentalBox({ gym, onBooked }: { gym: Gym; onBooked: (ticketId: string) => void }) {
   const me = useMe()!
@@ -84,8 +84,8 @@ export function RentalBox({ gym, onBooked }: { gym: Gym; onBooked: (ticketId: st
         credit={sub?.credit}
         balance={bal}
         onPay={async (prefer) => {
-          const t = await run(() => bookRental(gym.id, start!.toISOString(), h, prefer, teamId || undefined), 'رزرو انجام شد')
-          if (t) celebrate(undefined, { pieces: 18 })
+          const t = await run(() => bookRental(gym.id, start!.toISOString(), h, prefer, teamId || undefined))
+          if (t) moment('pay', { title: 'رزرو انجام شد', sub: prefer === 'wallet' ? 'مبلغ از کیف پول کسر شد' : 'از اعتبار اشتراک کم شد' })
           if (t) {
             setPay(false)
             setStart(undefined)

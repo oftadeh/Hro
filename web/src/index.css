@@ -315,7 +315,16 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 ::view-transition-new(root) { animation: kf-vt-in .28s var(--ease-out) both; }
 @keyframes kf-vt-out { to { opacity: 0; transform: translateY(-6px); } }
 @keyframes kf-vt-in { from { opacity: 0; transform: translateY(10px); } }
-::view-transition-group(*) { animation-duration: .34s; animation-timing-function: var(--ease-out); }
+::view-transition-group(*) { animation-duration: .42s; animation-timing-function: cubic-bezier(.2,.9,.1,1); }
+/* صفحه‌ی جدید از چپ وارد می‌شود و صفحه‌ی قبلی کمی به راست می‌رود و تیره می‌شود؛ بازگشت دقیقاً برعکس */
+html[data-vt='push']::view-transition-old(root) { animation: kf-vt-push-old .42s cubic-bezier(.2,.9,.1,1) both; }
+html[data-vt='push']::view-transition-new(root) { animation: kf-vt-push-new .42s cubic-bezier(.2,.9,.1,1) both; }
+html[data-vt='back']::view-transition-old(root) { animation: kf-vt-back-old .36s cubic-bezier(.2,.9,.1,1) both; z-index: 2; }
+html[data-vt='back']::view-transition-new(root) { animation: kf-vt-back-new .36s cubic-bezier(.2,.9,.1,1) both; }
+@keyframes kf-vt-push-old { to { transform: translateX(28%); filter: brightness(.55); } }
+@keyframes kf-vt-push-new { from { transform: translateX(-100%); } }
+@keyframes kf-vt-back-old { to { transform: translateX(-100%); } }
+@keyframes kf-vt-back-new { from { transform: translateX(28%); filter: brightness(.55); } }
 
 /* کاهش حرکت: حالت نهایی حفظ می‌شود، حرکت حذف می‌شود */
 @media (prefers-reduced-motion: reduce) {

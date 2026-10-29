@@ -7,7 +7,8 @@ import { faDateTime, num } from '@/core/format'
 import { deleteTeamSession, inviteToTeam, leaveTeam, removeTeamMember, rsvpTeamSession, scheduleTeamSession, teamBoard, TEAM_MAX } from '@/core/services/teams'
 import { Avatar, Button, Card, Empty, Field, Input, PageHeader, SectionTitle, Select, Sheet } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
-import { run, runOk, toast, ask } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
+import { moment } from '@/ui/moments'
 
 export default function TeamDetail() {
   const { id } = useParams()
@@ -34,7 +35,7 @@ export default function TeamDetail() {
       if (navigator.share) await navigator.share({ title: team.name, text })
       else {
         await navigator.clipboard.writeText(text)
-        toast.success('متن دعوت کپی شد')
+        moment('share', { title: 'متن دعوت کپی شد' })
       }
     } catch {
       /* لغو */
@@ -67,7 +68,7 @@ export default function TeamDetail() {
         <div className="mt-4 flex items-center gap-2 rounded-2xl bg-ink-900/[.04] p-3 dark:bg-white/[.05]">
           <span className="text-xs text-ink-500">کد دعوت</span>
           <span className="flex-1 font-display text-2xl tracking-widest" dir="ltr">{team.code}</span>
-          <Button size="sm" variant="ghost" icon={<Copy size={14} />} onClick={() => { navigator.clipboard?.writeText(team.code); toast.success('کد کپی شد') }} />
+          <Button size="sm" variant="ghost" icon={<Copy size={14} />} onClick={() => { navigator.clipboard?.writeText(team.code); moment('share', { title: 'کد کپی شد' }) }} />
           <Button size="sm" variant="ghost" icon={<Share2 size={14} />} onClick={share} />
         </div>
       </Card>

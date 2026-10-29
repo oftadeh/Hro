@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { REMOTE, api } from '@/core/client/remote'
 import { previewCoupon } from '@/core/services/commerce'
@@ -16,8 +16,8 @@ import { KeyCard } from '@/ui/KeyCard'
 import { useMe, useBalance } from '@/ui/hooks'
 import { run, runOk } from '@/ui/toast'
 import { TxList } from './TxList'
-import { WalletCoins } from '@/ui/art'
-import { celebrate } from '@/ui/motion'
+import { CardIcon, LiveTiles } from '@/ui/live'
+import { moment } from '@/ui/moments'
 
 const AMOUNTS = [200_000, 500_000, 1_000_000, 2_000_000]
 
@@ -42,10 +42,17 @@ export default function WalletPage() {
   useEffect(() => {
     const st = params.get('pay')
     if (!st) return
-    if (st === 'ok') toast.success(`پرداخت موفق بود${params.get('ref') ? ` — کد پیگیری ${params.get('ref')}` : ''}`)
+    if (st === 'ok') moment('pay', { title: 'کیف پول شارژ شد', sub: params.get('ref') ? `کد پیگیری ${params.get('ref')}` : undefined })
     else toast.error('پرداخت ناموفق بود یا لغو شد؛ مبلغی کسر نشده است')
     setParams({}, { replace: true })
   }, [params, setParams])
+  // کسر پول هنگام باز بودن کیف پول: آرام و بدون جشن
+  const lastBal = useRef(bal)
+  useEffect(() => {
+    if (bal < lastBal.current && !buy) moment('debit', { title: `− ${toman(lastBal.current - bal)}`, sub: 'از کیف پول کسر شد' })
+    lastBal.current = bal
+  }, [bal]) // eslint-disable-line react-hooks/exhaustive-deps
+  const coins = Array.from({ length: 12 }, (_, i) => ({ on: i < Math.min(12, Math.round(bal / 50_000)), y: true, back: '$' }))
   const mine = txs.filter((t) => t.payerId === me.id || t.to === me.id)
   const monthAgo = Date.now() - 30 * 86_400_000
   const recent = mine.filter((t) => new Date(t.createdAt).getTime() > monthAgo)
@@ -57,7 +64,9 @@ export default function WalletPage() {
       <PageHeader title="کیف پول و عضویت" />
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <HeroHeader seed="wallet" className="flex flex-col justify-between p-6">
-          <WalletCoins size={130} className="pointer-events-none absolute left-3 top-3 max-sm:opacity-70" />
+          {/* سکه‌های زنده: هر سکه ۵۰ هزار تومان موجودی؛ با پرداخت برمی‌گردند و با شارژ اضافه می‌شوند */}
+          <CardIcon name="wallet" playKey={bal} />
+          <LiveTiles round tiles={coins} className="!bottom-auto !top-[70px] !h-[96px] max-sm:!top-[64px]" />
           <div>
             <div className="font-display text-[1.9rem] leading-none">کیف پول</div>
             <div className="mt-3 font-display text-[3rem] leading-none">
@@ -171,9 +180,12 @@ export default function WalletPage() {
                 if (!ok) setBusy(false)
                 return
               }
-              const ok = await runOk(() => topUp(amount), 'کیف پول شارژ شد')
+              const ok = await runOk(() => topUp(amount))
               setBusy(false)
-              if (ok) setCharge(false)
+              if (ok) {
+                setCharge(false)
+                moment('pay', { title: 'کیف پول شارژ شد', sub: toman(amount) })
+              }
             }}
           >
             پرداخت از درگاه بانکی
@@ -195,8 +207,8 @@ export default function WalletPage() {
               {couponAmt > 0 && <div className="text-xs text-aqua-600 dark:text-aqua-400">تخفیف کد: {toman(couponAmt)} — مبلغ نهایی {toman(p.price - couponAmt)}</div>}
               <div className="text-xs text-ink-400">موجودی: {toman(bal)}</div>
               <Button className="w-full" size="lg" onClick={async () => {
-                const ok = await runOk(() => buySubscription(p.id, couponAmt ? coupon : undefined), `اشتراک ${p.name} فعال شد`)
-                if (ok) celebrate()
+                const ok = await runOk(() => buySubscription(p.id, couponAmt ? coupon : undefined))
+                if (ok) moment('pay', { title: `اشتراک ${p.name} فعال شد`, sub: `${toman(p.price - couponAmt)} از کیف پول کسر شد` })
                 if (ok) {
                   setBuy(undefined)
                   setCoupon('')

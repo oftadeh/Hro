@@ -18,10 +18,11 @@ import { Button, Card, Field, IconTile, ImagePicker, Input, NumberInput, Progres
 import { RoleIcon } from '@/ui/icons'
 import { Runner, Scale, Yoga } from '@/ui/art'
 import { useMe } from '@/ui/hooks'
-import { run, runOk, toast, ask } from '@/ui/toast'
+import { run, runOk, ask } from '@/ui/toast'
 import { CycleCard, CycleHistory } from '@/modules/health/Cycle'
 import { IntroVideoCard } from '@/modules/profile/IntroVideo'
 import { Achievements, BmiGauge, ProfileHero, StatRow, achievementsOf } from '@/modules/profile/parts'
+import { moment } from '@/ui/moments'
 
 const PRO_ROLES: Exclude<Role, 'admin' | 'user'>[] = ['gym', 'coach', 'seller', 'doctor', 'restaurant']
 type Tab = 'body' | 'health' | 'activity' | 'settings'
@@ -64,7 +65,7 @@ export default function Profile() {
       if (navigator.share) await navigator.share({ title: me.name, url })
       else {
         await navigator.clipboard.writeText(url)
-        toast.success('لینک پروفایل کپی شد')
+        moment('share', { title: 'لینک پروفایل کپی شد' })
       }
     } catch {
       /* لغو اشتراک‌گذاری */

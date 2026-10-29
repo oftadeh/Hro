@@ -14,9 +14,9 @@ import { run, runOk } from '@/ui/toast'
 import { MetricIcon } from '@/ui/icons'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
 import { PostCard } from '@/modules/fitzone/PostCard'
-import { celebrate } from '@/ui/motion'
 import { vtName } from '@/ui/ViewTransitions'
 import { MetricArt } from '@/ui/art'
+import { moment } from '@/ui/moments'
 
 const MEDALS = ['', '', '']
 
@@ -227,8 +227,8 @@ export default function ChallengeDetail() {
           className="w-full"
           size="lg"
           onClick={async () => {
-            const ok = await runOk(() => joinChallenge(c.id), 'به چالش پیوستی!')
-            if (ok) celebrate()
+            const ok = await runOk(() => joinChallenge(c.id))
+            if (ok) moment('join', { title: 'به چالش پیوستی!', sub: c.title })
             if (ok) setJoin(false)
           }}
         >

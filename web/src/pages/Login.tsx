@@ -12,6 +12,7 @@ import { faDigitsToEn } from '@/core/format'
 import type { Role } from '@/core/types'
 import { run, runOk } from '@/ui/toast'
 import { RoleIcon } from '@/ui/icons'
+import { moment } from '@/ui/moments'
 import { Runner, Lifter, Yoga, Trophy } from '@/ui/art'
 import { daysAgoKey, GOALS, ACTIVITY } from '@/core/profile'
 import { BUSINESS_ROLES, type BusinessRole } from '@/core/roles'
@@ -93,21 +94,25 @@ export default function Login() {
     if (step === 'otp') {
       const r = await run(() => (byEmail ? verifyEmailOtp(email, otp) : verifyOtp(phone, otp)))
       if (r && !r.exists) setStep('profile')
+      else if (r) moment('unlock', { title: 'خوش آمدی!' })
     } else {
       const ph = { ...(byEmail ? { phone: f.phone } : {}), acceptTerms: f.accept }
       if (f.kind !== 'athlete') {
-        await run(() => registerUser({ ...ph, name: f.name, gender: '', accountType: f.kind as BusinessRole }))
+        if (await runOk(() => registerUser({ ...ph, name: f.name, gender: '', accountType: f.kind as BusinessRole }))) moment('unlock', { title: `خوش آمدی، ${f.name}` })
         setLoading(false)
         return
       }
       const cycle = f.gender === 'female' && f.track && f.ago !== '' ? { lastPeriodStart: daysAgoKey(n(f.ago) ?? 0), cycleLength: n(f.cycleLength) ?? 28, periodLength: n(f.periodLength) ?? 5 } : undefined
-      await run(() => registerUser({ ...ph, referral: f.referral || undefined, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))
+      if (await runOk(() => registerUser({ ...ph, referral: f.referral || undefined, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))) moment('unlock', { title: `خوش آمدی، ${f.name}` })
     }
     setLoading(false)
   }
 
   const demo = async (userId: string, role: Role) => {
-    if (await runOk(() => loginAs(userId, role))) nav(ROLE_META[role].panel)
+    if (await runOk(() => loginAs(userId, role))) {
+      nav(ROLE_META[role].panel)
+      moment('unlock', { title: 'خوش آمدی!' })
+    }
   }
 
   return (

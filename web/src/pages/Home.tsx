@@ -13,10 +13,10 @@ import type { Challenge, PlanOrder } from '@/core/types'
 import { GROUPS, type NavGroup } from '@/layouts/nav'
 import { useMe } from '@/ui/hooks'
 import { run } from '@/ui/toast'
-import { celebrate } from '@/ui/motion'
 import { vtName } from '@/ui/ViewTransitions'
 import { toneFor } from '@/ui/kit'
 import { CardIcon, LiveTiles, progressTiles, tileIcon } from '@/ui/live'
+import { moment } from '@/ui/moments'
 
 /* ───────── عدد متحرک ───────── */
 function useCountUp(value: number, ms = 650) {
@@ -61,7 +61,7 @@ function ActivityCard({ log }: { log: { steps: number; water: number; workoutMin
     const before = value
     run(async () => {
       await logActivity(m.k, m.add)
-      if (before < m.goal && before + m.add >= m.goal) celebrate(undefined, { pieces: 22 })
+      if (before < m.goal && before + m.add >= m.goal) moment('unlock', { title: `هدف ${m.label} امروز باز شد!` })
     })
   }
 

@@ -6,7 +6,8 @@ import { SUBSCRIPTION_PLANS } from '@/core/config'
 import { giftSubscription, redeemGift } from '@/core/services/wallet'
 import { Button, Card, Field, Input, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
-import { run, runOk, toast } from '@/ui/toast'
+import { run, runOk } from '@/ui/toast'
+import { moment } from '@/ui/moments'
 
 export default function Invite() {
   const me = useMe()!
@@ -27,7 +28,7 @@ export default function Invite() {
       if (navigator.share) await navigator.share({ title: 'کی‌فیت', text, url: link })
       else {
         await navigator.clipboard.writeText(text)
-        toast.success('متن دعوت کپی شد')
+        moment('share', { title: 'متن دعوت کپی شد' })
       }
     } catch {
       /* لغو */
@@ -42,7 +43,7 @@ export default function Invite() {
         <p className="mt-2 text-xs leading-6 opacity-70">با اولین خرید اشتراک دوستت، به هر دو نفر {toman(settings.referralReward ?? 0)} اعتبار کیف پول هدیه داده می‌شود.</p>
         <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/60 p-3">
           <span className="flex-1 font-display text-2xl tracking-widest" dir="ltr">{me.referralCode}</span>
-          <Button size="sm" variant="dark" icon={<Copy size={14} />} onClick={() => { navigator.clipboard?.writeText(me.referralCode ?? ''); toast.success('کد کپی شد') }}>کپی</Button>
+          <Button size="sm" variant="dark" icon={<Copy size={14} />} onClick={() => { navigator.clipboard?.writeText(me.referralCode ?? ''); moment('share', { title: 'کد کپی شد' }) }}>کپی</Button>
         </div>
         <Button className="mt-3 w-full" variant="dark" icon={<Share2 size={16} />} onClick={share}>ارسال دعوت‌نامه</Button>
         <div className="mt-3 text-center text-xs opacity-70">{num(invited.length)} دوست با کد تو عضو شده‌اند · {num(invited.filter((u) => u.referralRewarded).length)} پاداش گرفته‌ای</div>
