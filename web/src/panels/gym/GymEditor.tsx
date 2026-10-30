@@ -11,7 +11,7 @@ import { uid } from '@/core/id'
 import { useDB } from '@/core/db'
 import { saveGym } from '@/core/services/fityab'
 import type { GenderWindow, Gym, GymClass, Media } from '@/core/types'
-import { Button, Card, Field, ImagePicker, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
+import { Button, Card, Field, ImagePicker, Input, NumberInput, PageHeader, SectionTitle, Select, Tabs, Textarea } from '@/ui/kit'
 import { run, toast } from '@/ui/toast'
 import { LocationPicker } from '../shared/LocationPicker'
 
@@ -48,21 +48,38 @@ export default function GymEditor() {
   const [sports, setSports] = useState((existing?.sports ?? []).join('، '))
   const [video, setVideo] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [tab, setTab] = useState<'info' | 'capacity' | 'classes' | 'place'>('info')
   const kind = (f.kind ?? 'gym') as VenueKind
   const rentalKind = VENUE_KINDS[kind].booking === 'rental'
+  // اجاره‌ای‌ها کلاس ندارند؛ اگر وسط کار نوع عوض شد، بخش کلاس‌ها به اطلاعات برمی‌گردد
+  const view = rentalKind && tab === 'classes' ? 'info' : tab
   const set = <K extends keyof Gym>(k: K, v: Gym[K]) => setF((s) => ({ ...s, [k]: v }))
   const media = f.media ?? []
   const classes = f.classes ?? []
 
   const save = async () => {
     const gid = await run(() => saveGym({ ...f, facilities: split(facilities), sports: split(sports) }), existing ? 'تغییرات ذخیره شد' : 'باشگاه ثبت شد و پس از تایید مدیر در فیت‌یاب نمایش داده می‌شود')
-    if (gid) nav('/panel/gym')
+    if (gid) nav("/panel/gym/gyms")
   }
 
   return (
     <div className="animate-fade-up">
-      <PageHeader back="/panel/gym" title={existing ? `ویرایش ${existing.name}` : 'معرفی باشگاه جدید'} subtitle="اطلاعات، عکس، فیلم و موقعیت باشگاه برای نمایش در فیت‌یاب" />
-      <div className="grid gap-4 lg:grid-cols-2">
+      <PageHeader back="/panel/gym/gyms" title={existing ? `ویرایش ${existing.name}` : 'معرفی باشگاه جدید'} subtitle="اطلاعات، عکس، فیلم و موقعیت باشگاه برای نمایش در فیت‌یاب" />
+      {/* بخش‌های فرم: هر بار فقط یک بخش؛ ذخیره همه را با هم ثبت می‌کند */}
+      <div className="-mx-4 mb-4 overflow-x-auto px-4 no-scrollbar">
+        <Tabs
+          value={view}
+          onChange={setTab}
+          items={[
+            { value: 'info', label: 'اطلاعات و قیمت' },
+            { value: 'capacity', label: rentalKind ? 'ظرفیت' : 'ظرفیت و سانس‌ها' },
+            ...(rentalKind ? [] : [{ value: 'classes' as const, label: `کلاس‌ها${classes.length ? ` (${classes.length.toLocaleString('fa-IR')})` : ''}` }]),
+            { value: 'place', label: 'مکان و رسانه' },
+          ]}
+        />
+      </div>
+      <div className="grid max-w-3xl gap-4">
+        {view === 'info' && (
         <Card className="space-y-4">
           <Field label="نوع مجموعه">
             <Select value={kind} onChange={(e) => { const k = e.target.value as VenueKind; set('kind', k); if (VENUE_KINDS[k].booking === 'rental' && !f.rental) set('rental', { hourlyPrice: 800_000, openFrom: 8, openTo: 24, maxHours: 2 }) }}>
@@ -99,7 +116,9 @@ export default function GymEditor() {
           <Field label="رشته‌ها" hint="با ویرگول جدا کنید"><Input value={sports} onChange={(e) => setSports(e.target.value)} placeholder="بدنسازی، کراس‌فیت، یوگا" /></Field>
           <Field label="امکانات" hint="با ویرگول جدا کنید"><Input value={facilities} onChange={(e) => setFacilities(e.target.value)} placeholder="سونا، پارکینگ، کمد" /></Field>
         </Card>
+        )}
 
+        {view === 'capacity' && (
         <Card className="space-y-4 lg:col-span-2">
           <SectionTitle title="ظرفیت و قیمت‌گذاری ساعات خلوت" />
           <p className="-mt-3 text-xs leading-6 text-ink-500">با تخفیف در ساعات خلوت، ظرفیت خالی سالن پر می‌شود. ظرفیت برای نمایش «شلوغی لحظه‌ای» به ورزشکاران استفاده می‌شود.</p>
@@ -110,8 +129,9 @@ export default function GymEditor() {
             <Field label="تخفیف (درصد)" hint="۰ یعنی غیرفعال"><NumberInput value={f.offPeak?.discountPct ?? 0} onChange={(v) => set('offPeak', { from: f.offPeak?.from ?? 10, to: f.offPeak?.to ?? 16, discountPct: v })} /></Field>
           </div>
         </Card>
+        )}
 
-        {f.gender === 'mixed' && !rentalKind && (
+        {view === 'capacity' && f.gender === 'mixed' && !rentalKind && (
           <Card className="space-y-3 lg:col-span-2">
             <SectionTitle
               title="سانس بانوان و آقایان"
@@ -142,6 +162,7 @@ export default function GymEditor() {
           </Card>
         )}
 
+        {view === 'classes' && (
         <Card className="space-y-3 lg:col-span-2">
           <SectionTitle
             title="کلاس‌های گروهی هفتگی"
@@ -185,7 +206,9 @@ export default function GymEditor() {
             )
           })}
         </Card>
+        )}
 
+        {view === 'place' && (
         <div className="space-y-4">
           <Card className="space-y-3">
             <Field label="آدرس"><Input value={f.address} onChange={(e) => set('address', e.target.value)} /></Field>
@@ -227,7 +250,10 @@ export default function GymEditor() {
               />
             </label>
           </Card>
-          <Button size="lg" className="w-full" onClick={save}>{existing ? 'ذخیره‌ی تغییرات' : 'ثبت باشگاه'}</Button>
+        </div>
+        )}
+        <div className="sticky bottom-3 z-10">
+          <Button size="lg" className="w-full shadow-glow" onClick={save}>{existing ? 'ذخیره‌ی تغییرات' : 'ثبت باشگاه'}</Button>
         </div>
       </div>
     </div>

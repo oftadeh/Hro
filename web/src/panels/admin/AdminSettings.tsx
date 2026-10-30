@@ -7,7 +7,7 @@ import type { VenueKind } from '@/core/types'
 import type { Coupon } from '@/core/types'
 import { faDate, num } from '@/core/format'
 import type { RevenueModule } from '@/core/types'
-import { Badge, Button, Card, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
+import { Badge, Button, Card, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Tabs, Textarea } from '@/ui/kit'
 import { run } from '@/ui/toast'
 
 export default function AdminSettings() {
@@ -20,9 +20,25 @@ export default function AdminSettings() {
   const trial = settings.trial ?? { enabled: false, credit: 300_000, days: 7 }
   const caps = settings.tierCaps ?? DEFAULT_TIER_CAPS
   const [capsDraft, setCapsDraft] = useState(caps)
+  const [tab, setTab] = useState<'money' | 'plans' | 'fityab' | 'marketing'>('money')
   return (
     <div className="animate-fade-up">
       <PageHeader title="کمیسیون و تنظیمات" />
+      {/* بخش‌ها: درآمد، عضویت‌ها، فیت‌یاب، بازاریابی */}
+      <div className="-mx-4 mb-4 overflow-x-auto px-4 no-scrollbar">
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: 'money', label: 'کمیسیون و هزینه‌ها' },
+            { value: 'plans', label: 'عضویت و رزرو' },
+            { value: 'fityab', label: 'فیت‌یاب' },
+            { value: 'marketing', label: 'اعلان و تخفیف' },
+          ]}
+        />
+      </div>
+
+      {tab === 'money' && (
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <SectionTitle title="درصد کمیسیون هر ماژول" />
@@ -36,8 +52,8 @@ export default function AdminSettings() {
             ))}
           </div>
         </Card>
-        <div className="space-y-4">
-          <Card className="space-y-3">
+        <Card className="space-y-3">
+          <SectionTitle title="هزینه‌ها و پاداش‌ها" />
             <Field label="هزینه‌ی ایجاد چالش (تومان)">
               <NumberInput value={settings.challengeCreationFee} onChange={(v) => setPlatformSetting('challengeCreationFee', v)} />
             </Field>
@@ -57,19 +73,33 @@ export default function AdminSettings() {
               <Field label="تخفیف سازمانی (٪)">
                 <NumberInput value={num0('orgDiscountPct')} onChange={(v) => setPlatformSetting('orgDiscountPct', v)} />
               </Field>
+          </div>
+        </Card>
+      </div>
+      )}
+
+      {tab === 'plans' && (
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="space-y-3">
+          <SectionTitle title="لغو و غیبت" />
               <Field label="هزینه‌ی لغو دیرهنگام (٪)" hint="سهم باشگاه وقتی کمتر از ۲ ساعت به کلاس لغو شود">
                 <NumberInput value={num0('lateCancelFeePct')} onChange={(v) => setPlatformSetting('lateCancelFeePct', v)} />
               </Field>
-            </div>
+          <p className="text-xs leading-6 text-ink-500">لغو تا ۲ ساعت پیش از کلاس (۱۲ ساعت پیش از اجاره) بازگشت کامل دارد؛ دیرتر، این درصد به باشگاه می‌رسد. با ۳ غیبت در ۳۰ روز، رزرو کلاس موقتاً بسته می‌شود.</p>
+        </Card>
+        <Card className="space-y-3">
+          <SectionTitle title="سطح باشگاه‌ها" />
             <div className="rounded-2xl bg-ink-900/[.04] p-3 dark:bg-white/[.05]">
-              <div className="text-sm font-semibold">سطح باشگاه‌ها بر اساس قیمت سانس</div>
-              <p className="mt-1 text-xs leading-6 text-ink-500">نقره‌ای فقط استاندارد، طلایی استاندارد و ویژه، الماس همه‌ی سطح‌ها را پوشش می‌دهد. بقیه با کیف پول.</p>
+              <p className="text-xs leading-6 text-ink-500">نقره‌ای فقط استاندارد، طلایی استاندارد و ویژه، الماس همه‌ی سطح‌ها را پوشش می‌دهد. بقیه با کیف پول.</p>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <Field label="سقف استاندارد (تومان)"><NumberInput value={capsDraft.standard} onChange={(v) => setCapsDraft({ ...capsDraft, standard: v })} /></Field>
                 <Field label="سقف ویژه (تومان)" hint="بیشتر از این: لوکس"><NumberInput value={capsDraft.premium} onChange={(v) => setCapsDraft({ ...capsDraft, premium: v })} /></Field>
               </div>
               <Button size="sm" variant="secondary" className="mt-2" disabled={capsDraft.standard === caps.standard && capsDraft.premium === caps.premium} onClick={() => run(() => setTierCaps(capsDraft), 'سطح‌ها ذخیره شد')}>ذخیره‌ی سطح‌ها</Button>
             </div>
+        </Card>
+        <Card className="space-y-3">
+          <SectionTitle title="دوره‌ی آزمایشی" />
             <div className="rounded-2xl bg-ink-900/[.04] p-3 dark:bg-white/[.05]">
               <label className="flex items-center justify-between gap-3 text-sm font-semibold">
                 دوره‌ی آزمایشی رایگان (یک بار برای هر شماره)
@@ -80,16 +110,12 @@ export default function AdminSettings() {
                 <Field label="مدت (روز)"><NumberInput value={trial.days} onChange={(v) => run(() => setTrial({ ...trial, days: v }))} /></Field>
               </div>
             </div>
-          </Card>
-          <Card className="space-y-3">
-            <div className="font-semibold">ارسال اعلان همگانی</div>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان" />
-            <Textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="متن اعلان" />
-            <Button className="w-full" disabled={!title.trim()} onClick={() => { run(() => broadcast(title, body), 'اعلان ارسال شد'); setTitle(''); setBody('') }}>ارسال به همه‌ی کاربران</Button>
-          </Card>
-        </div>
+        </Card>
       </div>
+      )}
 
+      {tab === 'fityab' && (
+      <>
       <SectionTitle title="انواع مجموعه‌های فعال در فیت‌یاب (فازبندی)" />
       <Card className="flex flex-wrap gap-2 p-4">
         {(Object.keys(VENUE_KINDS) as VenueKind[]).map((k) => {
@@ -106,7 +132,19 @@ export default function AdminSettings() {
         })}
         <p className="w-full text-[12px] text-ink-400">مجموعه‌های نوع غیرفعال ثبت و تأیید می‌شوند اما تا فعال‌سازی، به ورزشکاران نمایش داده نمی‌شوند.</p>
       </Card>
+      </>
+      )}
 
+      {tab === 'marketing' && (
+      <>
+        <div className="max-w-xl">
+          <Card className="space-y-3">
+            <div className="font-semibold">ارسال اعلان همگانی</div>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان" />
+            <Textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="متن اعلان" />
+            <Button className="w-full" disabled={!title.trim()} onClick={() => { run(() => broadcast(title, body), 'اعلان ارسال شد'); setTitle(''); setBody('') }}>ارسال به همه‌ی کاربران</Button>
+          </Card>
+        </div>
       <SectionTitle title="کدهای تخفیف" />
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
         <Card className="space-y-3">
@@ -150,6 +188,8 @@ export default function AdminSettings() {
           ))}
         </Card>
       </div>
+      </>
+      )}
     </div>
   )
 }

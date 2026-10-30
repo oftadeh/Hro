@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import { CalendarClock, MapPin, QrCode, Ticket } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { faDateTime, toman } from '@/core/format'
-import { answerEntryRequest, priceAt, ticketStatus } from '@/core/services/fityab'
+import { answerEntryRequest, priceAt, ticketStatus, gymTitle } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
 import { Badge, Button, Card, Empty, PageHeader, Tabs, toneFor } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
@@ -40,7 +40,7 @@ export default function Tickets() {
         return (
           <div key={r.id} className="anim-enter mb-4 rounded-[26px] card-peach p-5 text-ink-950">
             <div className="text-[13px] opacity-70">درخواست ورود از پذیرش</div>
-            <div className="mt-1 text-[22px] font-extrabold">{g.name}</div>
+            <div className="mt-1 text-[22px] font-extrabold">{gymTitle(g)}</div>
             <p className="mt-1 text-[13px] leading-6 opacity-75">پذیرش باشگاه برای ورود شما درخواست ثبت کرده است. با تأیید، {toman(priceAt(g).price)} پرداخت و ورود ثبت می‌شود.</p>
             <div className="mt-3 flex gap-2">
               <Button size="sm" variant="dark" onClick={() => setParams({ req: r.id })}>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Activity, Apple, Baby, Bell, Bot, CalendarDays, Dumbbell, HeartPulse, Home, LayoutGrid, LifeBuoy, MapPin, MessageCircle, QrCode, Radio, Recycle, Settings, ShieldPlus, ShoppingBag, Ticket, Trophy, Users, UsersRound, UtensilsCrossed, Wallet, Watch, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Activity, Apple, Baby, Bell, Bot, CalendarDays, Dumbbell, HeartPulse, Home, LayoutGrid, LifeBuoy, MapPin, MessageCircle, QrCode, Radio, Recycle, Settings, ShieldPlus, ShoppingBag, Ticket, Trophy, Users, UsersRound, UtensilsCrossed, Wallet, Watch, type LucideIcon, CalendarClock } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -21,6 +21,7 @@ export const GROUPS: NavGroup[] = [
     title: 'ورزش',
     items: [
       { to: '/fityab', label: 'فیت‌یاب', icon: MapPin, color: '', desc: 'باشگاه و استخر اطراف' },
+      { to: '/fityab?view=classes', label: 'کلاس بر اساس ساعت', icon: CalendarClock, color: '', desc: 'کلاس‌های امروز و فردا' },
       { to: '/scan', label: 'ورود با QR', icon: QrCode, color: '', desc: 'اسکن کد دم در باشگاه' },
       { to: '/tickets', label: 'بلیت‌های من', icon: Ticket, color: '', desc: 'ورودها و رزروها' },
       { to: '/workouts', label: 'تمرین‌ها', icon: Dumbbell, color: '', desc: 'ثبت تمرین و رکورد' },

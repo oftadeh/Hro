@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { NavLink, Outlet, Link } from 'react-router-dom'
+import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import { ArrowRight, MessageCircle, Trophy, Users, type LucideIcon } from 'lucide-react'
 import { VERIFY_ROLES, isBusiness, isVerified } from '@/core/roles'
@@ -30,13 +30,34 @@ export interface PanelLink {
   end?: boolean
 }
 
+/** شاخه‌ی منوی پنل با زیرشاخه‌هایش */
+export interface PanelGroup {
+  title: string
+  icon: LucideIcon
+  links: PanelLink[]
+}
+
+/** آدرس کامل یک لینک نسبی پنل (برای پیدا کردن شاخه‌ی فعال) */
+const fullPath = (base: string, to: string) => (to.startsWith('/') ? to : `${base}/${to}`)
+
 /** قالب مشترک پنل نقش‌ها (باشگاه‌دار، مربی، فروشنده، پزشک، رستوران، مدیر) */
-export function PanelShell({ role, links }: { role: Role; links: PanelLink[] }) {
+export function PanelShell({ role, groups }: { role: Role; groups: PanelGroup[] }) {
   const me = useMe()!
   const meta = ROLE_META[role]
   const business = isBusiness(me)
   // باشگاه، مربی، پزشک و فروشنده تا تأیید مدارک فقط صفحه‌ی بارگذاری مدارک را می‌بینند
   const gated = (VERIFY_ROLES as readonly string[]).includes(role) && !isVerified(me)
+  const { pathname } = useLocation()
+  const base = meta.panel
+  // شاخه‌ی فعال: طولانی‌ترین آدرسی که با مسیر فعلی جور است
+  // ریشه‌ی پنل با همه جور است ولی کوتاه‌ترین است، پس فقط وقتی شاخه‌ی دیگری جور نباشد انتخاب می‌شود
+  const match = (l: PanelLink) => {
+    const p = fullPath(base, l.to)
+    return pathname === p || pathname.startsWith(p + '/')
+  }
+  const scored = groups.flatMap((g, gi) => g.links.filter(match).map((l) => ({ gi, len: fullPath(base, l.to).length })))
+  const activeGroup = scored.sort((a, b) => b.len - a.len)[0]?.gi ?? 0
+  const current = groups[activeGroup]
   return (
     <div className="min-h-dvh lg:flex">
       <aside className="sticky top-0 hidden h-dvh w-72 shrink-0 p-4 lg:block print:!hidden">
@@ -52,26 +73,35 @@ export function PanelShell({ role, links }: { role: Role; links: PanelLink[] }) 
           </div>
           <div className="relative mt-1 text-[12px] leading-6 text-white/70">{meta.desc}</div>
         </div>
-        <nav className="mt-6 flex-1 space-y-0.5">
-          {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.end}
-              className={({ isActive }) =>
-                clsx(
-                  'flex items-center gap-3 rounded-full px-4 py-2.5 text-[13.5px] transition',
-                  isActive ? 'bg-ink-950 font-medium text-white dark:bg-white dark:text-ink-950' : 'text-ink-500 hover:text-ink-950 dark:text-ink-400 dark:hover:text-white',
-                )
-              }
-            >
-              <l.icon size={18} strokeWidth={1.5} />
-              {l.label}
-            </NavLink>
+        <nav className="mt-6 flex-1 space-y-4 overflow-y-auto no-scrollbar">
+          {groups.map((g) => (
+            <div key={g.title}>
+              <div className="mb-1 flex items-center gap-2 px-4 text-[12px] font-semibold text-ink-400">
+                <g.icon size={13} strokeWidth={1.8} /> {g.title}
+              </div>
+              <div className="space-y-0.5">
+                {g.links.map((l) => (
+                  <NavLink
+                    key={l.to}
+                    to={l.to}
+                    end={l.end}
+                    className={({ isActive }) =>
+                      clsx(
+                        'flex items-center gap-3 rounded-full px-4 py-2 text-[13.5px] transition',
+                        isActive ? 'bg-ink-950 font-medium text-white dark:bg-white dark:text-ink-950' : 'text-ink-500 hover:text-ink-950 dark:text-ink-400 dark:hover:text-white',
+                      )
+                    }
+                  >
+                    <l.icon size={17} strokeWidth={1.5} />
+                    {l.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
           {business && (
             <>
-              <div className="mb-2 mt-5 px-4 text-[12px] font-medium tracking-wide text-ink-400">جامعه</div>
+              <div className="mb-1 px-4 text-[12px] font-semibold text-ink-400">جامعه</div>
               {COMMUNITY.map((l) => (
                 <NavLink key={l.to} to={l.to} className="flex items-center gap-3 rounded-full px-4 py-2.5 text-[13.5px] text-ink-500 transition hover:text-ink-950 dark:text-ink-400 dark:hover:text-white">
                   <l.icon size={18} strokeWidth={1.5} />
@@ -115,21 +145,33 @@ export function PanelShell({ role, links }: { role: Role; links: PanelLink[] }) 
             <LogoutButton />
             <Avatar name={me.name} src={me.avatar} size={32} className="mr-1" />
           </div>
-          <div className="flex gap-1 overflow-x-auto px-4 pb-2.5 no-scrollbar lg:hidden">
-            {links.map((l) => (
-              <NavLink
-                key={l.to}
-                to={l.to}
-                end={l.end}
-                className={({ isActive }) =>
-                  clsx('flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition', isActive ? 'border-transparent bg-ink-950 text-white dark:bg-white dark:text-ink-950' : 'hairline text-ink-600 dark:text-ink-300')
-                }
+          {/* موبایل: ردیف اول شاخه‌ها، ردیف دوم زیرشاخه‌های شاخه‌ی فعال */}
+          <div className="flex gap-1 overflow-x-auto px-4 pb-2 no-scrollbar lg:hidden">
+            {groups.map((g, gi) => (
+              <Link
+                key={g.title}
+                to={g.links[0].to}
+                className={clsx('flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition', gi === activeGroup ? 'border-transparent bg-ink-950 font-medium text-white dark:bg-white dark:text-ink-950' : 'hairline text-ink-600 dark:text-ink-300')}
               >
-                <l.icon size={14} strokeWidth={1.5} />
-                {l.label}
-              </NavLink>
+                <g.icon size={14} strokeWidth={1.5} />
+                {g.title}
+              </Link>
             ))}
           </div>
+          {current && current.links.length > 1 && (
+            <div className="flex gap-4 overflow-x-auto border-t hairline px-5 py-2 no-scrollbar lg:hidden">
+              {current.links.map((l) => (
+                <NavLink
+                  key={l.to}
+                  to={l.to}
+                  end={l.end}
+                  className={({ isActive }) => clsx('whitespace-nowrap border-b-2 pb-1 text-xs transition', isActive ? 'border-ink-950 font-semibold text-ink-950 dark:border-white dark:text-white' : 'border-transparent text-ink-500')}
+                >
+                  {l.label}
+                </NavLink>
+              ))}
+            </div>
+          )}
           <div className="px-4 pb-2.5 lg:hidden">
             <RoleSwitcher compact />
           </div>

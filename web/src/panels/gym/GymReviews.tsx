@@ -5,6 +5,7 @@ import { faDate } from '@/core/format'
 import { replyReview } from '@/core/services/commerce'
 import { Avatar, Button, Card, Empty, PageHeader, Stars, Textarea } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
+import { gymTitle } from '@/core/services/fityab'
 import { runOk } from '@/ui/toast'
 
 /** نظرات ورزشکاران درباره‌ی باشگاه‌های من و پاسخ به آن‌ها */
@@ -30,7 +31,7 @@ export default function GymReviews() {
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">{u?.name}</div>
                   <div className="text-[12px] text-ink-400">
-                    {mine.find((g) => g.id === r.refId)?.name} · {faDate(r.createdAt)}
+                    {(() => { const g = mine.find((x) => x.id === r.refId); return g ? gymTitle(g) : '' })()} · {faDate(r.createdAt)}
                   </div>
                 </div>
                 <Stars value={r.stars} />

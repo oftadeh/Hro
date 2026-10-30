@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { Printer, RefreshCw, ShieldCheck } from 'lucide-react'
 import { useDB } from '@/core/db'
-import { ENTRY_RADIUS_M, rotateEntryCode } from '@/core/services/fityab'
+import { ENTRY_RADIUS_M, rotateEntryCode, gymTitle } from '@/core/services/fityab'
 import { Button, Card, Empty, PageHeader, Select } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 import { run, ask } from '@/ui/toast'
@@ -33,7 +33,7 @@ export default function GymQr() {
       </div>
       {gyms.length > 1 && (
         <Select value={gym.id} onChange={(e) => setGymId(e.target.value)} className="print:hidden">
-          {gyms.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+          {gyms.map((g) => <option key={g.id} value={g.id}>{gymTitle(g)}</option>)}
         </Select>
       )}
 

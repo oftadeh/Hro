@@ -6,6 +6,7 @@ import { SEGMENT_LABEL, gymMembers, recordInBody, sendCampaign } from '@/core/se
 import type { MemberSegment } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Empty, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Sheet, Stat, Textarea } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
+import { gymTitle } from '@/core/services/fityab'
 import { runOk } from '@/ui/toast'
 
 const SEG_TONE: Record<MemberSegment, 'emerald' | 'amber' | 'rose' | 'sky' | 'slate'> = { all: 'slate', new: 'sky', active: 'emerald', at_risk: 'amber', lost: 'rose' }
@@ -61,7 +62,7 @@ export default function GymMembers() {
       <PageHeader title="اعضا و کمپین" subtitle="ورزشکارانی که از طریق کی‌فیت به باشگاه شما آمده‌اند" actions={<Button size="sm" icon={<Megaphone size={15} />} onClick={() => { setC(preset(seg)); setOpen(true) }} disabled={!count(seg)}>پیام به این گروه</Button>} />
       {myGyms.length > 1 && (
         <Select className="mb-3" value={gymId} onChange={(e) => setGymId(e.target.value)}>
-          {myGyms.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+          {myGyms.map((g) => <option key={g.id} value={g.id}>{gymTitle(g)}</option>)}
         </Select>
       )}
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">

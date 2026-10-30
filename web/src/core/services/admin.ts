@@ -80,7 +80,7 @@ export const setGymApproval = svc(
       const g = d.gyms.find((x) => x.id === gymId)
       if (!g) return
       g.approved = approved
-      notify(d, g.ownerId, approved ? 'باشگاه شما تایید شد' : 'باشگاه شما غیرفعال شد', approved ? `«${g.name}» اکنون در فیت‌یاب نمایش داده می‌شود.` : `«${g.name}» از فیت‌یاب حذف شد.`, '', '/panel/gym')
+      notify(d, g.ownerId, approved ? 'باشگاه شما تایید شد' : 'باشگاه شما غیرفعال شد', approved ? `«${g.name}» اکنون در فیت‌یاب نمایش داده می‌شود.` : `«${g.name}» از فیت‌یاب حذف شد.`, '', '/panel/gym/gyms')
     })
   },
   A,

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { BadgeCheck, BarChart3, Building2, ClipboardList, Cog, FileText, Flag, LifeBuoy, Package, QrCode, Stethoscope, Trophy, UserCog, Users, UtensilsCrossed, Wallet, Briefcase, Star, ShieldPlus, Radio, Megaphone, CalendarDays } from 'lucide-react'
+import { BadgeCheck, BarChart3, CalendarClock, PlusCircle, Building2, ClipboardList, Cog, FileText, Flag, LifeBuoy, Package, QrCode, Stethoscope, Trophy, UserCog, Users, UtensilsCrossed, Wallet, Briefcase, Star, ShieldPlus, Radio, Megaphone, CalendarDays } from 'lucide-react'
 import { useSession } from '@/core/db'
 import { touchDaily } from '@/core/services/engagement'
 import { expireTickets } from '@/core/services/fityab'
@@ -13,7 +13,7 @@ import { isBusiness, isBusinessPathAllowed, primaryBusinessRole } from '@/core/r
 import { Toaster } from '@/ui/toast'
 import { useMe } from '@/ui/hooks'
 import { AppShell } from '@/layouts/AppShell'
-import { PanelShell, type PanelLink } from '@/layouts/PanelShell'
+import { PanelShell, type PanelGroup, type PanelLink } from '@/layouts/PanelShell'
 
 import Login from '@/pages/Login'
 import Home from '@/pages/Home'
@@ -97,56 +97,84 @@ const AdminModeration = lazy(() => import('@/panels/admin/AdminModeration'))
 const AdminSupport = lazy(() => import('@/panels/admin/AdminSupport'))
 const AdminInsurance = lazy(() => import('@/panels/admin/AdminInsurance'))
 const GymReviews = lazy(() => import('@/panels/gym/GymReviews'))
+const GymList = lazy(() => import('@/panels/gym/GymList'))
+const GymSchedulePage = lazy(() => import('@/panels/gym/GymSchedulePage'))
 const CompanyPanel = lazy(() => import('@/panels/company/CompanyPanel'))
 
 const finance: PanelLink = { to: 'finance', label: 'درآمد و تسویه', icon: Wallet }
+const money: PanelGroup = { title: 'مالی', icon: Wallet, links: [finance] }
 
-const PANELS: Record<Exclude<Role, 'user'>, PanelLink[]> = {
+/** منوی هر پنل: شاخه‌ها و زیرشاخه‌ها */
+const PANELS: Record<Exclude<Role, 'user'>, PanelGroup[]> = {
   gym: [
-    { to: '/panel/gym', label: 'داشبورد', icon: BarChart3, end: true },
-    { to: 'checkins', label: 'پذیرش ورود', icon: ClipboardList },
-    { to: 'qr', label: 'QR ورود باشگاه', icon: QrCode },
-    { to: 'members', label: 'اعضا و کمپین', icon: Megaphone },
-    { to: 'reviews', label: 'نظرات', icon: Star },
-    { to: '/events', label: 'رویدادها', icon: CalendarDays },
-    { to: 'edit', label: 'ثبت باشگاه جدید', icon: Building2 },
-    finance,
+    { title: 'نمای کلی', icon: BarChart3, links: [{ to: '/panel/gym', label: 'داشبورد', icon: BarChart3, end: true }] },
+    { title: 'پذیرش', icon: ClipboardList, links: [
+      { to: 'checkins', label: 'پذیرش ورود', icon: ClipboardList },
+      { to: 'qr', label: 'QR دم در', icon: QrCode },
+    ] },
+    { title: 'باشگاه', icon: Building2, links: [
+      { to: 'gyms', label: 'باشگاه‌ها و شعبه‌ها', icon: Building2 },
+      { to: 'schedule', label: 'برنامه و تعطیلی', icon: CalendarClock },
+      { to: 'edit', label: 'ثبت باشگاه یا شعبه', icon: PlusCircle, end: true },
+    ] },
+    { title: 'ورزشکاران', icon: Users, links: [
+      { to: 'members', label: 'اعضا و کمپین', icon: Megaphone },
+      { to: 'reviews', label: 'نظرات', icon: Star },
+      { to: '/events', label: 'رویدادها', icon: CalendarDays },
+    ] },
+    money,
   ],
   coach: [
-    { to: '/panel/coach', label: 'داشبورد', icon: BarChart3, end: true },
-    { to: 'orders', label: 'سفارش برنامه‌ها', icon: ClipboardList },
-    { to: 'live', label: 'کلاس آنلاین', icon: Radio },
-    { to: 'profile', label: 'پروفایل و پکیج‌ها', icon: UserCog },
-    { to: '/events', label: 'رویدادها', icon: CalendarDays },
-    finance,
+    { title: 'نمای کلی', icon: BarChart3, links: [{ to: '/panel/coach', label: 'داشبورد', icon: BarChart3, end: true }] },
+    { title: 'شاگردان', icon: ClipboardList, links: [{ to: 'orders', label: 'سفارش برنامه‌ها', icon: ClipboardList }] },
+    { title: 'کلاس و رویداد', icon: Radio, links: [
+      { to: 'live', label: 'کلاس آنلاین', icon: Radio },
+      { to: '/events', label: 'رویدادها', icon: CalendarDays },
+    ] },
+    { title: 'پروفایل', icon: UserCog, links: [{ to: 'profile', label: 'پروفایل و پکیج‌ها', icon: UserCog }] },
+    money,
   ],
   seller: [
-    { to: '/panel/seller', label: 'محصولات', icon: Package, end: true },
-    { to: 'orders', label: 'سفارش‌ها', icon: ClipboardList },
-    finance,
+    { title: 'فروشگاه', icon: Package, links: [
+      { to: '/panel/seller', label: 'محصولات', icon: Package, end: true },
+      { to: 'orders', label: 'سفارش‌ها', icon: ClipboardList },
+    ] },
+    money,
   ],
   doctor: [
-    { to: '/panel/doctor', label: 'نوبت‌ها', icon: Stethoscope, end: true },
-    { to: 'profile', label: 'پروفایل و زمان‌بندی', icon: UserCog },
-    finance,
+    { title: 'نوبت‌دهی', icon: Stethoscope, links: [
+      { to: '/panel/doctor', label: 'نوبت‌ها', icon: Stethoscope, end: true },
+      { to: 'profile', label: 'پروفایل و زمان‌بندی', icon: UserCog },
+    ] },
+    money,
   ],
   restaurant: [
-    { to: '/panel/restaurant', label: 'منو و رستوران', icon: UtensilsCrossed, end: true },
-    { to: 'orders', label: 'سفارش‌ها', icon: ClipboardList },
-    finance,
+    { title: 'رستوران', icon: UtensilsCrossed, links: [
+      { to: '/panel/restaurant', label: 'منو و رستوران', icon: UtensilsCrossed, end: true },
+      { to: 'orders', label: 'سفارش‌ها', icon: ClipboardList },
+    ] },
+    money,
   ],
-  company: [{ to: '/panel/company', label: 'سلامت سازمان', icon: Briefcase, end: true }],
+  company: [{ title: 'سازمان', icon: Briefcase, links: [{ to: '/panel/company', label: 'سلامت سازمان', icon: Briefcase, end: true }] }],
   admin: [
-    { to: '/panel/admin', label: 'نمای کلی', icon: BarChart3, end: true },
-    { to: 'users', label: 'کاربران و نقش‌ها', icon: Users },
-    { to: 'gyms', label: 'باشگاه‌ها', icon: Building2 },
-    { to: 'approvals', label: 'تأیید مدارک و رویدادها', icon: BadgeCheck },
-    { to: 'moderation', label: 'گزارش تخلف', icon: Flag },
-    { to: 'support', label: 'پشتیبانی', icon: LifeBuoy },
-    { to: 'insurance', label: 'بیمه و خسارت', icon: ShieldPlus },
-    { to: 'finance', label: 'مالی و تسویه', icon: FileText },
-    { to: 'challenges', label: 'چالش‌ها', icon: Trophy },
-    { to: 'settings', label: 'کمیسیون و تنظیمات', icon: Cog },
+    { title: 'نمای کلی', icon: BarChart3, links: [{ to: '/panel/admin', label: 'داشبورد', icon: BarChart3, end: true }] },
+    { title: 'کاربران', icon: Users, links: [
+      { to: 'users', label: 'کاربران و نقش‌ها', icon: Users },
+      { to: 'approvals', label: 'تأیید مدارک و رویدادها', icon: BadgeCheck },
+    ] },
+    { title: 'محتوا', icon: Building2, links: [
+      { to: 'gyms', label: 'باشگاه‌ها', icon: Building2 },
+      { to: 'challenges', label: 'چالش‌ها', icon: Trophy },
+      { to: 'moderation', label: 'گزارش تخلف', icon: Flag },
+    ] },
+    { title: 'خدمات', icon: LifeBuoy, links: [
+      { to: 'support', label: 'پشتیبانی', icon: LifeBuoy },
+      { to: 'insurance', label: 'بیمه و خسارت', icon: ShieldPlus },
+    ] },
+    { title: 'مالی و تنظیمات', icon: FileText, links: [
+      { to: 'finance', label: 'مالی و تسویه', icon: FileText },
+      { to: 'settings', label: 'کمیسیون و تنظیمات', icon: Cog },
+    ] },
   ],
 }
 
@@ -221,7 +249,7 @@ export default function App() {
 
   const panel = (role: Exclude<Role, 'user'>) => (
     <RequireRole role={role}>
-      <PanelShell role={role} links={PANELS[role]} />
+      <PanelShell role={role} groups={PANELS[role]} />
     </RequireRole>
   )
 
@@ -293,6 +321,8 @@ export default function App() {
           <Route path="qr" element={<GymQr />} />
           <Route path="members" element={<GymMembers />} />
           <Route path="reviews" element={<GymReviews />} />
+          <Route path="gyms" element={<GymList />} />
+          <Route path="schedule" element={<GymSchedulePage />} />
           <Route path="edit" element={<GymEditor />} />
           <Route path="edit/:id" element={<GymEditor />} />
           <Route path="finance" element={<PanelFinance />} />

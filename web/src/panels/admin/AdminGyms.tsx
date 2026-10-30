@@ -4,6 +4,7 @@ import { num, toman } from '@/core/format'
 import { setGymApproval } from '@/core/services/admin'
 import { Badge, Button, Card, Cover, PageHeader, Tabs } from '@/ui/kit'
 import { useUserMap } from '@/ui/hooks'
+import { gymTitle } from '@/core/services/fityab'
 import { useState } from 'react'
 
 export default function AdminGyms() {
@@ -21,7 +22,7 @@ export default function AdminGyms() {
           <Card key={g.id} className="flex gap-3">
             <Cover gradient={g.cover} image={g.media.find((m) => m.type === 'image')?.url} emoji="" className="h-24 w-24 shrink-0 rounded-2xl" />
             <div className="min-w-0 flex-1">
-              <Link to={`/fityab/${g.id}`} className="font-semibold">{g.name}</Link>
+              <Link to={`/fityab/${g.id}`} className="font-semibold">{gymTitle(g)}</Link>
               <div className="text-xs text-ink-500">مالک: {users[g.ownerId]?.name} · {g.address}</div>
               <div className="mt-1 flex flex-wrap gap-1">
                 <Badge color="slate">{toman(g.sessionPrice)}</Badge>

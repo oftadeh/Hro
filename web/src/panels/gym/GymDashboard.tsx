@@ -1,13 +1,10 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
-import { Building2, PenSquare, Pencil, Plus, TrendingUp, Users, Wallet } from 'lucide-react'
-import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
+import { Building2, CalendarDays, ClipboardList, Megaphone, Plus, TrendingUp, Users, Wallet } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { dayKey, num, toman } from '@/core/format'
-import { Badge, Button, Card, Cover, Empty, PageHeader, SectionTitle, Stars, Stat } from '@/ui/kit'
+import { Button, Card, Empty, PageHeader, SectionTitle, Stat } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { MiniBars } from '../shared/MiniBars'
-import { GymSchedule } from './GymSchedule'
 
 export default function GymDashboard() {
   const me = useMe()!
@@ -15,7 +12,6 @@ export default function GymDashboard() {
   const checkins = useDB((s) => s.checkins)
   const txs = useDB((s) => s.transactions)
   const bal = useBalance(me.id)
-  const [postGym, setPostGym] = useState<string>()
   const mine = gyms.filter((g) => g.ownerId === me.id)
   const ids = mine.map((g) => g.id)
   const myCheckins = checkins.filter((c) => ids.includes(c.gymId))
@@ -66,38 +62,24 @@ export default function GymDashboard() {
           <div className="mt-2 text-[12px] text-ink-500">لغو: {num(cancelled)} · عدم حضور: {num(noShow)} — برای پر کردن ساعات کم‌تردد، «تخفیف ساعات خلوت» را در ویرایش باشگاه فعال کنید.</div>
         </Card>
       </div>
-      <SectionTitle title="باشگاه‌های من" />
-      {mine.length === 0 && <Empty icon="" title="هنوز باشگاهی ثبت نکرده‌اید" action={<Link to="edit"><Button>ثبت باشگاه</Button></Link>} />}
-      <div className="grid gap-4 md:grid-cols-2">
-        {mine.map((g) => (
-          <Card key={g.id} className="overflow-hidden p-0">
-            <Cover gradient={g.cover} image={g.media.find((m) => m.type === 'image')?.url} emoji="" className="h-28">
-              <div className="absolute right-3 top-3">{g.approved ? <Badge color="emerald">فعال در فیت‌یاب</Badge> : <Badge color="amber">در انتظار تایید مدیر</Badge>}</div>
-            </Cover>
-            <div className="flex items-center gap-3 p-4">
-              <div className="min-w-0 flex-1">
-                <div className="font-semibold">{g.name}{g.branch && <span className="font-normal text-ink-500"> · {g.branch}</span>}</div>
-                <div className="text-xs text-ink-500">{toman(g.sessionPrice)} / سانس · {num(myCheckins.filter((c) => c.gymId === g.id).length)} ورود</div>
-                <Stars value={g.rating} count={g.reviews} />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Link to={`edit/${g.id}`}><Button size="sm" variant="outline" className="w-full" icon={<Pencil size={14} />}>ویرایش</Button></Link>
-                <Link to={`edit?from=${g.id}`}><Button size="sm" variant="ghost" className="w-full" icon={<Plus size={14} />}>افزودن شعبه</Button></Link>
-                {g.approved && <Button size="sm" variant="secondary" icon={<PenSquare size={14} />} onClick={() => setPostGym(g.id)}>پست در فیت‌زون</Button>}
-              </div>
-            </div>
-          </Card>
+      <SectionTitle title="دسترسی سریع" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          { to: 'checkins', title: 'پذیرش ورود', desc: `${num(today.length)} ورود امروز`, icon: ClipboardList },
+          { to: 'gyms', title: 'باشگاه‌ها و شعبه‌ها', desc: `${num(mine.length)} مجموعه`, icon: Building2 },
+          { to: 'schedule', title: 'برنامه و تعطیلی', desc: 'لغو نوبت، روز تعطیل', icon: CalendarDays },
+          { to: 'members', title: 'اعضا و کمپین', desc: 'پیشنهاد به ورزشکاران', icon: Megaphone },
+        ].map((q) => (
+          <Link key={q.to} to={q.to} className="press flex items-center gap-3 rounded-[22px] bg-white p-4 shadow-card dark:bg-ink-850 dark:shadow-none">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-400/15 text-brand-600 dark:text-brand-300"><q.icon size={18} /></span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold">{q.title}</span>
+              <span className="block truncate text-xs text-ink-500">{q.desc}</span>
+            </span>
+          </Link>
         ))}
       </div>
-      {mine.some((g) => g.approved) && (
-        <>
-          <SectionTitle title="تعطیلی و لغو نوبت" />
-          <div className="grid gap-4 lg:grid-cols-2">
-            {mine.filter((g) => g.approved).map((g) => <GymSchedule key={g.id} gym={g} />)}
-          </div>
-        </>
-      )}
-      <CreatePostSheet open={!!postGym} onClose={() => setPostGym(undefined)} gymId={postGym} />
+      {mine.length === 0 && <Empty title="هنوز باشگاهی ثبت نکرده‌اید" action={<Link to="edit"><Button>ثبت باشگاه</Button></Link>} />}
     </div>
   )
 }

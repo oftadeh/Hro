@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useDB } from '@/core/db'
 import { dayKey, faDate, faTime, num } from '@/core/format'
-import { bookedCount, cancelClassSlot, setClosedDay, upcomingClasses, waitlistFor } from '@/core/services/fityab'
+import { bookedCount, cancelClassSlot, setClosedDay, upcomingClasses, waitlistFor, gymTitle } from '@/core/services/fityab'
 import type { Gym } from '@/core/types'
 import { Badge, Button, Card, Input, Select } from '@/ui/kit'
 import { ask, askText, runOk } from '@/ui/toast'
@@ -27,7 +27,7 @@ export function GymSchedule({ gym }: { gym: Gym }) {
 
   return (
     <Card className="space-y-4">
-      <div className="font-semibold">{gym.name}: تعطیلی و لغو نوبت</div>
+      <div className="font-semibold">{gymTitle(gym)}</div>
       <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto]">
         <Select value={day} onChange={(e) => setDay(e.target.value)} aria-label="روز تعطیلی">
           {next.map((d) => <option key={dayKey(d)} value={dayKey(d)}>{new Intl.DateTimeFormat('fa-IR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d)}</option>)}

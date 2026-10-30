@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Navigation, Undo2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { faDateTime, toman } from '@/core/format'
-import { CANCEL_GRACE_MIN, cancelQuote, cancelTicket, CLASS_CANCEL_HOURS, inCancelGrace, NO_SHOW_LIMIT, ticketStatus } from '@/core/services/fityab'
+import { CANCEL_GRACE_MIN, cancelQuote, cancelTicket, CLASS_CANCEL_HOURS, inCancelGrace, NO_SHOW_LIMIT, ticketStatus, gymTitle } from '@/core/services/fityab'
 import { useDB } from '@/core/db'
 import type { CheckIn, Gym } from '@/core/types'
 import { Badge, Button, Sheet } from '@/ui/kit'
@@ -40,7 +40,7 @@ export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckI
               <div className="font-display text-5xl tracking-[.25em]" dir="ltr">
                 {ticket.code}
               </div>
-              <p className="mt-3 text-sm text-ink-500">QR یا کد را در پذیرش «{gym.name}» نشان دهید.</p>
+              <p className="mt-3 text-sm text-ink-500">QR یا کد را در پذیرش «{gymTitle(gym)}» نشان دهید.</p>
             </>
           ) : (
             <p className="py-6 text-sm text-ink-500">{st === 'used' ? `ورود در ${faDateTime(ticket.usedAt ?? ticket.createdAt)} ثبت شد.` : st === 'cancelled' ? 'این بلیت لغو و مبلغ آن برگشت داده شد.' : 'اعتبار این بلیت بدون استفاده تمام شد.'}</p>

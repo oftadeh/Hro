@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { CheckCircle2, QrCode, ScanLine, Send, Users } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { faDateTime, faTime, num, toman } from '@/core/format'
-import { occupancy, requestEntry, ticketStatus, verifyEntry } from '@/core/services/fityab'
+import { occupancy, requestEntry, ticketStatus, verifyEntry, gymTitle } from '@/core/services/fityab'
 import { Avatar, Badge, Button, Card, Empty, Input, PageHeader, SectionTitle, Select, Sheet, Tabs } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
 import { run, toast } from '@/ui/toast'
@@ -55,7 +55,7 @@ export default function GymCheckins() {
         <Select value={gymId} onChange={(e) => setGymId(e.target.value)} className="mb-3">
           {myGyms.map((g) => (
             <option key={g.id} value={g.id}>
-              {g.name}
+              {gymTitle(g)}
             </option>
           ))}
         </Select>
