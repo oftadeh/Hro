@@ -38,6 +38,18 @@ export function dailyCleanup(today: string) {
       /* ادامه */
     }
   }
+
+  // مدارک خصوصی که یک هفته است به هیچ پرونده یا مجوزی وصل نیستند
+  const docs = path.join(env.dataDir, 'docs')
+  if (fs.existsSync(docs))
+    for (const f of fs.readdirSync(docs)) {
+      const file = path.join(docs, f)
+      try {
+        if (now - fs.statSync(file).mtimeMs > 7 * DAY && !all.includes(f)) fs.rmSync(file, { force: true })
+      } catch {
+        /* ادامه */
+      }
+    }
 }
 
 let seedStories: ReturnType<typeof createSeed>['stories'] | undefined

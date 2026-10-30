@@ -820,7 +820,7 @@ export function gymMissing(g: Partial<Gym>): { key: string; label: string }[] {
   if (!rental && !(g.hours ?? '').trim()) add('hours', 'ساعات کاری')
   if ((g.address ?? '').trim().length < 8) add('address', 'نشانی کامل')
   if (!inIran(g.lat, g.lng) || isDefaultSpot(g)) add('location', 'موقعیت دقیق روی نقشه')
-  if ((g.media ?? []).filter((m) => m.type === 'image').length < MIN_GYM_PHOTOS) add('photos', `حداقل ${MIN_GYM_PHOTOS} عکس واقعی از مجموعه`)
+  if ((g.media ?? []).filter((m) => m.type === 'image').length < MIN_GYM_PHOTOS) add('photos', `حداقل ${MIN_GYM_PHOTOS.toLocaleString('fa-IR')} عکس واقعی از مجموعه`)
   if (!g.license?.number || g.license.number.trim().length < 4) add('licenseNo', 'شماره‌ی پروانه یا مجوز')
   if (!g.license?.doc) add('licenseDoc', 'تصویر پروانه یا مجوز')
   return out
@@ -943,6 +943,23 @@ export const saveGym = svc(
       }
     })
     return id!
+  },
+  { roles: ['gym'] },
+)
+
+/** حذف باشگاهی که هنوز منتشر نشده و هیچ بلیت و رزروی ندارد */
+export const deleteGym = svc(
+  'fityab.deleteGym',
+  (gymId: string) => {
+    const me = currentUserId()
+    const g = db().gyms.find((x) => x.id === gymId && x.ownerId === me)
+    if (!g) throw new AppError('باشگاه یافت نشد')
+    if (g.approved) throw new AppError('باشگاه منتشرشده را نمی‌توان حذف کرد؛ برای برداشتن از فیت‌یاب با پشتیبانی تماس بگیرید')
+    if (db().checkins.some((c) => c.gymId === gymId) || (db().waitlist ?? []).some((w) => w.gymId === gymId)) throw new AppError('این باشگاه سابقه‌ی بلیت یا رزرو دارد و قابل حذف نیست')
+    mutate((d) => {
+      d.gyms = d.gyms.filter((x) => x.id !== gymId)
+      d.posts = d.posts.filter((p) => p.gymId !== gymId)
+    })
   },
   { roles: ['gym'] },
 )

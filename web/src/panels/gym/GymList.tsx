@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PenSquare, Pencil, Plus } from 'lucide-react'
+import { PenSquare, Pencil, Plus, Trash2 } from 'lucide-react'
 import { CreatePostSheet } from '@/modules/fitzone/CreatePost'
 import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
-import { brandOf, gymTier, tierLabel } from '@/core/services/fityab'
+import { brandOf, deleteGym, gymTier, tierLabel } from '@/core/services/fityab'
+import { ask, run } from '@/ui/toast'
 import { Badge, Button, Card, Cover, Empty, PageHeader, SectionTitle, Stars } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
 
@@ -47,6 +48,9 @@ export default function GymList() {
                     <div className="flex flex-col gap-1.5">
                       <Link to={`../edit/${g.id}`}><Button size="sm" variant="outline" className="w-full" icon={<Pencil size={14} />}>{g.review?.status === 'changes' ? 'اصلاح' : 'ویرایش'}</Button></Link>
                       {g.approved && <Button size="sm" variant="secondary" icon={<PenSquare size={14} />} onClick={() => setPostGym(g.id)}>پست</Button>}
+                      {!g.approved && !checkins.some((c) => c.gymId === g.id) && (
+                        <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={14} />} onClick={async () => (await ask(`«${g.branch || g.name}» حذف شود؟`)) && run(() => deleteGym(g.id), 'حذف شد')}>حذف</Button>
+                      )}
                     </div>
                   </div>
                 </Card>
