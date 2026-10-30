@@ -3,6 +3,7 @@
  * شماره‌ی موبایل، سلامت، چرخه، کیف پول و پیام‌های دیگران هرگز به‌صورت عمومی ارسال نمی‌شود.
  */
 import type { DBState } from '../src/core/state'
+import { isProviderActive } from '../src/core/roles'
 import type { CheckIn, GymCampaign, Listing, LiveClass, SportEvent, User } from '../src/core/types'
 
 const DAY = 86_400_000
@@ -14,6 +15,13 @@ export function project(s: DBState, uid: string): DBState {
   const myGyms = new Set(s.gyms.filter((g) => g.ownerId === uid).map((g) => g.id))
   const myRests = new Set(s.restaurants.filter((r) => r.ownerId === uid).map((r) => r.id))
   const now = Date.now()
+  // ارائه‌دهنده‌ی مسدود یا بدون مدارک تأییدشده برای بقیه دیده نمی‌شود
+  const inactive = new Set(s.users.filter((u) => !isProviderActive(u)).map((u) => u.id))
+  const pub = (ownerId: string) => ownerId === uid || admin || !inactive.has(ownerId)
+  const myGymVisits = new Set(s.checkins.filter((c) => c.userId === uid).map((c) => c.gymId))
+  const myCoaches = new Set(s.planOrders.filter((o) => o.userId === uid).map((o) => o.coachId))
+  const myDoctors = new Set(s.appointments.filter((a) => a.userId === uid).map((a) => a.doctorId))
+  const visibleRests = new Set(s.restaurants.filter((r) => r.ownerId === uid || admin || (r.approved && pub(r.ownerId))).map((r) => r.id))
 
   const publicUser = (u: User): User => {
     const shared = sharedWithMe.has(u.id)
@@ -67,14 +75,14 @@ export function project(s: DBState, uid: string): DBState {
     transactions: admin ? s.transactions : s.transactions.filter(involves),
     payouts: admin ? s.payouts : s.payouts.filter((p) => p.userId === uid),
     // رمز QR ورودی فقط برای صاحب باشگاه و مدیر
-    gyms: s.gyms.filter((g) => g.approved || g.ownerId === uid || admin).map((g) => (g.ownerId === uid || admin || !g.entryCode ? g : { ...g, entryCode: undefined })),
+    gyms: s.gyms.filter((g) => (g.approved && pub(g.ownerId)) || g.ownerId === uid || admin || myGymVisits.has(g.id)).map((g) => (g.ownerId === uid || admin ? g : { ...g, entryCode: undefined, license: undefined, review: undefined })),
     checkins,
     entryRequests: s.entryRequests.filter((r) => r.userId === uid || myGyms.has(r.gymId) || admin),
     planOrders: s.planOrders.filter((o) => o.userId === uid || o.coachId === uid || admin),
     threads: s.threads.filter((t) => t.members.includes(uid)),
     orders: s.orders.filter((o) => o.userId === uid || o.vendorId === uid || myRests.has(o.vendorId) || admin),
     appointments: s.appointments.filter((a) => a.userId === uid || a.doctorId === uid || admin),
-    restaurants: s.restaurants.filter((r) => r.approved || r.ownerId === uid || admin),
+    restaurants: s.restaurants.filter((r) => visibleRests.has(r.id)).map((r) => (r.ownerId === uid || admin ? r : { ...r, review: undefined })),
     posts: s.posts.filter((p) => !p.hidden || p.authorId === uid || admin),
     stories: s.stories.filter((x) => now - new Date(x.createdAt).getTime() < DAY),
     challenges: s.challenges.map((c) =>
@@ -96,12 +104,16 @@ export function project(s: DBState, uid: string): DBState {
     teams: s.teams.filter((t) => t.members.includes(uid) || admin),
     policies: admin ? s.policies : s.policies.filter((x) => x.userId === uid),
     claims: admin ? s.claims : s.claims.filter((x) => x.userId === uid),
-    liveClasses: s.liveClasses.filter((c) => c.status === 'scheduled' || c.hostId === uid || c.attendees.includes(uid) || admin).map(liveView),
+    liveClasses: s.liveClasses.filter((c) => (c.status === 'scheduled' && pub(c.hostId)) || c.hostId === uid || c.attendees.includes(uid) || admin).map(liveView),
     campaigns: admin ? s.campaigns : s.campaigns.filter((c) => myGyms.has(c.gymId)).concat(s.campaigns.filter((c) => !myGyms.has(c.gymId) && c.recipients.includes(uid)).map(campaignView)),
-    events: s.events.filter((e) => e.approved || e.organizerId === uid || admin).map(eventView),
+    events: s.events.filter((e) => (e.approved && pub(e.organizerId)) || e.organizerId === uid || admin || e.registrations.some((r) => r.userId === uid)).map(eventView),
     // لیست انتظار: ردیف‌های دیگران بی‌نام (فقط برای نوبت و تعداد)
     waitlist: (s.waitlist ?? []).map((w) => (w.userId === uid || admin || myGyms.has(w.gymId) ? w : { ...w, userId: 'anon', memberId: undefined })),
+    products: s.products.filter((p) => p.sellerId === uid || admin || (!p.review && pub(p.sellerId))),
+    foods: s.foods.filter((f) => visibleRests.has(f.restaurantId)),
+    coaches: s.coaches.filter((c) => c.userId === uid || admin || myCoaches.has(c.userId) || (c.verified && pub(c.userId) && c.bio.trim().length >= 20)),
+    doctors: s.doctors.filter((x) => x.userId === uid || admin || myDoctors.has(x.userId) || (x.verified && pub(x.userId))),
     trialKeys: admin ? s.trialKeys ?? [] : [],
-    listings: s.listings.filter((l) => l.status === 'active' || l.sellerId === uid || l.deal?.buyerId === uid || admin).map(listingView),
+    listings: s.listings.filter((l) => (l.status === 'active' && pub(l.sellerId)) || l.sellerId === uid || l.deal?.buyerId === uid || admin).map(listingView),
   }
 }

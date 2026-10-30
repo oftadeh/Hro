@@ -3,6 +3,7 @@ import type { DBState } from '../state'
 import { uid, now } from '../id'
 import type { ID, RevenueModule, Transaction, TxType } from '../types'
 import { toman } from '../format'
+import { isProviderActive } from '../roles'
 
 export const balanceOf = (userId: ID) => db().wallets[userId] ?? 0
 
@@ -28,9 +29,17 @@ interface PayInput {
  * هسته‌ی مالی: انتقال وجه + کسر کمیسیون کی‌فیت در یک تراکنش اتمیک.
  * باید داخل `mutate` صدا زده شود.
  */
+/** پرداخت‌هایی که خرید از یک ارائه‌دهنده است */
+const SALE_TYPES = new Set<TxType>(['checkin', 'coach_plan', 'shop_order', 'doctor_visit', 'food_order', 'rental', 'live_class', 'event_entry'])
+
 export function applyPayment(d: DBState, input: PayInput): Transaction {
   const { amount } = input
   if (amount < 0) throw new AppError('مبلغ نامعتبر است')
+  // فروش فقط به ارائه‌دهنده‌ی فعال (مسدود نشده و دارای مدارک تأییدشده)
+  if (SALE_TYPES.has(input.type) && input.to !== 'platform' && input.to !== 'escrow') {
+    const payee = d.users.find((u) => u.id === input.to) ?? d.users.find((u) => u.id === d.restaurants.find((r) => r.id === input.to)?.ownerId)
+    if (payee && !isProviderActive(payee)) throw new AppError('این ارائه‌دهنده فعلاً فعال نیست')
+  }
   // کاربر مبلغ پس از تخفیف را می‌پردازد؛ ارائه‌دهنده سهم کامل خود را می‌گیرد
   const discount = Math.min(amount, Math.round((amount * Math.min(100, Math.max(0, input.discountPct ?? 0))) / 100) + Math.max(0, Math.round(input.discountAmount ?? 0)))
   const charged = amount - discount

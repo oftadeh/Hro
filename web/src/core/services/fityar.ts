@@ -57,7 +57,9 @@ export const bookCall = svc('coach.bookCall', (coachId: ID) => {
   const me = currentUserId()
   const coach = db().coaches.find((c) => c.userId === coachId)
   if (!coach) throw new AppError('مربی یافت نشد')
+  if (!coach.verified) throw new AppError('مدارک این مربی هنوز تأیید نشده است')
   if (coachId === me) throw new AppError('نمی‌توانید با خودتان تماس رزرو کنید')
+  if (!coach.callPrice) throw new AppError('این مربی تماس مشاوره ارائه نمی‌کند')
   let threadId = ''
   mutate((d) => {
     const id = uid('call-')
@@ -76,6 +78,7 @@ export const buyCoachPlan = svc('coach.buyPlan', (coachId: ID, planId: ID, answe
   const coach = db().coaches.find((c) => c.userId === coachId)
   const plan = coach?.plans.find((p) => p.id === planId)
   if (!coach || !plan) throw new AppError('برنامه یافت نشد')
+  if (!coach.verified) throw new AppError('مدارک این مربی هنوز تأیید نشده است')
   if (coachId === me) throw new AppError('نمی‌توانید برنامه‌ی خودتان را بخرید')
   if (String(answers ?? '').trim().length < 10) throw new AppError('لطفاً اطلاعات بدنی و هدف‌تان را کامل بنویسید')
   mutate((d) => {
@@ -166,7 +169,21 @@ export const saveCoachProfile = svc(
   'coach.saveProfile',
   (input: Partial<CoachProfile>) => {
     const me = currentUserId()
-    if (input.callPrice !== undefined && input.callPrice < 0) throw new AppError('هزینه‌ی تماس معتبر نیست')
+    if (input.callPrice !== undefined && !(input.callPrice === 0 || (input.callPrice >= 10_000 && input.callPrice <= 50_000_000))) throw new AppError('هزینه‌ی تماس معتبر نیست (رایگان یا حداقل ۱۰ هزار تومان)')
+    if (input.title !== undefined && String(input.title).trim().length < 3) throw new AppError('عنوان تخصصی را بنویسید')
+    if (input.bio !== undefined && String(input.bio).trim().length < 30) throw new AppError('درباره‌ی خودتان حداقل ۳۰ حرف بنویسید')
+    if (input.specialties !== undefined && !(input.specialties.length >= 1 && input.specialties.length <= 10)) throw new AppError('بین ۱ تا ۱۰ تخصص وارد کنید')
+    if (input.certificates !== undefined && !input.certificates.length) throw new AppError('حداقل یک مدرک مربیگری وارد کنید')
+    if (input.experienceYears !== undefined && !(input.experienceYears >= 0 && input.experienceYears <= 60)) throw new AppError('سابقه معتبر نیست')
+    if (input.plans !== undefined) {
+      if (input.plans.length > 20) throw new AppError('حداکثر ۲۰ پکیج')
+      for (const p of input.plans) {
+        if (String(p.title ?? '').trim().length < 3) throw new AppError('عنوان پکیج را بنویسید')
+        if (!(p.price >= 50_000 && p.price <= 200_000_000)) throw new AppError(`قیمت پکیج «${p.title}» معتبر نیست (حداقل ۵۰ هزار تومان)`)
+        if (!(p.durationWeeks >= 1 && p.durationWeeks <= 52)) throw new AppError(`مدت پکیج «${p.title}» باید ۱ تا ۵۲ هفته باشد`)
+        if (!['workout', 'diet', 'both'].includes(p.kind)) throw new AppError('نوع پکیج معتبر نیست')
+      }
+    }
     mutate((d) => {
       let c = d.coaches.find((x) => x.userId === me)
       if (!c) {
@@ -175,6 +192,10 @@ export const saveCoachProfile = svc(
       }
       const certsBefore = c.certificates.join('|')
       for (const k of COACH_FIELDS) if (k in input) (c as unknown as Record<string, unknown>)[k] = input[k]
+      c.title = String(c.title).trim().slice(0, 60)
+      c.bio = String(c.bio ?? '').trim().slice(0, 1500)
+      c.specialties = c.specialties.map((x) => String(x).trim().slice(0, 30)).filter(Boolean)
+      c.certificates = c.certificates.map((x) => String(x).trim().slice(0, 80)).filter(Boolean).slice(0, 10)
       c.plans = c.plans.map((p) => ({ ...p, id: p.id || uid('cp-'), price: Math.max(0, Math.round(p.price)) }))
       // تغییر مدارک نیاز به بررسی مجدد مدیر دارد
       if (c.certificates.join('|') !== certsBefore && c.verified) c.verified = false

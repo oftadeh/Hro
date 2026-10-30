@@ -44,8 +44,14 @@ export default function RestaurantPanel() {
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{current.name}</div>
                 <div className="text-xs text-ink-500">{current.description}</div>
+                {!current.approved && (
+                  <div className="mt-1 text-[12px] leading-5 text-coral-500">
+                    {current.review?.status === 'changes' ? 'نیاز به اصلاح' : current.review?.status === 'rejected' ? 'رد شده' : 'در انتظار تأیید مدیر'}
+                    {current.review?.note ? ` — یادداشت مدیر: ${current.review.note}` : ''}
+                  </div>
+                )}
               </div>
-              <Button size="sm" variant={current.open ? 'primary' : 'outline'} onClick={() => saveRestaurant({ id: current.id, open: !current.open })}>{current.open ? 'باز است' : 'بسته است'}</Button>
+              <Button size="sm" variant={current.open ? 'primary' : 'outline'} onClick={() => run(() => saveRestaurant({ id: current.id, open: !current.open }))}>{current.open ? 'باز است' : 'بسته است'}</Button>
               <Button size="sm" variant="outline" icon={<Pencil size={14} />} onClick={() => setEditR(current)}>ویرایش</Button>
               <Button size="sm" icon={<Plus size={14} />} onClick={() => setEditF({ restaurantId: current.id, name: '', price: 0, calories: 0, protein: 0, carbs: 0, fat: 0, emoji: '', tags: [] })}>غذای جدید</Button>
             </Card>
@@ -60,7 +66,7 @@ export default function RestaurantPanel() {
                   {!f.available && <Badge color="rose">ناموجود</Badge>}
                   <div className="mt-2 flex gap-1">
                     <Button size="sm" variant="outline" onClick={() => setEditF(f)}>ویرایش</Button>
-                    <Button size="sm" variant="ghost" onClick={() => saveFood({ ...f, available: !f.available })}>{f.available ? 'ناموجود کن' : 'موجود کن'}</Button>
+                    <Button size="sm" variant="ghost" onClick={() => run(() => saveFood({ ...f, available: !f.available }))}>{f.available ? 'ناموجود کن' : 'موجود کن'}</Button>
                     <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={13} />} onClick={async () => (await ask('حذف شود؟')) && deleteFood(f.id)} />
                   </div>
                 </div>
@@ -77,8 +83,8 @@ export default function RestaurantPanel() {
             <Field label="زمان ارسال (دقیقه)"><NumberInput value={editR.deliveryMinutes ?? 0} onChange={(v) => setEditR({ ...editR, deliveryMinutes: v })} /></Field>
             <div className="sm:col-span-2"><Field label="توضیح"><Input value={editR.description} onChange={(e) => setEditR({ ...editR, description: e.target.value })} /></Field></div>
             <div className="sm:col-span-2"><Field label="آدرس"><Input value={editR.address} onChange={(e) => setEditR({ ...editR, address: e.target.value })} /></Field></div>
-            <div className="sm:col-span-2"><LocationPicker lat={editR.lat!} lng={editR.lng!} onChange={(lat, lng) => setEditR({ ...editR, lat, lng })} /></div>
-            <Button className="sm:col-span-2" onClick={async () => { await run(() => saveRestaurant(editR), 'ذخیره شد'); setEditR(undefined) }}>ذخیره</Button>
+            <div className="sm:col-span-2"><LocationPicker lat={editR.lat!} lng={editR.lng!} picked={!!editR.id || editR.lat !== cityCenter(me.city)[0] || editR.lng !== cityCenter(me.city)[1]} onChange={(lat, lng) => setEditR({ ...editR, lat, lng })} /></div>
+            <Button className="sm:col-span-2" onClick={async () => { if (await runOk(() => saveRestaurant(editR), 'ذخیره شد')) setEditR(undefined) }}>ذخیره</Button>
           </div>
         )}
       </Sheet>

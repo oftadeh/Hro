@@ -29,13 +29,14 @@ export const addToCart = svc('shop.addToCart', (kind: CartItem['kind'], refId: s
     const cart = (d.carts[me] ??= [])
     if (kind === 'food') {
       const food = d.foods.find((f) => f.id === refId)
-      if (!food || !food.available) throw new AppError('این غذا در دسترس نیست')
+      const rest = food && d.restaurants.find((r) => r.id === food.restaurantId)
+      if (!food || !food.available || !rest?.approved) throw new AppError('این غذا در دسترس نیست')
       // سفارش غذا فقط از یک رستوران در هر بار
       const other = cart.find((c) => c.kind === 'food' && d.foods.find((f) => f.id === c.refId)?.restaurantId !== food.restaurantId)
       if (other && delta > 0) d.carts[me] = cart.filter((c) => c.kind !== 'food')
     } else {
       const p = d.products.find((x) => x.id === refId)
-      if (!p) throw new AppError('محصول یافت نشد')
+      if (!p || (p.review && delta > 0)) throw new AppError('محصول یافت نشد')
       const inCart = cart.find((c) => c.kind === 'product' && c.refId === refId)?.qty ?? 0
       if (delta > 0 && inCart + delta > p.stock) throw new AppError(p.stock ? `فقط ${p.stock} عدد موجود است` : 'این محصول ناموجود است')
     }
@@ -110,7 +111,7 @@ export const checkout = svc('shop.checkout', (kind: CartItem['kind'], address: s
   if (kind === 'food') {
     const r = db().restaurants.find((x) => x.id === q.lines[0].vendorId)
     if (!r?.open || !r.approved) throw new AppError('این رستوران در حال حاضر سفارش نمی‌پذیرد')
-  }
+  } else if (q.lines.some((l) => db().products.find((p) => p.id === l.refId)?.review)) throw new AppError('یکی از محصولات سبد هنوز تأیید نشده است')
   if ((db().wallets[me] ?? 0) < q.total) throw new AppError(`موجودی کافی نیست. مبلغ سفارش ${toman(q.total)} است`)
 
   const byVendor = new Map<string, typeof q.lines>()
@@ -265,7 +266,10 @@ export const replyReview = svc('review.reply', (reviewId: string, text: string) 
   })
 })
 
-const PRODUCT_FIELDS = ['name', 'brand', 'category', 'price', 'discount', 'stock', 'description', 'image', 'emoji'] as const
+const PRODUCT_FIELDS = ['name', 'brand', 'category', 'price', 'discount', 'stock', 'description', 'image', 'emoji', 'licenseCode'] as const
+/** تغییر این فیلدها در محصول منتشرشده، بررسی دوباره‌ی مدیر لازم دارد */
+const PRODUCT_REVIEW_FIELDS = ['name', 'brand', 'category', 'description', 'image', 'licenseCode'] as const
+const PRODUCT_CATEGORIES = ['supplement', 'equipment', 'apparel', 'accessory']
 const RESTAURANT_FIELDS = ['name', 'description', 'address', 'lat', 'lng', 'deliveryMinutes', 'open', 'cover'] as const
 const FOOD_FIELDS = ['name', 'description', 'price', 'calories', 'protein', 'carbs', 'fat', 'tags', 'emoji', 'image', 'available', 'restaurantId'] as const
 function pick<T extends object, K extends keyof T>(input: Partial<T>, keys: readonly K[]) {
@@ -274,27 +278,79 @@ function pick<T extends object, K extends keyof T>(input: Partial<T>, keys: read
   return out
 }
 
+/** موارد ناقص محصول برای انتشار؛ همان فهرست در فرم فروشنده */
+export function productMissing(p: Partial<Product>): string[] {
+  const out: string[] = []
+  if ((p.name ?? '').trim().length < 3) out.push('نام محصول')
+  if (!(p.price && p.price >= 1000)) out.push('قیمت')
+  if (!PRODUCT_CATEGORIES.includes(p.category ?? '')) out.push('دسته‌بندی')
+  if (!p.image) out.push('تصویر واقعی محصول')
+  if ((p.description ?? '').trim().length < 20) out.push('توضیحات (حداقل ۲۰ حرف)')
+  if (p.category === 'supplement' && (p.licenseCode ?? '').trim().length < 4) out.push('کد IRC یا پروانه‌ی بهداشت مکمل')
+  return out
+}
+
 export const saveProduct = svc(
   'shop.saveProduct',
   (input: Partial<Product>) => {
     const me = currentUserId()
-    if (!input.name?.trim() || !input.price) throw new AppError('نام و قیمت محصول الزامی است')
-    if (input.price < 1000) throw new AppError('قیمت معتبر نیست')
+    if (input.price !== undefined && input.price < 1000) throw new AppError('قیمت معتبر نیست')
     if (input.discount !== undefined && (input.discount < 0 || input.discount > 90)) throw new AppError('تخفیف باید بین ۰ تا ۹۰ درصد باشد')
-    if (input.stock !== undefined && input.stock < 0) throw new AppError('موجودی معتبر نیست')
+    if (input.stock !== undefined && (input.stock < 0 || !Number.isInteger(input.stock))) throw new AppError('موجودی معتبر نیست')
     const data = pick(input, PRODUCT_FIELDS)
+    for (const k of ['name', 'brand', 'licenseCode'] as const) if (data[k] !== undefined) data[k] = String(data[k] ?? '').trim().slice(0, 80)
+    if (data.description !== undefined) data.description = String(data.description ?? '').trim().slice(0, 2000)
     mutate((d) => {
       const ex = input.id ? d.products.find((p) => p.id === input.id) : undefined
       if (input.id && ex?.sellerId !== me) throw new AppError('محصول یافت نشد')
-      if (ex) Object.assign(ex, data)
-      else
+      if (ex?.review?.status === 'rejected') throw new AppError('این محصول رد شده است و قابل ویرایش نیست')
+      const missing = productMissing({ ...(ex ?? {}), ...data })
+      if (missing.length) throw new AppError(`برای انتشار محصول این موارد لازم است: ${missing.join('، ')}`)
+      const admins = d.users.filter((u) => u.roles.includes('admin'))
+      if (ex) {
+        const needsReview = PRODUCT_REVIEW_FIELDS.some((k) => k in data && data[k] !== ex[k])
+        Object.assign(ex, data)
+        if (needsReview || ex.review?.status === 'changes') {
+          const was = ex.review?.status
+          ex.review = { status: 'pending', note: ex.review?.note, at: now() }
+          if (was !== 'pending') admins.forEach((a) => notify(d, a.id, 'محصول برای بررسی', `«${ex.name}»`, '', '/panel/admin/approvals'))
+        }
+      } else {
         d.products.unshift({
           brand: '', category: 'supplement', discount: 0, stock: 0, description: '', emoji: '', ...data,
-          id: uid('p-'), sellerId: me, rating: 5, sold: 0, createdAt: now(),
+          id: uid('p-'), sellerId: me, rating: 5, sold: 0, createdAt: now(), review: { status: 'pending', at: now() },
         } as Product)
+        admins.forEach((a) => notify(d, a.id, 'محصول جدید برای بررسی', `«${data.name}»`, '', '/panel/admin/approvals'))
+      }
     })
   },
   { roles: ['seller'] },
+)
+
+/** بررسی محصول توسط مدیر */
+export const reviewProduct = svc(
+  'shop.reviewProduct',
+  (productId: string, decision: 'approve' | 'changes' | 'reject', note?: string) => {
+    const n = String(note ?? '').trim().slice(0, 500)
+    if (!['approve', 'changes', 'reject'].includes(decision)) throw new AppError('تصمیم نامعتبر است')
+    if (decision !== 'approve' && n.length < 5) throw new AppError(decision === 'reject' ? 'دلیل رد را بنویسید' : 'موارد لازم برای اصلاح را بنویسید')
+    mutate((d) => {
+      const p = d.products.find((x) => x.id === productId)
+      if (!p) throw new AppError('محصول یافت نشد')
+      if (decision === 'approve') {
+        const missing = productMissing(p)
+        if (missing.length) throw new AppError(`ناقص است: ${missing.join('، ')}`)
+        p.review = undefined
+        notify(d, p.sellerId, 'محصول شما منتشر شد', `«${p.name}» در فروشگاه نمایش داده می‌شود.`, '', '/panel/seller')
+      } else {
+        p.review = { status: decision === 'reject' ? 'rejected' : 'changes', note: n, at: now() }
+        // از سبدهای خرید دیگران برداشته می‌شود
+        for (const k of Object.keys(d.carts)) d.carts[k] = d.carts[k].filter((c) => !(c.kind === 'product' && c.refId === p.id))
+        notify(d, p.sellerId, decision === 'reject' ? 'محصول شما رد شد' : 'محصول شما نیاز به اصلاح دارد', `«${p.name}»: ${n}`, '', '/panel/seller')
+      }
+    })
+  },
+  { roles: ['admin'] },
 )
 
 export const deleteProduct = svc(
@@ -313,12 +369,29 @@ export const saveRestaurant = svc(
   (input: Partial<Restaurant>) => {
     const me = currentUserId()
     const data = pick(input, RESTAURANT_FIELDS)
+    if (data.name !== undefined && String(data.name).trim().length < 2) throw new AppError('نام رستوران را بنویسید')
+    if (data.address !== undefined && String(data.address).trim().length < 8) throw new AppError('نشانی کامل رستوران را بنویسید')
+    if (data.deliveryMinutes !== undefined && !(data.deliveryMinutes >= 10 && data.deliveryMinutes <= 180)) throw new AppError('زمان ارسال باید بین ۱۰ تا ۱۸۰ دقیقه باشد')
+    if (data.lat !== undefined || data.lng !== undefined) {
+      const lat = Number(data.lat), lng = Number(data.lng)
+      if (!(lat >= 25 && lat <= 40 && lng >= 44 && lng <= 63.5)) throw new AppError('موقعیت رستوران باید داخل ایران باشد؛ روی نقشه انتخاب کنید')
+    }
     mutate((d) => {
       const ex = input.id ? d.restaurants.find((r) => r.id === input.id) : undefined
       if (input.id && ex?.ownerId !== me) throw new AppError('رستوران یافت نشد')
-      if (ex) Object.assign(ex, data)
-      else {
+      if (ex?.review?.status === 'rejected') throw new AppError('ثبت این رستوران رد شده است؛ برای بررسی دوباره با پشتیبانی تماس بگیرید')
+      if (ex) {
+        Object.assign(ex, data)
+        // ویرایش پس از «نیاز به اصلاح» دوباره برای بررسی فرستاده می‌شود
+        if (ex.review?.status === 'changes' && Object.keys(data).some((k) => k !== 'open')) {
+          ex.review = { status: 'pending', note: ex.review.note, at: now() }
+          d.users.filter((u) => u.roles.includes('admin')).forEach((a) => notify(d, a.id, 'رستوران اصلاح‌شده برای بررسی', `«${ex.name}»`, '', '/panel/admin/approvals'))
+        }
+      } else {
+        if (!String(data.name ?? '').trim() || String(data.address ?? '').trim().length < 8) throw new AppError('نام و نشانی کامل رستوران الزامی است')
+        if (String(data.description ?? '').trim().length < 10) throw new AppError('توضیح کوتاهی درباره‌ی رستوران و غذاها بنویسید')
         const [lat, lng] = cityCenter(d.users.find((u) => u.id === me)?.city)
+        if (data.lat === undefined || (Math.abs(Number(data.lat) - lat) < 1e-4 && Math.abs(Number(data.lng) - lng) < 1e-4)) throw new AppError('موقعیت دقیق رستوران را روی نقشه انتخاب کنید')
         d.restaurants.unshift({
           name: 'رستوران من', description: '', address: '', lat, lng, cover: 'from-ink-700 via-ink-800 to-brand-600', deliveryMinutes: 40, open: true, ...data,
           id: uid('r-'), ownerId: me, rating: 5, approved: false,
@@ -334,7 +407,10 @@ export const saveFood = svc(
   'buffet.saveFood',
   (input: Partial<Food>) => {
     const me = currentUserId()
-    if (!input.name?.trim() || !input.price || !input.restaurantId) throw new AppError('نام، قیمت و رستوران الزامی است')
+    if (String(input.name ?? '').trim().length < 2 || !input.restaurantId) throw new AppError('نام غذا و رستوران الزامی است')
+    if (!(Number(input.price) >= 10_000 && Number(input.price) <= 20_000_000)) throw new AppError('قیمت غذا معتبر نیست (حداقل ۱۰ هزار تومان)')
+    if (!(Number(input.calories ?? 0) >= 0 && Number(input.calories ?? 0) <= 5000)) throw new AppError('کالری معتبر نیست')
+    for (const k of ['protein', 'carbs', 'fat'] as const) if (!(Number(input[k] ?? 0) >= 0 && Number(input[k] ?? 0) <= 500)) throw new AppError('مقدار درشت‌مغذی‌ها معتبر نیست')
     const data = pick(input, FOOD_FIELDS)
     mutate((d) => {
       const rest = d.restaurants.find((r) => r.id === input.restaurantId && r.ownerId === me)

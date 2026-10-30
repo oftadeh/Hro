@@ -72,12 +72,12 @@ export function Badge({ children, color = 'slate', className }: { children: Reac
 const fieldCls =
   'w-full rounded-[18px] border border-transparent bg-ink-900/[.05] px-4 py-3.5 text-[15px] outline-none transition-colors duration-200 placeholder:text-ink-400 focus:border-brand-400 focus:bg-white dark:bg-white/[.06] dark:focus:border-brand-300/60 dark:focus:bg-white/[.08]'
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-[13px] font-medium text-ink-500 dark:text-ink-400">{label}</span>
       {children}
-      {hint && <span className="block text-[12px] text-ink-400">{hint}</span>}
+      {error ? <span className="block text-[12px] text-coral-500">{error}</span> : hint && <span className="block text-[12px] text-ink-400">{hint}</span>}
     </label>
   )
 }

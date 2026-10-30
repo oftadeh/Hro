@@ -7,7 +7,7 @@ import type { CareKind, DoctorProfile } from '@/core/types'
 import { CARE_KINDS } from '@/core/config'
 import { Button, Card, Chips, Field, Input, NumberInput, PageHeader, Select, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
-import { run } from '@/ui/toast'
+import { run, toast } from '@/ui/toast'
 
 export default function DoctorProfileEditor() {
   const me = useMe()!
@@ -39,7 +39,7 @@ export default function DoctorProfileEditor() {
             <Field label="نشانی مطب / کلینیک"><Input value={f.address ?? ''} onChange={(e) => setF({ ...f, address: e.target.value })} /></Field>
           )}
           <Field label="هزینه‌ی هر جلسه (تومان)"><NumberInput value={f.visitPrice ?? 0} onChange={(v) => setF({ ...f, visitPrice: v })} /></Field>
-          <Field label="درباره"><Textarea value={f.bio ?? ''} onChange={(e) => setF({ ...f, bio: e.target.value })} /></Field>
+          <Field label="درباره" hint="حداقل ۲۰ حرف: سوابق و حوزه‌ی کار"><Textarea value={f.bio ?? ''} onChange={(e) => setF({ ...f, bio: e.target.value })} /></Field>
           <Button className="w-full" onClick={() => run(() => saveDoctorProfile({ kind: f.kind ?? 'doctor', mode: f.mode ?? 'online', address: f.address ?? '', specialty: f.specialty, medicalCode: f.medicalCode, visitPrice: f.visitPrice, bio: f.bio }), 'ذخیره شد')}>ذخیره</Button>
         </Card>
         <Card className="space-y-3">
@@ -48,6 +48,7 @@ export default function DoctorProfileEditor() {
             <Input type="datetime-local" value={slot} onChange={(e) => setSlot(e.target.value)} dir="ltr" />
             <Button variant="secondary" onClick={() => {
               if (!slot) return
+              if (new Date(slot) <= new Date()) return void toast.error('زمان نوبت باید در آینده باشد')
               run(() => saveDoctorProfile({ slots: [...(doc?.slots ?? []), new Date(slot).toISOString()] }), 'نوبت اضافه شد')
               setSlot('')
             }}>افزودن</Button>
@@ -56,7 +57,7 @@ export default function DoctorProfileEditor() {
             {(doc?.slots ?? []).map((s) => (
               <span key={s} className="flex items-center gap-1 rounded-xl bg-aqua-50 px-3 py-1.5 text-xs dark:bg-aqua-500/10">
                 {faDateTime(s)}
-                <button onClick={() => saveDoctorProfile({ slots: doc!.slots.filter((x) => x !== s) })} aria-label="حذف"><X size={12} /></button>
+                <button onClick={() => run(() => saveDoctorProfile({ slots: doc!.slots.filter((x) => x !== s) }))} aria-label="حذف"><X size={12} /></button>
               </span>
             ))}
           </div>

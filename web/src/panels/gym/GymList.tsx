@@ -32,7 +32,7 @@ export default function GymList() {
                 <Card key={g.id} className="overflow-hidden p-0">
                   <Cover gradient={g.cover} image={g.media.find((m) => m.type === 'image')?.url} className="h-24">
                     <div className="absolute right-3 top-3 flex gap-1.5">
-                      {g.approved ? <Badge color="emerald">فعال در فیت‌یاب</Badge> : <Badge color="amber">در انتظار تأیید مدیر</Badge>}
+                      {g.approved ? <Badge color="emerald">فعال در فیت‌یاب</Badge> : g.review?.status === 'changes' ? <Badge color="rose">نیاز به اصلاح</Badge> : g.review?.status === 'rejected' ? <Badge color="rose">رد شده</Badge> : <Badge color="amber">در انتظار تأیید مدیر</Badge>}
                       {!g.rental && <Badge>{tierLabel(gymTier(g, { settings }))}</Badge>}
                     </div>
                   </Cover>
@@ -42,9 +42,10 @@ export default function GymList() {
                       <div className="truncate text-xs text-ink-500">{g.city}{g.address ? ` · ${g.address}` : ''}</div>
                       <div className="mt-0.5 text-xs text-ink-500">{g.rental ? `${toman(g.rental.hourlyPrice)} / ساعت` : `${toman(g.sessionPrice)} / سانس`} · {num(checkins.filter((c) => c.gymId === g.id).length)} ورود</div>
                       <Stars value={g.rating} count={g.reviews} />
+                      {!g.approved && g.review?.note && <div className="mt-1 text-[12px] leading-5 text-coral-500">یادداشت مدیر: {g.review.note}</div>}
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <Link to={`../edit/${g.id}`}><Button size="sm" variant="outline" className="w-full" icon={<Pencil size={14} />}>ویرایش</Button></Link>
+                      <Link to={`../edit/${g.id}`}><Button size="sm" variant="outline" className="w-full" icon={<Pencil size={14} />}>{g.review?.status === 'changes' ? 'اصلاح' : 'ویرایش'}</Button></Link>
                       {g.approved && <Button size="sm" variant="secondary" icon={<PenSquare size={14} />} onClick={() => setPostGym(g.id)}>پست</Button>}
                     </div>
                   </div>

@@ -67,14 +67,63 @@ export function isBusinessPathAllowed(path: string): boolean {
 /* ───────── احراز مدارک کسب‌وکار ───────── */
 
 /** نقش‌هایی که پیش از فعالیت باید مدارک بارگذاری کنند و مدیر تأیید کند */
-export const VERIFY_ROLES = ['gym', 'coach', 'doctor', 'seller'] as const
+export const VERIFY_ROLES = ['gym', 'coach', 'doctor', 'seller', 'restaurant'] as const
+export type VerifyRole = (typeof VERIFY_ROLES)[number]
 
-/** مدارک لازم برای هر نقش (برای راهنمای فرم بارگذاری) */
-export const REQUIRED_DOCS: Record<(typeof VERIFY_ROLES)[number], string[]> = {
-  gym: ['پروانه‌ی بهره‌برداری یا مجوز هیئت ورزشی', 'کارت ملی مالک یا مدیر'],
-  coach: ['کارت یا مدرک مربیگری فدراسیون', 'کارت ملی'],
-  doctor: ['پروانه‌ی نظام پزشکی یا مجوز فعالیت درمانی', 'کارت ملی'],
-  seller: ['جواز کسب یا مجوز فروش', 'کارت ملی'],
+/** مدرک یا اطلاعات الزامی هر نقش */
+export interface Requirement {
+  key: string
+  label: string
+  hint?: string
+}
+
+/** مدارک الزامی هر نقش؛ هر کدام جداگانه بارگذاری می‌شود */
+export const REQUIRED_DOCS: Record<VerifyRole, Requirement[]> = {
+  gym: [
+    { key: 'license', label: 'پروانه‌ی بهره‌برداری یا مجوز هیئت ورزشی', hint: 'به نام مالک یا مدیر مجموعه' },
+    { key: 'nationalCard', label: 'کارت ملی مالک یا مدیر' },
+  ],
+  coach: [
+    { key: 'certificate', label: 'کارت یا مدرک مربیگری فدراسیون' },
+    { key: 'nationalCard', label: 'کارت ملی' },
+  ],
+  doctor: [
+    { key: 'license', label: 'پروانه‌ی نظام پزشکی یا مجوز فعالیت درمانی' },
+    { key: 'nationalCard', label: 'کارت ملی' },
+  ],
+  seller: [
+    { key: 'license', label: 'جواز کسب یا مجوز فروش' },
+    { key: 'nationalCard', label: 'کارت ملی' },
+  ],
+  restaurant: [
+    { key: 'license', label: 'جواز کسب و پروانه‌ی بهداشت' },
+    { key: 'nationalCard', label: 'کارت ملی' },
+  ],
+}
+
+/** اطلاعات الزامی هر نقش (کد ملی برای همه + شماره‌ی مجوز) */
+export const REQUIRED_FIELDS: Record<VerifyRole, Requirement[]> = {
+  gym: [{ key: 'nationalId', label: 'کد ملی مالک یا مدیر' }, { key: 'licenseNo', label: 'شماره‌ی پروانه یا مجوز' }],
+  coach: [{ key: 'nationalId', label: 'کد ملی' }, { key: 'licenseNo', label: 'شماره‌ی کارت مربیگری' }],
+  doctor: [{ key: 'nationalId', label: 'کد ملی' }, { key: 'licenseNo', label: 'کد نظام پزشکی یا شماره‌ی مجوز' }],
+  seller: [{ key: 'nationalId', label: 'کد ملی' }, { key: 'licenseNo', label: 'شماره‌ی جواز کسب یا شناسه‌ی ملی' }],
+  restaurant: [{ key: 'nationalId', label: 'کد ملی' }, { key: 'licenseNo', label: 'شماره‌ی جواز کسب یا پروانه‌ی بهداشت' }],
+}
+
+/** مدارک و اطلاعات الزامی یک حساب (اجتماع نقش‌هایش) */
+export function requirementsOf(roles: readonly string[]) {
+  const vr = roles.filter((r): r is VerifyRole => (VERIFY_ROLES as readonly string[]).includes(r))
+  const uniq = (list: Requirement[]) => list.filter((x, i) => list.findIndex((y) => y.key === x.key) === i)
+  return { docs: uniq(vr.flatMap((r) => REQUIRED_DOCS[r])), fields: uniq(vr.flatMap((r) => REQUIRED_FIELDS[r])) }
+}
+
+/** کد ملی ایران با رقم کنترل */
+export function isNationalId(v: string) {
+  const s = String(v ?? '').replace(/\D/g, '')
+  if (!/^\d{10}$/.test(s) || /^(\d)\1{9}$/.test(s)) return false
+  const sum = [...s.slice(0, 9)].reduce((a, c, i) => a + Number(c) * (10 - i), 0) % 11
+  const check = Number(s[9])
+  return sum < 2 ? check === sum : check === 11 - sum
 }
 
 /** این حساب پیش از فعالیت نیاز به تأیید مدارک دارد؟ */
@@ -86,6 +135,11 @@ export function needsVerification(u?: Pick<User, 'roles'> | null): boolean {
 export function isVerified(u?: Pick<User, 'roles' | 'verification'> | null): boolean {
   if (!u || !needsVerification(u)) return true
   return !u.verification || u.verification.status === 'approved'
+}
+
+/** ارائه‌دهنده‌ای که خدمات و کالایش قابل نمایش و خرید است: مسدود نیست و مدارکش تأیید شده */
+export function isProviderActive(u?: Pick<User, 'roles' | 'verification' | 'blocked'> | null): boolean {
+  return !!u && !u.blocked && isVerified(u)
 }
 
 /** کارهای تجاری بدون محدودیت نقش که تا تأیید مدارک بسته‌اند */

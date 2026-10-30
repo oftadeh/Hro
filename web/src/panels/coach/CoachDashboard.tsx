@@ -5,6 +5,7 @@ import { num, timeAgo, toman } from '@/core/format'
 import { saveCoachProfile } from '@/core/services/fityar'
 import { Avatar, Button, Card, Empty, PageHeader, SectionTitle, Stat } from '@/ui/kit'
 import { useMe, useUserMap } from '@/ui/hooks'
+import { run } from '@/ui/toast'
 
 export default function CoachDashboard() {
   const me = useMe()!
@@ -25,7 +26,7 @@ export default function CoachDashboard() {
         subtitle="مدیریت شاگردان، برنامه‌ها و گفتگوها در فیت‌یار"
         actions={
           coach && (
-            <Button size="sm" variant={coach.online ? 'primary' : 'outline'} onClick={() => saveCoachProfile({ online: !coach.online })}>
+            <Button size="sm" variant={coach.online ? 'primary' : 'outline'} onClick={() => run(() => saveCoachProfile({ online: !coach.online }))}>
               {coach.online ? 'آنلاین' : 'آفلاین'}
             </Button>
           )

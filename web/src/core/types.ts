@@ -226,6 +226,17 @@ export interface Gym {
   cancelledSlots?: { classId: ID; slotAt: ISODate; reason: string }[]
   /** روزهای تعطیل باشگاه (کلید روز YYYY-MM-DD) */
   closedDays?: { day: string; reason: string }[]
+  /** مجوز همین شعبه (پروانه‌ی بهره‌برداری یا مجوز هیئت)؛ فایل خصوصی، فقط مالک و مدیر */
+  license?: { number: string; doc: string }
+  /** نتیجه‌ی بررسی مدیر وقتی هنوز منتشر نشده */
+  review?: ApprovalReview
+}
+
+/** وضعیت بررسی مدیر برای باشگاه، رویداد و رستوران */
+export interface ApprovalReview {
+  status: 'pending' | 'changes' | 'rejected'
+  note?: string
+  at?: ISODate
 }
 
 /** سانس جنسیتی: روزهای هفته (خالی = همه‌ی روزها) و ساعت شروع/پایان */
@@ -422,6 +433,10 @@ export interface Product {
   rating: number
   sold: number
   createdAt: ISODate
+  /** کد IRC یا شماره‌ی پروانه‌ی بهداشت (برای مکمل‌ها الزامی) */
+  licenseCode?: string
+  /** تا تأیید مدیر در فروشگاه نمایش داده نمی‌شود (بدون این فیلد = منتشرشده) */
+  review?: ApprovalReview
 }
 
 export interface CartItem {
@@ -535,6 +550,7 @@ export interface Restaurant {
   deliveryMinutes: number
   open: boolean
   approved: boolean
+  review?: ApprovalReview
 }
 
 export interface Food {
@@ -987,6 +1003,7 @@ export interface SportEvent {
   cover: string
   registrations: EventRegistration[]
   approved: boolean
+  review?: ApprovalReview
   status: 'open' | 'closed' | 'done' | 'cancelled'
   createdAt: ISODate
 }
@@ -1011,11 +1028,18 @@ export interface Listing {
 
 /** وضعیت مدارک حساب کسب‌وکار */
 export interface Verification {
-  status: 'none' | 'pending' | 'approved' | 'rejected'
+  /** changes = نیاز به اصلاح و ارسال دوباره؛ rejected = رد نهایی */
+  status: 'none' | 'pending' | 'approved' | 'rejected' | 'changes'
   /** نام فایل‌های مدارک (خصوصی؛ فقط صاحب حساب و مدیر می‌بینند) */
   docs: string[]
-  /** توضیح متقاضی یا دلیل رد از طرف مدیر */
+  /** هر مدرک الزامی با کلید خودش (مثلاً license، nationalCard) */
+  slots?: Record<string, string>
+  /** اطلاعات الزامی: کد ملی، شماره‌ی پروانه و… */
+  fields?: Record<string, string>
+  /** توضیح متقاضی */
   note?: string
+  /** توضیح مدیر برای «نیاز به اصلاح» یا «رد» */
+  adminNote?: string
   submittedAt?: ISODate
   reviewedAt?: ISODate
 }

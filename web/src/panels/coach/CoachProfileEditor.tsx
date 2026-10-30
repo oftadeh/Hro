@@ -23,16 +23,21 @@ export default function CoachProfileEditor() {
   return (
     <div className="animate-fade-up">
       <PageHeader title="پروفایل و پکیج‌ها" subtitle="این اطلاعات در ماژول فیت‌یار به کاربران نمایش داده می‌شود" />
+      {coach && (!coach.verified || (coach.bio ?? '').trim().length < 20) && (
+        <Card className="mb-4 border border-gold-400/50 text-[13px] leading-6">
+          {!coach.verified ? 'نشان مربی تأییدشده هنوز فعال نیست؛ پس از تأیید مدارک، پروفایل شما در فیت‌یار نمایش داده می‌شود.' : 'برای نمایش در فیت‌یار، بخش «درباره‌ی من» را کامل کنید (حداقل ۳۰ حرف).'}
+        </Card>
+      )}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="space-y-4">
           <Field label="عنوان تخصصی"><Input value={f.title ?? ''} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="مربی بدنسازی و فیتنس" /></Field>
-          <Field label="درباره‌ی من"><Textarea value={f.bio ?? ''} onChange={(e) => setF({ ...f, bio: e.target.value })} /></Field>
+          <Field label="درباره‌ی من" hint="حداقل ۳۰ حرف: سابقه، روش کار و نتایج"><Textarea value={f.bio ?? ''} onChange={(e) => setF({ ...f, bio: e.target.value })} /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="سابقه (سال)"><NumberInput value={f.experienceYears ?? 0} onChange={(v) => setF({ ...f, experienceYears: v })} /></Field>
             <Field label="هزینه‌ی تماس ۳۰ دقیقه (تومان)"><NumberInput value={f.callPrice ?? 0} onChange={(v) => setF({ ...f, callPrice: v })} /></Field>
           </div>
           <Field label="تخصص‌ها" hint="با ویرگول جدا کنید"><Input value={specs} onChange={(e) => setSpecs(e.target.value)} /></Field>
-          <Field label="مدارک" hint="با ویرگول جدا کنید"><Input value={certs} onChange={(e) => setCerts(e.target.value)} /></Field>
+          <Field label="مدارک" hint="با ویرگول جدا کنید؛ تغییر مدارک نیاز به بررسی دوباره دارد"><Input value={certs} onChange={(e) => setCerts(e.target.value)} /></Field>
           <Button className="w-full" onClick={() => run(() => saveCoachProfile({ ...f, specialties: split(specs), certificates: split(certs) }), 'پروفایل ذخیره شد')}>ذخیره‌ی پروفایل</Button>
         </Card>
         <div className="space-y-4">
@@ -44,7 +49,7 @@ export default function CoachProfileEditor() {
                   <div className="text-sm font-semibold">{p.title}</div>
                   <div className="text-xs text-ink-500">{toman(p.price)} · {p.durationWeeks} هفته</div>
                 </div>
-                <button onClick={() => { const next = plans.filter((x) => x.id !== p.id); setF({ ...f, plans: next }); saveCoachProfile({ plans: next }) }} className="text-ink-400 hover:text-coral-500" aria-label="حذف"><Trash2 size={16} /></button>
+                <button onClick={async () => { const next = plans.filter((x) => x.id !== p.id); if (await run(async () => { await saveCoachProfile({ plans: next }); return true }, 'پکیج حذف شد')) setF({ ...f, plans: next }) }} className="text-ink-400 hover:text-coral-500" aria-label="حذف"><Trash2 size={16} /></button>
               </div>
             ))}
           </Card>
@@ -61,13 +66,14 @@ export default function CoachProfileEditor() {
               <Field label="هفته"><NumberInput value={plan.durationWeeks} onChange={(v) => setPlan({ ...plan, durationWeeks: v })} /></Field>
             </div>
             <Field label="توضیحات"><Textarea rows={2} value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></Field>
-            <Button variant="secondary" className="w-full" icon={<Plus size={16} />} onClick={() => {
-              if (!plan.title.trim() || !plan.price) return
+            <Button variant="secondary" className="w-full" icon={<Plus size={16} />} disabled={plan.title.trim().length < 3 || plan.price < 50_000} onClick={async () => {
               const next = [...plans, { ...plan, id: uid('cp-') }]
+              const ok = await run(async () => { await saveCoachProfile({ plans: next }); return true }, 'پکیج اضافه شد')
+              if (!ok) return
               setF({ ...f, plans: next })
-              run(() => saveCoachProfile({ plans: next }), 'پکیج اضافه شد')
               setPlan({ ...plan, title: '', description: '' })
             }}>افزودن پکیج</Button>
+            <p className="text-[12px] text-ink-500">قیمت هر پکیج حداقل ۵۰ هزار تومان و مدت آن ۱ تا ۵۲ هفته.</p>
           </Card>
         </div>
       </div>

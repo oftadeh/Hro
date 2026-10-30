@@ -160,7 +160,7 @@ const PANELS: Record<Exclude<Role, 'user'>, PanelGroup[]> = {
     { title: 'نمای کلی', icon: BarChart3, links: [{ to: '/panel/admin', label: 'داشبورد', icon: BarChart3, end: true }] },
     { title: 'کاربران', icon: Users, links: [
       { to: 'users', label: 'کاربران و نقش‌ها', icon: Users },
-      { to: 'approvals', label: 'تأیید مدارک و رویدادها', icon: BadgeCheck },
+      { to: 'approvals', label: 'بررسی مدارک، محصولات و رویدادها', icon: BadgeCheck },
     ] },
     { title: 'محتوا', icon: Building2, links: [
       { to: 'gyms', label: 'باشگاه‌ها', icon: Building2 },

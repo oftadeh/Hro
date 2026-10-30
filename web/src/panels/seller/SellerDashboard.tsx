@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Package, Pencil, Plus, ShoppingBag, Trash2, Wallet } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
-import { deleteProduct, saveProduct } from '@/core/services/commerce'
+import { deleteProduct, productMissing, saveProduct } from '@/core/services/commerce'
 import type { Product } from '@/core/types'
 import { Badge, Button, Card, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, Select, Sheet, Stat, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
@@ -43,10 +43,12 @@ export default function SellerDashboard() {
               <div className="mt-1 flex flex-wrap gap-1">
                 <Badge color={p.stock > 0 ? 'emerald' : 'rose'}>موجودی {num(p.stock)}</Badge>
                 {p.discount > 0 && <Badge color="rose">٪{num(p.discount)}</Badge>}
+                {p.review && <Badge color={p.review.status === 'pending' ? 'amber' : 'rose'}>{p.review.status === 'pending' ? 'در انتظار تأیید' : p.review.status === 'changes' ? 'نیاز به اصلاح' : 'رد شده'}</Badge>}
               </div>
+              {p.review?.note && p.review.status !== 'pending' && <div className="mt-1 text-[12px] leading-5 text-coral-500">یادداشت مدیر: {p.review.note}</div>}
               <div className="mt-1 text-xs">{toman(p.price)} · {num(p.sold)} فروش</div>
               <div className="mt-2 flex gap-1">
-                <Button size="sm" variant="outline" icon={<Pencil size={13} />} onClick={() => setEdit(p)}>ویرایش</Button>
+                {p.review?.status !== 'rejected' && <Button size="sm" variant="outline" icon={<Pencil size={13} />} onClick={() => setEdit(p)}>{p.review?.status === 'changes' ? 'اصلاح' : 'ویرایش'}</Button>}
                 <Button size="sm" variant="ghost" className="text-coral-500" icon={<Trash2 size={13} />} onClick={async () => (await ask('حذف شود؟')) && deleteProduct(p.id)} />
               </div>
             </div>
@@ -68,9 +70,14 @@ export default function SellerDashboard() {
             <Field label="قیمت (تومان)"><NumberInput value={edit.price ?? 0} onChange={(v) => setEdit({ ...edit, price: v })} /></Field>
             <Field label="تخفیف (درصد)"><NumberInput value={edit.discount ?? 0} onChange={(v) => setEdit({ ...edit, discount: Math.min(90, v) })} /></Field>
             <Field label="موجودی انبار"><NumberInput value={edit.stock ?? 0} onChange={(v) => setEdit({ ...edit, stock: v })} /></Field>
-            <div className="sm:col-span-2"><Field label="توضیحات"><Textarea rows={3} value={edit.description} onChange={(e) => setEdit({ ...edit, description: e.target.value })} /></Field></div>
-            <Button className="sm:col-span-2" onClick={async () => {
-              const ok = await runOk(() => saveProduct(edit), 'محصول ذخیره شد')
+            {edit.category === 'supplement' && (
+              <div className="sm:col-span-2"><Field label="کد IRC یا شماره‌ی پروانه‌ی بهداشت" hint="مکمل بدون مجوز سازمان غذا و دارو منتشر نمی‌شود"><Input dir="ltr" className="text-left" value={edit.licenseCode ?? ''} onChange={(e) => setEdit({ ...edit, licenseCode: e.target.value })} /></Field></div>
+            )}
+            <div className="sm:col-span-2"><Field label="توضیحات" hint="حداقل ۲۰ حرف: ترکیبات، اندازه، نحوه‌ی مصرف یا جنس"><Textarea rows={3} value={edit.description} onChange={(e) => setEdit({ ...edit, description: e.target.value })} /></Field></div>
+            {productMissing(edit).length > 0 && <p className="text-[12px] leading-6 text-ink-500 sm:col-span-2">باقی‌مانده: {productMissing(edit).join('، ')}</p>}
+            <p className="text-[12px] leading-6 text-ink-500 sm:col-span-2">محصول جدید یا تغییر نام، تصویر، دسته و توضیحات پس از بررسی کی‌فیت منتشر می‌شود.</p>
+            <Button className="sm:col-span-2" disabled={productMissing(edit).length > 0} onClick={async () => {
+              const ok = await runOk(() => saveProduct(edit), 'ذخیره شد')
               if (ok) setEdit(undefined)
             }}>ذخیره</Button>
           </div>

@@ -87,7 +87,11 @@ export const saveDoctorProfile = svc(
   'doctor.saveProfile',
   (input: Partial<DoctorProfile>) => {
     const me = currentUserId()
-    if (input.visitPrice !== undefined && input.visitPrice < 0) throw new AppError('هزینه‌ی ویزیت معتبر نیست')
+    if (input.visitPrice !== undefined && !(input.visitPrice === 0 || (input.visitPrice >= 10_000 && input.visitPrice <= 50_000_000))) throw new AppError('هزینه‌ی ویزیت معتبر نیست (رایگان یا حداقل ۱۰ هزار تومان)')
+    if (input.medicalCode !== undefined && String(input.medicalCode).trim().length < 4) throw new AppError('کد نظام یا شماره‌ی مجوز را کامل وارد کنید')
+    if (input.specialty !== undefined && String(input.specialty).trim().length < 3) throw new AppError('تخصص را بنویسید')
+    if (input.bio !== undefined && String(input.bio).trim().length < 20) throw new AppError('درباره‌ی خودتان حداقل ۲۰ حرف بنویسید')
+    if (input.slots !== undefined && input.slots.length > 200) throw new AppError('تعداد نوبت‌ها بیش از حد است')
     if (input.kind !== undefined && !(input.kind in CARE_KINDS)) throw new AppError('نوع خدمت معتبر نیست')
     if (input.mode !== undefined && !['online', 'inperson', 'both'].includes(input.mode)) throw new AppError('نحوه‌ی ارائه‌ی خدمت معتبر نیست')
     if (input.address !== undefined) input.address = String(input.address).slice(0, 200)

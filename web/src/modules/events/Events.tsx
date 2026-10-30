@@ -4,7 +4,7 @@ import { CalendarDays, MapPin, Medal, Plus, ShieldCheck, Users } from 'lucide-re
 import { useDB } from '@/core/db'
 import { EVENT_KINDS } from '@/core/config'
 import { faDateTime, faDigitsToEn, num, toman } from '@/core/format'
-import { EVENT_CANCEL_HOURS, cancelEvent, cancelRegistration, checkInEvent, createEvent, publishResults, registerEvent, type NewEvent } from '@/core/services/events'
+import { EVENT_CANCEL_HOURS, cancelEvent, cancelRegistration, checkInEvent, createEvent, publishResults, registerEvent, updateEvent, type NewEvent } from '@/core/services/events'
 import { activePolicy } from '@/core/services/insurance'
 import type { SportEvent } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Cover, Empty, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
@@ -112,8 +112,9 @@ export function EventDetail() {
         <div className="flex items-center gap-2"><MapPin size={15} className="text-ink-400" /> {e.location}، {e.city}</div>
         <div className="flex items-center gap-2"><Users size={15} className="text-ink-400" /> {num(e.registrations.length)} از {num(e.capacity)} نفر · {GENDER[e.gender]}</div>
         <div className="flex items-center gap-2 text-xs text-ink-500">برگزارکننده: <Avatar name={users[e.organizerId]?.name ?? ''} size={20} /> {users[e.organizerId]?.name}</div>
-        <div className="pt-1"><Badge color={STATUS[e.status][1]}>{STATUS[e.status][0]}</Badge>{!e.approved && <Badge color="amber" className="mr-1">در انتظار تأیید</Badge>}</div>
+        <div className="pt-1"><Badge color={STATUS[e.status][1]}>{STATUS[e.status][0]}</Badge>{!e.approved && <Badge color={e.review?.status === 'changes' ? 'rose' : 'amber'} className="mr-1">{e.review?.status === 'changes' ? 'نیاز به اصلاح' : 'در انتظار تأیید'}</Badge>}</div>
       </Card>
+      {manager && !e.approved && e.review?.status === 'changes' && <EventFix e={e} />}
       {e.description && <p className="mt-3 whitespace-pre-line text-sm leading-7 text-ink-600 dark:text-ink-300">{e.description}</p>}
 
       {ranked.length > 0 && (
@@ -190,6 +191,20 @@ export function EventDetail() {
         </>
       )}
     </div>
+  )
+}
+
+/** اصلاح رویداد پس از درخواست مدیر و ارسال دوباره برای بررسی */
+function EventFix({ e }: { e: SportEvent }) {
+  const [desc, setDesc] = useState(e.description)
+  const [loc, setLoc] = useState(e.location)
+  return (
+    <Card className="mt-3 space-y-3 border border-coral-300/50">
+      <div className="text-[14px] leading-7"><b>یادداشت مدیر:</b> {e.review?.note}</div>
+      <Field label="محل برگزاری"><Input value={loc} onChange={(x) => setLoc(x.target.value)} /></Field>
+      <Field label="توضیحات"><Textarea rows={4} value={desc} onChange={(x) => setDesc(x.target.value)} /></Field>
+      <Button className="w-full" onClick={() => run(() => updateEvent(e.id, { description: desc, location: loc }), 'برای بررسی دوباره ارسال شد')}>ذخیره و ارسال دوباره</Button>
+    </Card>
   )
 }
 

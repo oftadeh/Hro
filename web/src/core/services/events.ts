@@ -27,7 +27,8 @@ function clean(input: NewEvent) {
   if (!(input.kind in EVENT_KINDS)) throw new AppError('نوع رویداد معتبر نیست')
   const at = new Date(input.at)
   if (isNaN(at.getTime()) || at.getTime() < Date.now() + 24 * 3_600_000) throw new AppError('زمان رویداد باید حداقل یک روز بعد باشد')
-  if (!String(input.location ?? '').trim()) throw new AppError('محل برگزاری را بنویسید')
+  if (String(input.location ?? '').trim().length < 5) throw new AppError('محل برگزاری را کامل بنویسید')
+  if (String(input.description ?? '').trim().length < 30) throw new AppError('توضیحات رویداد (برنامه، شرایط شرکت، جوایز) را حداقل ۳۰ حرف بنویسید')
   if (cleanCity(input.city).length < 2) throw new AppError('شهر برگزاری را بنویسید')
   if (!(input.capacity >= 2 && input.capacity <= 20_000)) throw new AppError('ظرفیت معتبر نیست')
   if (!(input.fee === 0 || input.fee >= 10_000)) throw new AppError('ورودی معتبر نیست (رایگان یا حداقل ۱۰ هزار تومان)')
@@ -62,28 +63,46 @@ export const updateEvent = svc('event.update', (eventId: string, input: Partial<
   if (e.status === 'done' || e.status === 'cancelled') throw new AppError('این رویداد بسته شده است')
   mutate((d) => {
     const x = d.events.find((y) => y.id === eventId)!
-    if (input.description !== undefined) x.description = String(input.description).slice(0, 2000)
+    if (input.description !== undefined) {
+      if (String(input.description).trim().length < 30) throw new AppError('توضیحات رویداد حداقل ۳۰ حرف است')
+      x.description = String(input.description).slice(0, 2000)
+    }
     if (input.location !== undefined && String(input.location).trim()) x.location = String(input.location).trim().slice(0, 150)
     if (input.capacity !== undefined) {
       if (input.capacity < x.registrations.length) throw new AppError('ظرفیت از تعداد ثبت‌نام‌شده‌ها کمتر است')
       x.capacity = Math.round(input.capacity)
     }
     if (input.status === 'open' || input.status === 'closed') x.status = input.status
+    // ویرایش پس از «نیاز به اصلاح» دوباره برای بررسی مدیر فرستاده می‌شود
+    if (x.review?.status === 'changes') {
+      x.review = { status: 'pending', note: x.review.note, at: now() }
+      d.users.filter((a) => a.roles.includes('admin')).forEach((a) => notify(d, a.id, 'رویداد اصلاح‌شده برای بررسی', `«${x.title}»`, '', '/panel/admin/approvals'))
+    }
   })
 })
 
 export const approveEvent = svc(
   'event.approve',
-  (eventId: string, approve: boolean) => {
+  (eventId: string, decision: 'approve' | 'changes' | 'reject', note?: string) => {
+    const n = String(note ?? '').trim().slice(0, 500)
+    if (!['approve', 'changes', 'reject'].includes(decision)) throw new AppError('تصمیم نامعتبر است')
+    if (decision !== 'approve' && n.length < 5) throw new AppError(decision === 'reject' ? 'دلیل رد را بنویسید' : 'موارد لازم برای اصلاح را بنویسید')
     mutate((d) => {
       const e = d.events.find((x) => x.id === eventId)
       if (!e) throw new AppError('رویداد یافت نشد')
-      if (approve) {
+      if (decision === 'approve') {
         e.approved = true
+        e.review = undefined
         notify(d, e.organizerId, 'رویداد شما منتشر شد', `«${e.title}» تأیید شد و ثبت‌نام باز است.`, '', `/events/${e.id}`)
+      } else if (decision === 'changes') {
+        e.approved = false
+        e.review = { status: 'changes', note: n, at: now() }
+        notify(d, e.organizerId, 'رویداد شما نیاز به اصلاح دارد', `«${e.title}»: ${n}`, '', `/events/${e.id}`)
       } else {
+        e.approved = false
+        e.review = { status: 'rejected', note: n, at: now() }
         e.status = 'cancelled'
-        notify(d, e.organizerId, 'رویداد تأیید نشد', `«${e.title}» با قوانین کی‌فیت مطابقت نداشت.`, '', '/events')
+        notify(d, e.organizerId, 'رویداد تأیید نشد', `«${e.title}»: ${n}`, '', '/events')
       }
     })
   },

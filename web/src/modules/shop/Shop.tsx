@@ -27,7 +27,7 @@ export default function Shop() {
   const [cat, setCat] = useState<'all' | Product['category']>('all')
   const [q, setQ] = useState('')
   const [cart, setCart] = useState(false)
-  const list = useMemo(() => products.filter((p) => (cat === 'all' || p.category === cat) && (!q || p.name.includes(q) || p.brand.toLowerCase().includes(q.toLowerCase()))), [products, cat, q])
+  const list = useMemo(() => products.filter((p) => !p.review && (cat === 'all' || p.category === cat) && (!q || p.name.includes(q) || p.brand.toLowerCase().includes(q.toLowerCase()))), [products, cat, q])
 
   return (
     <div className="animate-fade-up">

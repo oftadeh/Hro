@@ -14,15 +14,16 @@ export default function AdminOverview() {
   const users = useDB((s) => s.users)
   const gyms = useDB((s) => s.gyms)
   const payouts = useDB((s) => s.payouts)
+  const products = useDB((s) => s.products)
   const wallets = useDB((s) => s.wallets)
   const txs = useDB((s) => s.transactions)
   const challenges = useDB((s) => s.challenges)
   const { gmv, revenue, revenueByModule } = platformStats()
-  const pendingGyms = gyms.filter((g) => !g.approved).length
+  const pendingGyms = gyms.filter((g) => !g.approved && g.review?.status !== 'rejected' && g.review?.status !== 'changes').length
   const pendingPayouts = payouts.filter((p) => p.status === 'pending').length
-  const pendingDocs = users.filter((u) => u.verification?.status === 'pending').length
+  const pendingDocs = users.filter((u) => u.verification?.status === 'pending').length + products.filter((p) => p.review?.status === 'pending').length
   const todo = [
-    { n: pendingDocs, label: 'مدرک کسب‌وکار در انتظار بررسی', to: 'approvals', tone: 'card-violet' },
+    { n: pendingDocs, label: 'مدرک و محصول در انتظار بررسی', to: 'approvals', tone: 'card-violet' },
     { n: pendingGyms, label: 'باشگاه در انتظار تأیید', to: 'gyms', tone: 'card-pink' },
     { n: pendingPayouts, label: 'درخواست تسویه در انتظار', to: 'finance', tone: 'card-mint' },
   ].filter((t) => t.n > 0)

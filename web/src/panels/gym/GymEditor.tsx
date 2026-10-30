@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Plus, Trash2, Upload } from 'lucide-react'
-import { uploadVideo } from '@/core/client/remote'
+import { AlertCircle, CheckCircle2, FileText, Plus, Trash2, Upload } from 'lucide-react'
+import { openDoc, uploadDoc, uploadVideo } from '@/core/client/remote'
 import { IR_CITIES, VENUE_KINDS, cityCenter } from '@/core/config'
 import { CityInput } from '@/ui/CityInput'
 import { useMe } from '@/ui/hooks'
 import type { VenueKind } from '@/core/types'
-import { weekdayLabel } from '@/core/services/fityab'
+import { MIN_GYM_PHOTOS, gymMissing, isDefaultSpot, weekdayLabel } from '@/core/services/fityab'
 import { uid } from '@/core/id'
 import { useDB } from '@/core/db'
 import { saveGym } from '@/core/services/fityab'
@@ -14,6 +14,11 @@ import type { GenderWindow, Gym, GymClass, Media } from '@/core/types'
 import { Button, Card, Field, ImagePicker, Input, NumberInput, PageHeader, SectionTitle, Select, Tabs, Textarea } from '@/ui/kit'
 import { run, toast } from '@/ui/toast'
 import { LocationPicker } from '../shared/LocationPicker'
+
+type Tab = 'info' | 'capacity' | 'classes' | 'place' | 'license'
+
+/** هر مورد ناقص در کدام بخش فرم است */
+const TAB_OF: Record<string, Tab> = { name: 'info', city: 'info', phone: 'info', description: 'info', sports: 'info', hours: 'info', address: 'place', location: 'place', photos: 'place', licenseNo: 'license', licenseDoc: 'license' }
 
 const split = (s: string) => s.split(/[،,]/).map((x) => x.trim()).filter(Boolean)
 
@@ -48,7 +53,8 @@ export default function GymEditor() {
   const [sports, setSports] = useState((existing?.sports ?? []).join('، '))
   const [video, setVideo] = useState('')
   const [uploading, setUploading] = useState(false)
-  const [tab, setTab] = useState<'info' | 'capacity' | 'classes' | 'place'>('info')
+  const [tab, setTab] = useState<Tab>('info')
+  const [docBusy, setDocBusy] = useState(false)
   const kind = (f.kind ?? 'gym') as VenueKind
   const rentalKind = VENUE_KINDS[kind].booking === 'rental'
   // اجاره‌ای‌ها کلاس ندارند؛ اگر وسط کار نوع عوض شد، بخش کلاس‌ها به اطلاعات برمی‌گردد
@@ -56,6 +62,10 @@ export default function GymEditor() {
   const set = <K extends keyof Gym>(k: K, v: Gym[K]) => setF((s) => ({ ...s, [k]: v }))
   const media = f.media ?? []
   const classes = f.classes ?? []
+  const missing = gymMissing({ ...f, sports: split(sports) })
+  const photos = media.filter((m) => m.type === 'image').length
+  const review = existing && !existing.approved ? existing.review : undefined
+  const rejected = review?.status === 'rejected'
 
   const save = async () => {
     const gid = await run(() => saveGym({ ...f, facilities: split(facilities), sports: split(sports) }), existing ? 'تغییرات ذخیره شد' : 'باشگاه ثبت شد و پس از تایید مدیر در فیت‌یاب نمایش داده می‌شود')
@@ -74,11 +84,22 @@ export default function GymEditor() {
             { value: 'info', label: 'اطلاعات و قیمت' },
             { value: 'capacity', label: rentalKind ? 'ظرفیت' : 'ظرفیت و سانس‌ها' },
             ...(rentalKind ? [] : [{ value: 'classes' as const, label: `کلاس‌ها${classes.length ? ` (${classes.length.toLocaleString('fa-IR')})` : ''}` }]),
-            { value: 'place', label: 'مکان و رسانه' },
+            { value: 'place', label: 'مکان و عکس‌ها' },
+            { value: 'license', label: 'مجوز' },
           ]}
         />
       </div>
       <div className="grid max-w-3xl gap-4">
+        {review && (review.status !== 'pending' || review.note) && (
+          <Card className={`flex items-start gap-3 border text-[14px] leading-7 ${rejected ? 'border-coral-300/50' : 'border-gold-400/50'}`}>
+            <AlertCircle size={20} className={`mt-1 shrink-0 ${rejected ? 'text-coral-500' : 'text-gold-600'}`} />
+            <div>
+              <b>{rejected ? 'ثبت این باشگاه رد شد' : review.status === 'changes' ? 'مدیر کی‌فیت درخواست اصلاح داده است' : 'در انتظار بررسی دوباره'}</b>
+              {review.note && <div>یادداشت مدیر: {review.note}</div>}
+              {rejected ? <div className="text-ink-500">برای بررسی دوباره با پشتیبانی تماس بگیرید.</div> : review.status === 'changes' && <div className="text-ink-500">موارد را اصلاح و ذخیره کنید تا دوباره بررسی شود.</div>}
+            </div>
+          </Card>
+        )}
         {view === 'info' && (
         <Card className="space-y-4">
           <Field label="نوع مجموعه">
@@ -92,7 +113,7 @@ export default function GymEditor() {
             <Field label="نام شعبه"><Input value={f.branch ?? ''} onChange={(e) => set('branch', e.target.value)} placeholder="مثلاً شعبه‌ی سعادت‌آباد" /></Field>
           </div>
           <Field label="شعار کوتاه"><Input value={f.tagline} onChange={(e) => set('tagline', e.target.value)} placeholder="مثلاً: بدنسازی حرفه‌ای با تجهیزات روز" /></Field>
-          <Field label="معرفی کامل"><Textarea value={f.description} onChange={(e) => set('description', e.target.value)} /></Field>
+          <Field label="معرفی کامل" hint="حداقل ۳۰ حرف: فضا، تجهیزات، مربی‌ها"><Textarea value={f.description} onChange={(e) => set('description', e.target.value)} /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
             {rentalKind ? (
               <>
@@ -212,11 +233,12 @@ export default function GymEditor() {
         <div className="space-y-4">
           <Card className="space-y-3">
             <Field label="آدرس"><Input value={f.address} onChange={(e) => set('address', e.target.value)} /></Field>
-            <div className="text-xs text-ink-500">روی نقشه کلیک کنید تا موقعیت دقیق باشگاه ثبت شود</div>
-            <LocationPicker lat={f.lat!} lng={f.lng!} onChange={(lat, lng) => setF((s) => ({ ...s, lat, lng }))} />
+            <div className="text-xs text-ink-500">روی نقشه کلیک کنید یا «موقعیت من» را بزنید تا موقعیت دقیق باشگاه ثبت شود</div>
+            <LocationPicker lat={f.lat!} lng={f.lng!} picked={!isDefaultSpot(f)} onChange={(lat, lng) => setF((s) => ({ ...s, lat, lng }))} />
           </Card>
           <Card>
             <SectionTitle title="گالری عکس و فیلم" />
+            <p className={`-mt-2 mb-3 text-xs ${photos < MIN_GYM_PHOTOS ? 'text-coral-500' : 'text-ink-500'}`}>حداقل {MIN_GYM_PHOTOS.toLocaleString('fa-IR')} عکس واقعی از سالن، تجهیزات و ورودی لازم است ({photos.toLocaleString('fa-IR')} عکس اضافه شده).</p>
             <div className="grid grid-cols-3 gap-2">
               {media.map((m, i) => (
                 <div key={i} className="relative aspect-square overflow-hidden rounded-2xl bg-ink-900">
@@ -252,8 +274,58 @@ export default function GymEditor() {
           </Card>
         </div>
         )}
+        {view === 'license' && (
+        <Card className="space-y-4">
+          <SectionTitle title="مجوز این مجموعه" />
+          <p className="-mt-3 text-xs leading-6 text-ink-500">پروانه‌ی بهره‌برداری از اداره‌ی ورزش و جوانان یا مجوز هیئت ورزشی همین شعبه. فایل مجوز خصوصی است و فقط تیم بررسی کی‌فیت آن را می‌بیند.</p>
+          <Field label="شماره‌ی پروانه یا مجوز"><Input value={f.license?.number ?? ''} onChange={(e) => set('license', { number: e.target.value, doc: f.license?.doc ?? '' })} dir="ltr" className="text-left" /></Field>
+          {f.license?.doc ? (
+            <div className="flex items-center gap-3 rounded-2xl bg-ink-50 px-3 py-2.5 dark:bg-ink-800">
+              <FileText size={18} className="shrink-0 text-ink-500" />
+              <button type="button" className="min-w-0 flex-1 truncate text-start text-[14px] underline-offset-4 hover:underline" onClick={() => run(() => openDoc(f.license!.doc))}>تصویر مجوز</button>
+              <button type="button" aria-label="حذف فایل مجوز" onClick={() => set('license', { number: f.license?.number ?? '', doc: '' })} className="flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-700"><Trash2 size={16} /></button>
+            </div>
+          ) : (
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-ink-200 py-4 text-sm text-ink-500 dark:border-white/15">
+              <Upload size={16} /> {docBusy ? 'در حال بارگذاری…' : 'بارگذاری تصویر یا PDF مجوز'}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                hidden
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  e.target.value = ''
+                  if (!file) return
+                  setDocBusy(true)
+                  const ref = await run(() => uploadDoc(file))
+                  setDocBusy(false)
+                  if (ref) set('license', { number: f.license?.number ?? '', doc: ref })
+                }}
+              />
+            </label>
+          )}
+        </Card>
+        )}
+
+        {missing.length > 0 && !rejected && (
+          <Card className="space-y-2 border border-gold-400/40">
+            <div className="text-[14px] font-bold">برای ثبت، این موارد را کامل کنید</div>
+            <ul className="space-y-1">
+              {missing.map((m) => (
+                <li key={m.key}>
+                  <button type="button" onClick={() => setTab(TAB_OF[m.key] ?? 'info')} className="flex items-center gap-2 text-[13px] text-ink-600 underline-offset-4 hover:underline dark:text-ink-300">
+                    <AlertCircle size={14} className="shrink-0 text-gold-600" />{m.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+        {missing.length === 0 && !existing?.approved && !rejected && (
+          <div className="flex items-center gap-2 text-[13px] text-aqua-600"><CheckCircle2 size={16} /> اطلاعات کامل است؛ پس از ثبت، مدیر کی‌فیت بررسی و منتشر می‌کند.</div>
+        )}
         <div className="sticky bottom-3 z-10">
-          <Button size="lg" className="w-full shadow-glow" onClick={save}>{existing ? 'ذخیره‌ی تغییرات' : 'ثبت باشگاه'}</Button>
+          <Button size="lg" className="w-full shadow-glow" disabled={rejected} onClick={save}>{existing ? (review?.status === 'changes' ? 'ذخیره و ارسال دوباره' : 'ذخیره‌ی تغییرات') : 'ثبت باشگاه'}</Button>
         </div>
       </div>
     </div>

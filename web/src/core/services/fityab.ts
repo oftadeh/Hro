@@ -794,7 +794,39 @@ export function expireTickets() {
   })
 }
 
-const GYM_FIELDS = ['name', 'tagline', 'description', 'address', 'city', 'lat', 'lng', 'phone', 'sessionPrice', 'facilities', 'sports', 'hours', 'gender', 'media', 'capacity', 'classes', 'offPeak', 'kind', 'rental', 'genderHours', 'brand', 'branch'] as const
+/** موقعیت داخل محدوده‌ی ایران */
+export const inIran = (lat?: number, lng?: number) => typeof lat === 'number' && typeof lng === 'number' && lat >= 25 && lat <= 40 && lng >= 44 && lng <= 63.5
+
+/** موقعیت هنوز همان مرکز پیش‌فرض شهر است (یعنی روی نقشه انتخاب نشده) */
+export function isDefaultSpot(g: Pick<Partial<Gym>, 'city' | 'lat' | 'lng'>) {
+  const [lat, lng] = cityCenter(g.city)
+  return Math.abs((g.lat ?? 0) - lat) < 1e-4 && Math.abs((g.lng ?? 0) - lng) < 1e-4
+}
+
+export const MIN_GYM_PHOTOS = 3
+const digits = (v: unknown) => String(v ?? '').replace(/[۰-۹]/g, (c) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(c))).replace(/[٠-٩]/g, (c) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(c)))
+export const cleanGymPhone = (v: unknown) => digits(v).replace(/\D/g, '').replace(/^98/, '0')
+
+/** موارد ناقص برای ثبت باشگاه؛ همان فهرستی که در فرم و روی سرور بررسی می‌شود */
+export function gymMissing(g: Partial<Gym>): { key: string; label: string }[] {
+  const out: { key: string; label: string }[] = []
+  const add = (key: string, label: string) => out.push({ key, label })
+  const rental = VENUE_KINDS[(g.kind ?? 'gym') as keyof typeof VENUE_KINDS]?.booking === 'rental'
+  if (!g.name?.trim() || g.name.trim().length < 2) add('name', 'نام مجموعه')
+  if (!g.city?.trim()) add('city', 'شهر')
+  if (!/^0\d{10}$/.test(cleanGymPhone(g.phone))) add('phone', 'تلفن ۱۱ رقمی (ثابت با کد شهر یا همراه)')
+  if ((g.description ?? '').trim().length < 30) add('description', 'معرفی کامل (حداقل ۳۰ حرف)')
+  if (!(g.sports ?? []).length) add('sports', 'حداقل یک رشته')
+  if (!rental && !(g.hours ?? '').trim()) add('hours', 'ساعات کاری')
+  if ((g.address ?? '').trim().length < 8) add('address', 'نشانی کامل')
+  if (!inIran(g.lat, g.lng) || isDefaultSpot(g)) add('location', 'موقعیت دقیق روی نقشه')
+  if ((g.media ?? []).filter((m) => m.type === 'image').length < MIN_GYM_PHOTOS) add('photos', `حداقل ${MIN_GYM_PHOTOS} عکس واقعی از مجموعه`)
+  if (!g.license?.number || g.license.number.trim().length < 4) add('licenseNo', 'شماره‌ی پروانه یا مجوز')
+  if (!g.license?.doc) add('licenseDoc', 'تصویر پروانه یا مجوز')
+  return out
+}
+
+const GYM_FIELDS = ['name', 'tagline', 'description', 'address', 'city', 'lat', 'lng', 'phone', 'sessionPrice', 'facilities', 'sports', 'hours', 'gender', 'media', 'capacity', 'classes', 'offPeak', 'kind', 'rental', 'genderHours', 'brand', 'branch', 'license'] as const
 
 function cleanGym(input: Partial<Gym>) {
   const out: Partial<Gym> = {}
@@ -843,6 +875,21 @@ function cleanGym(input: Partial<Gym>) {
       }
     })
   }
+  if (out.phone !== undefined) out.phone = cleanGymPhone(out.phone).slice(0, 11)
+  for (const k of ['name', 'tagline', 'address', 'hours'] as const) if (out[k] !== undefined) out[k] = String(out[k] ?? '').trim().slice(0, k === 'address' ? 200 : 80)
+  if (out.description !== undefined) out.description = String(out.description ?? '').trim().slice(0, 3000)
+  if (out.lat !== undefined || out.lng !== undefined) {
+    if (!inIran(Number(out.lat), Number(out.lng))) throw new AppError('موقعیت باید داخل ایران باشد؛ روی نقشه انتخاب کنید')
+    out.lat = +Number(out.lat).toFixed(5)
+    out.lng = +Number(out.lng).toFixed(5)
+  }
+  if (out.media) out.media = out.media.filter((m) => m && (m.type === 'image' || m.type === 'video') && typeof m.url === 'string').slice(0, 20)
+  if (out.license !== undefined) {
+    const l = out.license as { number?: unknown; doc?: unknown } | undefined
+    const doc = String(l?.doc ?? '')
+    if (doc && !/^doc-[A-Za-z0-9-]+\.(jpg|png|webp|pdf)$/.test(doc)) throw new AppError('فایل مجوز معتبر نیست')
+    out.license = l ? { number: digits(l.number).trim().slice(0, 40), doc } : undefined
+  }
   if (out.brand !== undefined) out.brand = String(out.brand ?? '').trim().replace(/\s+/g, ' ').slice(0, 40) || undefined
   if (out.branch !== undefined) out.branch = String(out.branch ?? '').trim().replace(/\s+/g, ' ').slice(0, 40) || undefined
   // باشگاه تک‌جنسیتی سانس‌بندی و کلاس جنسیت‌دار ندارد
@@ -862,26 +909,37 @@ export const saveGym = svc(
     if (rentalKind && !input.rental) throw new AppError('اجاره‌ی ساعتی را تنظیم کنید')
     if (!rentalKind && (!input.sessionPrice || input.sessionPrice < 10_000)) throw new AppError('هزینه‌ی هر سانس را وارد کنید')
     const data = cleanGym(input)
+    // فایل مجوز باید از همین حساب بارگذاری شده باشد (یا همان فایل قبلی همین باشگاه باشد)
+    const prev = input.id ? db().gyms.find((g) => g.id === input.id) : undefined
+    if (data.license?.doc && data.license.doc !== prev?.license?.doc && !data.license.doc.startsWith(`doc-${ownerId.replace(/[^A-Za-z0-9]/g, '')}-`)) throw new AppError('فایل مجوز را دوباره بارگذاری کنید')
+    if (prev?.review?.status === 'rejected') throw new AppError('ثبت این باشگاه رد شده است؛ برای بررسی دوباره با پشتیبانی تماس بگیرید')
+    // باشگاه تازه یا منتشرنشده باید کامل باشد؛ باشگاه منتشرشده‌ی قدیمی فقط نباید موردی را که داشته از دست بدهد
+    const merged = { ...(prev ?? {}), ...data }
+    const before = new Set(prev?.approved ? gymMissing(prev).map((x) => x.key) : [])
+    const missing = gymMissing(merged).filter((x) => !before.has(x.key))
+    if (missing.length) throw new AppError(`برای ثبت باشگاه این موارد لازم است: ${missing.map((x) => x.label).join('، ')}`)
     let id = input.id
     mutate((d) => {
       const existing = id ? d.gyms.find((g) => g.id === id) : undefined
       if (id && (!existing || existing.ownerId !== ownerId)) throw new AppError('باشگاه یافت نشد')
+      const admins = d.users.filter((u) => u.roles.includes('admin'))
       if (existing) {
         Object.assign(existing, data)
         reconcileSchedule(d, existing)
+        // پس از «نیاز به اصلاح»، ذخیره یعنی ارسال دوباره برای بررسی
+        if (existing.review?.status === 'changes') {
+          existing.review = { status: 'pending', note: existing.review.note, at: now() }
+          admins.forEach((a) => notify(d, a.id, 'باشگاه اصلاح‌شده برای بررسی', `«${gymTitle(existing)}»`, '', '/panel/admin/gyms'))
+        }
       } else {
         id = uid('g-')
-        const city = d.users.find((u) => u.id === ownerId)?.city ?? ''
-        const [lat, lng] = cityCenter(city)
         d.gyms.unshift({
-          name: '', tagline: '', description: '', address: '', city, lat, lng, phone: '',
+          name: '', tagline: '', description: '', address: '', city: '', lat: 0, lng: 0, phone: '',
           sessionPrice: 0, facilities: [], sports: [], hours: '', gender: 'mixed', media: [], capacity: 50, classes: [],
           ...data,
-          id, ownerId, cover: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)], rating: 0, reviews: 0, approved: false, createdAt: now(),
+          id, ownerId, cover: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)], rating: 0, reviews: 0, approved: false, review: { status: 'pending', at: now() }, createdAt: now(),
         } as Gym)
-        d.users.filter((u) => u.roles.includes('admin')).forEach((a) =>
-          notify(d, a.id, 'باشگاه جدید در انتظار تایید', `«${input.name}» برای فیت‌یاب ثبت شد.`, '', '/panel/admin/gyms'),
-        )
+        admins.forEach((a) => notify(d, a.id, 'باشگاه جدید در انتظار تأیید', `«${gymTitle(data as Gym)}» برای فیت‌یاب ثبت شد.`, '', '/panel/admin/gyms'))
       }
     })
     return id!

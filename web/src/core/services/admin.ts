@@ -1,12 +1,15 @@
 /** عملیات مدیر سامانه — همه روی سرور فقط برای نقش admin مجازند */
 import { AppError, mutate, db, svc, currentUserId } from '../store'
-import type { Coupon, RevenueModule, VenueKind } from '../types'
+import type { Coupon, RevenueModule, VenueKind, Gym } from '../types'
 import { VENUE_KINDS } from '../config'
 import { notify } from './ledger'
+import { gymMissing } from './fityab'
 import { uid, now } from '../id'
 import { toman, dayKey } from '../format'
 
 const A = { roles: ['admin' as const] }
+
+const gymLabel = (g: Pick<Gym, 'name' | 'branch'>) => (g.branch ? `${g.name} · ${g.branch}` : g.name)
 
 export const setCommission = svc(
   'admin.commission',
@@ -75,42 +78,62 @@ export const setVenueKinds = svc(
 
 export const setGymApproval = svc(
   'admin.gymApproval',
-  (gymId: string, approved: boolean) => {
+  (gymId: string, decision: Decision, note?: string) => {
+    const n = decisionNote(decision, note)
     mutate((d) => {
       const g = d.gyms.find((x) => x.id === gymId)
-      if (!g) return
-      g.approved = approved
-      notify(d, g.ownerId, approved ? 'باشگاه شما تایید شد' : 'باشگاه شما غیرفعال شد', approved ? `«${g.name}» اکنون در فیت‌یاب نمایش داده می‌شود.` : `«${g.name}» از فیت‌یاب حذف شد.`, '', '/panel/gym/gyms')
+      if (!g) throw new AppError('باشگاه یافت نشد')
+      const title = gymLabel(g)
+      if (decision === 'approve') {
+        const missing = gymMissing(g)
+        if (missing.length) throw new AppError(`پیش از انتشار این موارد کامل شود (گزینه‌ی «نیاز به اصلاح»): ${missing.map((x) => x.label).join('، ')}`)
+        g.approved = true
+        g.review = undefined
+        notify(d, g.ownerId, 'باشگاه شما تأیید و منتشر شد', `«${title}» اکنون در فیت‌یاب نمایش داده می‌شود.`, '', '/panel/gym/gyms')
+        return
+      }
+      g.approved = false
+      g.review = { status: decision === 'reject' ? 'rejected' : 'changes', note: n, at: now() }
+      const [t, b] = decision === 'changes' ? ['باشگاه شما نیاز به اصلاح دارد', `«${title}»: ${n}`] : ['باشگاه شما تأیید نشد', `«${title}»: ${n}`]
+      notify(d, g.ownerId, t, b, '', '/panel/gym/gyms')
     })
   },
   A,
 )
 
-/** تأیید پروانه‌ی پزشک، مدارک مربی و رستوران */
+
+/** تأیید پروانه‌ی پزشک، مدارک مربی و رستوران؛ لغو یا رد با توضیح */
 export const setVerification = svc(
   'admin.verify',
-  (kind: 'doctor' | 'coach' | 'restaurant', id: string, ok: boolean) => {
+  (kind: 'doctor' | 'coach' | 'restaurant', id: string, decision: Decision, note?: string) => {
+    const n = decisionNote(decision, note)
+    const ok = decision === 'approve'
+    const why = n ? ` ${n}` : ''
     mutate((d) => {
       if (kind === 'doctor') {
         const x = d.doctors.find((v) => v.userId === id)
         if (!x) throw new AppError('پزشک یافت نشد')
+        if (ok && String(x.medicalCode ?? '').trim().length < 4) throw new AppError('کد نظام یا مجوز ثبت نشده است؛ «نیاز به اصلاح» بزنید')
         x.verified = ok
-        notify(d, id, ok ? 'پروانه‌ی شما تأیید شد' : 'پروانه‌ی شما تأیید نشد', ok ? 'اکنون بیماران می‌توانند نوبت رزرو کنند.' : 'کد نظام پزشکی را بررسی و دوباره ثبت کنید.', '', '/panel/doctor/profile')
+        notify(d, id, ok ? 'پروانه‌ی شما تأیید شد' : 'پروانه‌ی شما تأیید نشد', ok ? 'اکنون بیماران می‌توانند نوبت رزرو کنند.' : `${why} اطلاعات پروانه را اصلاح کنید.`.trim(), '', '/panel/doctor/profile')
       } else if (kind === 'coach') {
         const x = d.coaches.find((v) => v.userId === id)
         if (!x) throw new AppError('مربی یافت نشد')
+        if (ok && !x.certificates.length) throw new AppError('مربی مدرکی ثبت نکرده است؛ «نیاز به اصلاح» بزنید')
         x.verified = ok
-        notify(d, id, ok ? 'مدارک مربیگری تأیید شد' : 'مدارک مربیگری تأیید نشد', ok ? 'نشان «مربی تأییدشده» روی پروفایل شما نمایش داده می‌شود.' : 'لطفاً مدارک معتبر بارگذاری کنید.', '', '/panel/coach/profile')
+        notify(d, id, ok ? 'مدارک مربیگری تأیید شد' : 'مدارک مربیگری تأیید نشد', ok ? 'نشان «مربی تأییدشده» روی پروفایل شما نمایش داده می‌شود.' : `${why} مدارک معتبر را در پروفایل ثبت کنید.`.trim(), '', '/panel/coach/profile')
       } else {
         const x = d.restaurants.find((v) => v.id === id)
         if (!x) throw new AppError('رستوران یافت نشد')
         x.approved = ok
-        notify(d, x.ownerId, ok ? 'رستوران شما تأیید شد' : 'رستوران شما غیرفعال شد', x.name, '', '/panel/restaurant')
+        x.review = ok ? undefined : { status: decision === 'reject' ? 'rejected' : 'changes', note: n, at: now() }
+        notify(d, x.ownerId, ok ? 'رستوران شما تأیید و منتشر شد' : decision === 'changes' ? 'رستوران شما نیاز به اصلاح دارد' : 'رستوران شما تأیید نشد', ok ? x.name : `«${x.name}»: ${n}`, '', '/panel/restaurant')
       }
     })
   },
   A,
 )
+
 
 export const resolvePayout = svc(
   'admin.payout',
@@ -261,22 +284,47 @@ export function dailySeries(days = 14) {
   return out
 }
 
-/** تأیید یا رد مدارک حساب کسب‌وکار (باشگاه، مربی، پزشک، فروشنده) */
+/** تصمیم مدیر: تأیید و انتشار، نیاز به اصلاح (قابل ارسال دوباره) یا رد نهایی؛ دو مورد آخر با توضیح */
+export type Decision = 'approve' | 'changes' | 'reject'
+
+function decisionNote(decision: Decision, note?: string) {
+  if (!['approve', 'changes', 'reject'].includes(decision)) throw new AppError('تصمیم نامعتبر است')
+  const n = String(note ?? '').trim().slice(0, 500)
+  if (decision !== 'approve' && n.length < 5) throw new AppError(decision === 'reject' ? 'دلیل رد را بنویسید' : 'موارد لازم برای اصلاح را بنویسید')
+  return n
+}
+
+/** بررسی مدارک حساب کسب‌وکار (باشگاه، مربی، پزشک، فروشنده، رستوران) */
 export const reviewVerification = svc(
   'admin.reviewVerification',
-  (userId: string, ok: boolean, note?: string) => {
-    if (!ok && !note?.trim()) throw new AppError('دلیل رد مدارک را بنویسید')
+  (userId: string, decision: Decision, note?: string) => {
+    const n = decisionNote(decision, note)
     mutate((d) => {
       const u = d.users.find((v) => v.id === userId)
       if (!u?.verification) throw new AppError('پرونده‌ی مدارک یافت نشد')
-      u.verification = { ...u.verification, status: ok ? 'approved' : 'rejected', note: ok ? u.verification.note : note!.trim().slice(0, 500), reviewedAt: now() }
-      notify(
-        d, userId,
-        ok ? 'حساب شما تأیید شد' : 'مدارک شما تأیید نشد',
-        ok ? 'اکنون می‌توانید در کی‌فیت فعالیت کنید.' : `دلیل: ${note!.trim()}. مدارک را اصلاح و دوباره ارسال کنید.`,
-        '', '/',
-      )
+      const status = decision === 'approve' ? 'approved' : decision === 'changes' ? 'changes' : 'rejected'
+      u.verification = { ...u.verification, status, adminNote: n || undefined, reviewedAt: now() }
+      // تأیید مدارک حساب، مجوز مربی/پزشک را هم تأیید می‌کند (همان مدرک و شماره بررسی شده است)
+      if (decision === 'approve') {
+        const no = u.verification.fields?.licenseNo
+        const c = d.coaches.find((x) => x.userId === userId)
+        if (c) {
+          if (!c.certificates.length && no) c.certificates = [`کارت مربیگری ${no}`]
+          c.verified = true
+        }
+        const doc = d.doctors.find((x) => x.userId === userId)
+        if (doc) {
+          if (!doc.medicalCode && no) doc.medicalCode = no
+          doc.verified = !!doc.medicalCode
+        }
+      }
+      const [title, body] =
+        decision === 'approve' ? ['حساب شما تأیید شد', 'اکنون می‌توانید در کی‌فیت فعالیت کنید.']
+        : decision === 'changes' ? ['مدارک شما نیاز به اصلاح دارد', `${n} — موارد را اصلاح و دوباره ارسال کنید.`]
+        : ['درخواست شما رد شد', `دلیل: ${n}`]
+      notify(d, userId, title, body, '', '/panel')
     })
   },
   A,
 )
+

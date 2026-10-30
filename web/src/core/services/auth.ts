@@ -9,7 +9,7 @@ import { faDigitsToEn } from '../format'
 import { ROLE_META, cleanCity } from '../config'
 import { TERMS_VERSION } from '../legal'
 import { setupCycleFor } from './cycle'
-import { type BusinessRole, isBusiness, isBusinessRole, needsVerification } from '../roles'
+import { type BusinessRole, isBusiness, isBusinessRole, isNationalId, needsVerification, requirementsOf } from '../roles'
 
 export function normalizePhone(raw: string) {
   const p = faDigitsToEn(raw).replace(/\D/g, '').replace(/^98/, '0')
@@ -220,17 +220,40 @@ export const setIntroVideo = svc('auth.introVideo', (url: string | null) => {
 })
 
 /** ارسال مدارک حساب کسب‌وکار برای بررسی مدیر (فایل‌ها پیش‌تر در /api/upload-doc بارگذاری شده‌اند) */
-export const submitVerification = svc('auth.submitVerification', (docs: string[], note?: string) => {
+/** ارسال مدارک کسب‌وکار: هر مدرک الزامی در جای خودش + کد ملی و شماره‌ی مجوز + تعهد صحت اطلاعات */
+export const submitVerification = svc('auth.submitVerification', (slots: Record<string, string>, fields: Record<string, string>, note?: string, declared?: boolean) => {
   const me = currentUserId()
   const u = db().users.find((x) => x.id === me)!
   if (!needsVerification(u)) throw new AppError('این حساب نیازی به ارسال مدارک ندارد')
-  if (u.verification?.status === 'approved') throw new AppError('مدارک شما قبلاً تأیید شده است')
-  const list = (Array.isArray(docs) ? docs : []).map(String).filter((x) => !x.startsWith('doc-') || x.startsWith(`doc-${me.replace(/[^A-Za-z0-9]/g, '')}-`)).filter((x) => /^(doc-[A-Za-z0-9-]+\.(jpg|png|webp|pdf)|data:(image\/(jpeg|png|webp)|application\/pdf);base64,[A-Za-z0-9+/=]+)$/.test(x))
-  if (list.length < 1) throw new AppError('حداقل یک مدرک بارگذاری کنید')
-  if (list.length > 6) throw new AppError('حداکثر ۶ فایل')
+  const st = u.verification?.status
+  if (st === 'approved') throw new AppError('مدارک شما قبلاً تأیید شده است')
+  if (st === 'pending') throw new AppError('مدارک شما در حال بررسی است')
+  if (st === 'rejected') throw new AppError('درخواست شما رد شده است؛ برای بررسی دوباره با پشتیبانی تماس بگیرید')
+  if (declared !== true) throw new AppError('تعهد صحت اطلاعات و مدارک را تأیید کنید')
+  const req = requirementsOf(u.roles)
+  const own = `doc-${me.replace(/[^A-Za-z0-9]/g, '')}-`
+  const okRef = (x: unknown) => typeof x === 'string' && /^doc-[A-Za-z0-9-]+\.(jpg|png|webp|pdf)$/.test(x) && x.startsWith(own)
+  const cleanSlots: Record<string, string> = {}
+  for (const r of req.docs) {
+    const ref = slots?.[r.key]
+    if (!okRef(ref)) throw new AppError(`«${r.label}» را بارگذاری کنید`)
+    cleanSlots[r.key] = ref as string
+  }
+  if (new Set(Object.values(cleanSlots)).size < Object.keys(cleanSlots).length) throw new AppError('برای هر مدرک فایل جداگانه بارگذاری کنید')
+  const cleanFields: Record<string, string> = {}
+  for (const r of req.fields) {
+    const v = faDigitsToEn(String(fields?.[r.key] ?? '')).trim().slice(0, 40)
+    if (r.key === 'nationalId') {
+      if (!isNationalId(v)) throw new AppError('کد ملی معتبر نیست')
+      cleanFields[r.key] = v.replace(/\D/g, '')
+    } else {
+      if (v.length < 4) throw new AppError(`«${r.label}» را وارد کنید`)
+      cleanFields[r.key] = v
+    }
+  }
   mutate((d) => {
     const x = d.users.find((v) => v.id === me)!
-    x.verification = { status: 'pending', docs: list, note: note?.trim().slice(0, 500) || undefined, submittedAt: now() }
-    d.users.filter((a) => a.roles.includes('admin')).forEach((a) => notify(d, a.id, 'مدارک جدید برای بررسی', `${x.name} مدارک خود را فرستاد.`, '', '/panel/admin/approvals'))
+    x.verification = { status: 'pending', docs: Object.values(cleanSlots), slots: cleanSlots, fields: cleanFields, note: note?.trim().slice(0, 500) || undefined, submittedAt: now() }
+    d.users.filter((a) => a.roles.includes('admin')).forEach((a) => notify(d, a.id, st === 'changes' ? 'مدارک اصلاح‌شده برای بررسی' : 'مدارک جدید برای بررسی', `${x.name} مدارک خود را فرستاد.`, '', '/panel/admin/approvals'))
   })
 })
