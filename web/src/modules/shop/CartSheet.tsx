@@ -35,7 +35,7 @@ export function CartSheet({ kind, open, onClose }: { kind: CartItem['kind']; ope
   }
   const cal = lines.reduce((a, l) => a + ('calories' in l ? (l.calories as number) : 0), 0)
   const saved = me.addresses ?? []
-  const [address, setAddress] = useState(saved[0]?.text ?? 'اصفهان، ')
+  const [address, setAddress] = useState(saved[0]?.text ?? (me.city ? `${me.city}، ` : ''))
 
   return (
     <Sheet open={open} onClose={onClose} title={kind === 'product' ? 'سبد خرید' : 'سفارش غذا'}>

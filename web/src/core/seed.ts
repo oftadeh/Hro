@@ -294,7 +294,9 @@ export function createSeed(): DBState {
       { id: 'ls-2', sellerId: 'u-mina', title: 'کفش کراس‌فیت ریباک نانو سایز ۳۸', category: 'apparel', condition: 'like_new', price: 2_400_000, description: 'فقط سه جلسه پوشیده شده؛ سایز برایم کوچک بود. با جعبه.', photos: [pic('ریباک نانو ۳۸', 330)], city: 'اصفهان', status: 'active', createdAt: ago(50) },
       { id: 'ls-3', sellerId: 'u-reza', title: 'تردمیل خانگی تاشو', category: 'equipment', condition: 'good', price: 18_000_000, description: 'حداکثر سرعت ۱۴، شیب دستی، سالم. فقط تحویل حضوری (خیابان جی).', photos: [pic('تردمیل', 20)], city: 'اصفهان', status: 'active', createdAt: ago(70) },
     ],
-    settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000, shippingFee: 60_000, freeShippingOver: 2_000_000, referralReward: 100_000, orgDiscountPct: 15, venueKinds: ['gym', 'pool', 'equestrian', 'hall', 'turf'] },
+    settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000, shippingFee: 60_000, freeShippingOver: 2_000_000, referralReward: 100_000, orgDiscountPct: 15, venueKinds: ['gym', 'pool', 'equestrian', 'hall', 'turf'], lateCancelFeePct: 50, tierCaps: { standard: 150_000, premium: 300_000 }, trial: { enabled: true, credit: 300_000, days: 7 } },
+    waitlist: [],
+    trialKeys: [],
   }
 }
 
@@ -306,6 +308,8 @@ export function createEmpty(): DBState {
     challenges: [], notifications: [], dailyLogs: [], cycles: [], carts: {}, aiChats: {}, entryRequests: [], reviews: [], reports: [], tickets: [],
     workouts: [], meals: [], bodyEntries: [], orgs: [], giftCards: [], coupons: [],
     teams: [], insurancePlans: DEFAULT_INSURANCE_PLANS.map((p) => ({ ...p })), policies: [], claims: [], liveClasses: [], campaigns: [], events: [], listings: [],
-    settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000, shippingFee: 60_000, freeShippingOver: 2_000_000, referralReward: 100_000, orgDiscountPct: 15, venueKinds: ['gym'] },
+    settings: { commissions: { ...DEFAULT_COMMISSIONS }, challengeCreationFee: 500_000, minWithdraw: 500_000, shippingFee: 60_000, freeShippingOver: 2_000_000, referralReward: 100_000, orgDiscountPct: 15, venueKinds: ['gym'], lateCancelFeePct: 50, tierCaps: { standard: 150_000, premium: 300_000 }, trial: { enabled: true, credit: 300_000, days: 7 } },
+    waitlist: [],
+    trialKeys: [],
   }
 }

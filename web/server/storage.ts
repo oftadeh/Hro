@@ -87,7 +87,7 @@ export function ensureAdmin() {
   mutateState((d) => {
     let u = d.users.find((x) => (env.adminPhone && x.phone === env.adminPhone) || (env.adminEmail && x.email === env.adminEmail))
     if (!u && env.adminPhone) {
-      u = { id: 'u-admin-' + env.adminPhone.slice(-4), name: 'مدیر کی‌فیت', phone: env.adminPhone, city: 'اصفهان', roles: ['user', 'admin'], xp: 0, streak: 0, following: [], createdAt: new Date().toISOString() }
+      u = { id: 'u-admin-' + env.adminPhone.slice(-4), name: 'مدیر کی‌فیت', phone: env.adminPhone, city: '', roles: ['user', 'admin'], xp: 0, streak: 0, following: [], createdAt: new Date().toISOString() }
       d.users.push(u)
     }
     if (!u) return

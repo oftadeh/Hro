@@ -1,4 +1,5 @@
-import { MapContainer, Marker, useMapEvents } from 'react-leaflet'
+import { useEffect } from 'react'
+import { MapContainer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import { BaseTiles } from '@/ui/BaseTiles'
 import { useSession } from '@/core/db'
 import L from 'leaflet'
@@ -15,6 +16,15 @@ function Clicker({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   return null
 }
 
+/** وقتی موقعیت از بیرون عوض شود (مثلاً با انتخاب شهر)، نقشه به آن‌جا می‌رود */
+function Follow({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap()
+  useEffect(() => {
+    if (map.getCenter().distanceTo([lat, lng]) > 5000) map.setView([lat, lng], 13)
+  }, [map, lat, lng])
+  return null
+}
+
 /** انتخاب موقعیت روی نقشه با کلیک */
 export function LocationPicker({ lat, lng, onChange }: { lat: number; lng: number; onChange: (lat: number, lng: number) => void }) {
   const dark = useSession((s) => s.theme) === 'dark'
@@ -22,6 +32,7 @@ export function LocationPicker({ lat, lng, onChange }: { lat: number; lng: numbe
     <MapContainer center={[lat, lng]} zoom={13} className="h-64 w-full overflow-hidden rounded-2xl">
       <BaseTiles dark={dark} />
       <Clicker onPick={onChange} />
+      <Follow lat={lat} lng={lng} />
       <Marker position={[lat, lng]} icon={pin} />
     </MapContainer>
   )

@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import { useDB } from '@/core/db'
 import { num, toman } from '@/core/format'
 import { VENUE_KINDS } from '@/core/config'
-import { bookRental, rentalPrice, rentalSlots, RENTAL_CANCEL_HOURS, weekdayLabel, weekdayOf } from '@/core/services/fityab'
+import { bookRental, rentalPrice, rentalSlots, rentalTier, RENTAL_CANCEL_HOURS, subCovers, tierLabel, weekdayLabel, weekdayOf } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
 import type { Gym } from '@/core/types'
 import { Button, Select } from '@/ui/kit'
@@ -83,6 +83,7 @@ export function RentalBox({ gym, onBooked }: { gym: Gym; onBooked: (ticketId: st
         price={price}
         credit={sub?.credit}
         balance={bal}
+        uncovered={sub && !subCovers(sub.planId, rentalTier(gym)) ? `عضویت ${sub.plan.name} شامل اجاره‌های سطح ${tierLabel(rentalTier(gym))} نیست؛ از کیف پول پرداخت کن.` : undefined}
         onPay={async (prefer) => {
           const t = await run(() => bookRental(gym.id, start!.toISOString(), h, prefer, teamId || undefined))
           if (t) moment('pay', { title: 'رزرو انجام شد', sub: prefer === 'wallet' ? 'مبلغ از کیف پول کسر شد' : 'از اعتبار اشتراک کم شد' })

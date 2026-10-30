@@ -39,7 +39,7 @@ const CONSUMER_ONLY = new Set([
   // کلاس آنلاین و رویداد (ثبت‌نام به‌عنوان شرکت‌کننده)
   'live.register', 'event.register', 'event.unregister',
   // کیف پول مصرف‌کننده (اشتراک، هدیه، کد)
-  'wallet.buySub', 'wallet.gift', 'wallet.redeem',
+  'wallet.buySub', 'wallet.gift', 'wallet.redeem', 'wallet.trial', 'fityab.waitlist', 'fityab.leaveWaitlist',
   // مأموریت‌های روزانه و عضویت سازمانی
   'engagement.log', 'engagement.reward', 'org.join', 'org.leave',
 ])

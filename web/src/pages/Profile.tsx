@@ -18,6 +18,7 @@ import { Button, Card, Field, IconTile, ImagePicker, Input, NumberInput, Progres
 import { RoleIcon } from '@/ui/icons'
 import { Runner, Scale, Yoga } from '@/ui/art'
 import { useMe } from '@/ui/hooks'
+import { CityInput } from '@/ui/CityInput'
 import { run, runOk, ask } from '@/ui/toast'
 import { CycleCard, CycleHistory } from '@/modules/health/Cycle'
 import { IntroVideoCard } from '@/modules/profile/IntroVideo'
@@ -500,7 +501,7 @@ export function EditProfileSheet({ open, onClose, user }: { open: boolean; onClo
               <Input value={form.name ?? ''} onChange={(e) => set('name', e.target.value)} />
             </Field>
             <Field label="شهر">
-              <Input value={form.city ?? ''} onChange={(e) => set('city', e.target.value)} />
+              <CityInput value={form.city ?? ''} onChange={(e) => set('city', e.target.value)} />
             </Field>
             <div className="sm:col-span-2">
               <Field label="درباره‌ی من">

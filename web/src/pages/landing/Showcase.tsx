@@ -251,7 +251,7 @@ function FitYabScreen({ s }: { s: number }) {
         <svg viewBox="0 0 266 444" className="absolute inset-0 h-full w-full" aria-hidden>
           {[40, 110, 180, 250].map((y) => <path key={y} d={`M-10 ${y} L280 ${y - 30}`} stroke="rgba(255,255,255,.06)" strokeWidth="7" />)}
           {[30, 120, 210].map((x) => <path key={x} d={`M${x} -10 L${x + 26} 460`} stroke="rgba(255,255,255,.06)" strokeWidth="6" />)}
-          {/* زاینده‌رود */}
+          {/* رودخانه */}
           <path d="M-10 290 C60 250 120 300 170 262 S250 230 280 246" stroke="rgba(46,230,201,.22)" strokeWidth="16" fill="none" strokeLinecap="round" />
           <path d="M98 270 l18 -6" stroke="rgba(255,255,255,.18)" strokeWidth="5" />
         </svg>
@@ -268,10 +268,10 @@ function FitYabScreen({ s }: { s: number }) {
         </span>
         <div className="absolute inset-x-0 bottom-0 rounded-t-[22px] bg-[#1d1a23] px-3 pb-3 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,.4)]">
           <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-white/20" />
-          <div className="mb-2 text-[12px] font-extrabold">نزدیک تو در اصفهان</div>
+          <div className="mb-2 text-[12px] font-extrabold">نزدیک تو</div>
           {[
-            { n: 'باشگاه آیرون‌من', d: '۶۰۰ متر · چهارباغ', p: '۹۵ هزار', t: 'card-peach' },
-            { n: 'مجموعه آبی آکوا', d: '۱٫۲ کیلومتر · نظر', p: '۱۲۰ هزار', t: 'card-mint' },
+            { n: 'باشگاه آیرون‌من', d: '۶۰۰ متر', p: '۹۵ هزار', t: 'card-peach' },
+            { n: 'مجموعه آبی آکوا', d: '۱٫۲ کیلومتر', p: '۱۲۰ هزار', t: 'card-mint' },
           ].map((g, i) => (
             <div key={g.n} className={clsx('flex items-center gap-2.5 rounded-[16px] p-2 transition-colors duration-200', i === 0 && s === 2 ? 'bg-white/[.12]' : 'bg-white/[.04]', i > 0 && 'mt-1.5')}>
               <span className={clsx('flex h-10 w-10 items-center justify-center rounded-[12px] text-ink-950', g.t)}><Dumbbell size={16} /></span>
@@ -298,7 +298,7 @@ function FitYabScreen({ s }: { s: number }) {
         <div className="px-3 pt-3">
           <div className="text-[17px] font-extrabold">باشگاه آیرون‌من</div>
           <div className="mt-0.5 flex items-center gap-1 text-[10px] text-white/55">
-            <Star size={11} className="fill-[#ff5a1f] text-[#ff5a1f]" /> ۴٫۸ · ۲۴۰ نظر · چهارباغ
+            <Star size={11} className="fill-[#ff5a1f] text-[#ff5a1f]" /> ۴٫۸ · ۲۴۰ نظر · ۶۰۰ متر
           </div>
           <div className="mt-2.5 flex gap-1.5">
             {['بدنسازی', 'کراس‌فیت', 'کاردیو'].map((x) => <span key={x} className="rounded-full bg-white/[.08] px-2.5 py-1 text-[10px]">{x}</span>)}
@@ -468,7 +468,7 @@ function ZoneScreen({ s }: { s: number }) {
           </span>
         </div>
         <div className="card-peach relative mt-2 flex h-[150px] items-center justify-center overflow-hidden rounded-[18px] p-4 text-center text-[16px] font-black leading-7 text-ink-950">
-          امروز ۵ کیلومتر کنار زاینده‌رود دویدم!
+          امروز ۵ کیلومتر توی پارک دویدم!
           {liked && (
             <span className="sc-heart absolute inset-0 flex items-center justify-center">
               <Heart size={78} className="fill-white text-white drop-shadow-xl" />
@@ -510,7 +510,7 @@ const SCENES: SceneDef[] = [
     Screen: HomeScreen,
   },
   {
-    id: 'fityab', title: 'باشگاه نزدیک، بلیت فوری', desc: 'باشگاه‌ها و استخرهای اصفهان را روی نقشه ببین و با اعتبار اشتراک بلیت بگیر.', icon: MapPin, tab: 'fityab',
+    id: 'fityab', title: 'باشگاه نزدیک، بلیت فوری', desc: 'باشگاه‌ها و استخرهای شهرت را روی نقشه ببین و با اعتبار اشتراک بلیت بگیر.', icon: MapPin, tab: 'fityab',
     steps: [900, 900, 450, 1200, 900, 450, 2000],
     finger: (s) => (s === 1 ? { x: 150, y: 388 } : s === 2 ? { x: 150, y: 388, tap: true } : s === 4 ? { x: 133, y: 408 } : s === 5 ? { x: 133, y: 408, tap: true } : null),
     Screen: FitYabScreen,

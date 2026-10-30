@@ -29,7 +29,7 @@ const PASS_PINS = [
   { x: 92, y: 74 }, { x: 196, y: 120 }, { x: 160, y: 40 }, { x: 108, y: 200 }, { x: 290, y: 146 }, { x: 40, y: 132 },
 ]
 
-/** نقشه‌ی ساده‌ی شهر پشت کارت اشتراک: خیابان‌ها، زاینده‌رود، میدان و باشگاه‌ها؛ هر چند ثانیه یک باشگاه «ورود تازه» می‌گیرد */
+/** نقشه‌ی ساده‌ی شهر پشت کارت اشتراک: خیابان‌ها، رودخانه، میدان و باشگاه‌ها؛ هر چند ثانیه یک باشگاه «ورود تازه» می‌گیرد */
 function PassMap({ active }: { active: number }) {
   const you = { x: 134, y: 150 }
   const pin = PASS_PINS[active]
@@ -58,7 +58,7 @@ function PassMap({ active }: { active: number }) {
           <path d="M330 -10 L320 260" />
           <path d="M40 -10 L60 260" />
         </g>
-        {/* زاینده‌رود */}
+        {/* رودخانه */}
         <path d="M-10 244 C70 230 120 254 200 242 S330 224 410 238" stroke="rgb(255 255 255 / .38)" strokeWidth="13" />
         {/* میدان */}
         <rect x="196" y="82" width="34" height="56" rx="6" fill="rgb(255 255 255 / .16)" stroke="rgb(19 17 24 / .14)" strokeWidth="2" />
@@ -91,7 +91,7 @@ function PassCard({ className }: { className?: string }) {
       </div>
       <div className="relative mt-5 flex items-end justify-between gap-3">
         <div className="space-y-1 text-[13px] font-semibold">
-          <div className="flex items-center gap-1.5"><MapPin size={14} /> همه‌ی باشگاه‌های منتخب اصفهان</div>
+          <div className="flex items-center gap-1.5"><MapPin size={14} /> باشگاه‌های منتخب در شهر تو</div>
           <div className="opacity-70">۲۲ روز مانده · اعتبار ۱٬۴۲۰٬۰۰۰ تومان</div>
         </div>
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-ink-950 text-white"><QrCode size={28} /></span>
@@ -219,7 +219,7 @@ function ZoneMini({ className }: { className?: string }) {
       </div>
       <div className="card-pink relative mt-2 flex min-h-0 flex-1 items-center overflow-hidden rounded-[20px] px-4 py-3 text-[15px] font-extrabold leading-7 text-ink-950">
         <LiveTiles tiles={progressTiles(29 / 42, tileIcon('foot'))} />
-        <span className="relative max-w-[66%]">امروز ۵ کیلومتر کنار زاینده‌رود دویدم!</span>
+        <span className="relative max-w-[66%]">امروز ۵ کیلومتر توی پارک دویدم!</span>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5 text-[13px] font-bold">
         {[['🔥', fire], ['💪', 11], ['👏', 6], ['🏆', 3]].map(([e, n], k) => (
@@ -242,7 +242,7 @@ function EntryMini({ className }: { className?: string }) {
       <CardIcon name="check" playKey={t} />
       <div className="relative text-[13px] font-bold opacity-70">ورود به باشگاه</div>
       <div className="relative max-w-[62%]">
-        <div className="text-[20px] font-extrabold leading-snug">باشگاه پارس، چهارباغ</div>
+        <div className="text-[20px] font-extrabold leading-snug">باشگاه پارس</div>
         <div className="mt-1 text-[13px] font-semibold opacity-75">شلوغی الان: {['خلوت', 'کم‌جمعیت', 'متوسط', 'شلوغ'][now]}</div>
         <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-ink-950 px-3 py-1.5 text-[13px] font-bold text-white"><Check size={15} strokeWidth={3} /> ورود ثبت شد</div>
       </div>
@@ -254,7 +254,7 @@ function EntryMini({ className }: { className?: string }) {
 function HeroVisual() {
   return (
     <div className="relative isolate mx-auto w-full max-w-[380px] px-2 pb-6 pt-20">
-      {/* طاق اصفهانی: قاب صحنه */}
+      {/* طاق ایرانی: قاب صحنه */}
       <svg viewBox="0 0 400 560" preserveAspectRatio="none" className="absolute inset-0 -z-10 h-full w-full" aria-hidden>
         <defs>
           <linearGradient id="taqFill" x1="0" y1="0" x2="0" y2="1">
@@ -351,7 +351,7 @@ export default function Landing() {
           <div>
             <h1 className="text-[38px] font-black leading-[1.3] sm:text-[52px]">با یک اشتراک، به هر باشگاهی که خواستی برو</h1>
             <p className="mt-5 max-w-xl text-[16px] leading-8 text-white/65">
-              کی‌فیت اپ ورزشی اصفهان است: ورود به باشگاه‌ها و استخرها با اسکن QR، چالش‌های جایزه‌دار، مربی و برنامه‌ی تمرینی، و جامعه‌ای از ورزشکارهای شهر.
+              کی‌فیت اپ ورزشی ایران است: ورود به باشگاه‌ها و استخرها با اسکن QR، چالش‌های جایزه‌دار، مربی و برنامه‌ی تمرینی، و جامعه‌ای از ورزشکارهای شهر.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {start}
@@ -422,7 +422,7 @@ export default function Landing() {
           <Link to="/terms" className="hover:text-white">قوانین و مقررات</Link>
           <Link to="/privacy" className="hover:text-white">حریم خصوصی</Link>
         </nav>
-        © {new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric' }).format(new Date())} کی‌فیت · اصفهان · keyfitapp.ir
+        © {new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric' }).format(new Date())} کی‌فیت · ایران · keyfitapp.ir
       </footer>
     </div>
   )

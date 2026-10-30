@@ -2,7 +2,7 @@
 import type {
   Appointment, CartItem, Challenge, CheckIn, CoachProfile, CycleProfile, DailyLog, DoctorProfile, Food, Gym, ID, Notification,
   Order, Payout, PlanOrder, PlatformSettings, Post, Product, Restaurant, Story, Subscription, Thread,
-  Transaction, User, EntryRequest, Review, Report, Ticket, WorkoutSession, MealLog, BodyEntry, Org, GiftCard, Coupon, Team, InsurancePlan, InsurancePolicy, InsuranceClaim, LiveClass, GymCampaign, SportEvent, Listing,
+  Transaction, User, EntryRequest, Review, Report, Ticket, WorkoutSession, MealLog, BodyEntry, Org, GiftCard, Coupon, Team, InsurancePlan, InsurancePolicy, InsuranceClaim, LiveClass, GymCampaign, SportEvent, Listing, WaitlistEntry,
 } from './types'
 
 export interface AIChatMessage {
@@ -57,5 +57,8 @@ export interface DBState {
   campaigns: GymCampaign[]
   events: SportEvent[]
   listings: Listing[]
+  waitlist: WaitlistEntry[]
+  /** شماره‌ها و ایمیل‌هایی که دوره‌ی آزمایشی گرفته‌اند (فقط سرور و مدیر) */
+  trialKeys: string[]
   settings: PlatformSettings
 }

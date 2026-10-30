@@ -10,7 +10,7 @@ import { useDB } from '@/core/db'
 import { ROLE_META, SUBSCRIPTION_PLANS } from '@/core/config'
 import { isBusiness, primaryBusinessRole } from '@/core/roles'
 import { daysLeft, num, toman } from '@/core/format'
-import { activeSubscription, buySubscription, topUp } from '@/core/services/wallet'
+import { activeSubscription, buySubscription, startTrial, topUp, trialBlocker } from '@/core/services/wallet'
 import { Button, Card, Field, HeroHeader, MetricRow, Money, NumberInput, PageHeader, SectionTitle, Sheet } from '@/ui/kit'
 import { KeyCard } from '@/ui/KeyCard'
 import { useMe, useBalance } from '@/ui/hooks'
@@ -27,6 +27,9 @@ export default function WalletPage() {
   const txs = useDB((s) => s.transactions)
   useDB((s) => s.subscriptions)
   const sub = activeSubscription(me.id)
+  const settings = useDB((s) => s.settings)
+  const trial = settings.trial ?? { enabled: false, credit: 0, days: 0 }
+  const trialWhy = trialBlocker(me.id)
   // حساب کسب‌وکار عضویت ورزشکاری نمی‌خرد؛ درآمد و تسویه‌اش در پنل است
   const biz = isBusiness(me)
   const bizRole = biz ? primaryBusinessRole(me) : undefined
@@ -116,9 +119,25 @@ export default function WalletPage() {
           ) : (
             <KeyCard tone="lavender" title="KEYFIT" subtitle="عضویت فعال ندارید" amount="۰ تومان" footer={<span>با عضویت، بیش از مبلغ پرداختی اعتبار بگیرید</span>} />
           )}
-          {sub && (
+          {sub && sub.plan.credit > 0 && (
             <Card className="px-4 py-1">
-              <MetricRow tone="amber" icon={<Ticket size={17} />} title="مصرف اعتبار ورود" value={`${num((1 - sub.credit / sub.plan.credit) * 100)}٪`} progress={1 - sub.credit / sub.plan.credit} />
+              <MetricRow tone="amber" icon={<Ticket size={17} />} title="مصرف اعتبار ورود" value={`${num(Math.max(0, 1 - sub.credit / sub.plan.credit) * 100)}٪`} progress={Math.max(0, 1 - sub.credit / sub.plan.credit)} />
+            </Card>
+          )}
+          {!sub && trial.enabled && !trialWhy && (
+            <Card className="card-lime flex items-center gap-3 text-ink-950">
+              <div className="min-w-0 flex-1">
+                <div className="text-[16px] font-extrabold">{num(trial.days)} روز رایگان امتحان کن</div>
+                <p className="mt-0.5 text-[13px] leading-6 opacity-75">{toman(trial.credit)} اعتبار ورود به باشگاه‌های سطح استاندارد، بدون پرداخت. فقط یک بار برای هر شماره.</p>
+              </div>
+              <Button
+                variant="dark"
+                onClick={async () => {
+                  if (await runOk(() => startTrial(), 'دوره‌ی آزمایشی فعال شد')) moment('unlock', { title: 'دوره‌ی آزمایشی فعال شد', sub: `${toman(trial.credit)} اعتبار ورود` })
+                }}
+              >
+                شروع
+              </Button>
             </Card>
           )}
         </div>

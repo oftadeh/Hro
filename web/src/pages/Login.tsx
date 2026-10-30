@@ -15,6 +15,7 @@ import { RoleIcon } from '@/ui/icons'
 import { moment } from '@/ui/moments'
 import { Runner, Lifter, Yoga, Trophy } from '@/ui/art'
 import { daysAgoKey, GOALS, ACTIVITY } from '@/core/profile'
+import { CityList } from '@/ui/CityInput'
 import { BUSINESS_ROLES, type BusinessRole } from '@/core/roles'
 
 const DEMOS: { userId: string; role: Role }[] = [
@@ -69,7 +70,7 @@ export default function Login() {
         })
         .catch(() => setDemoUsers(null))
   }, [])
-  const [f, setF] = useState<Form>({ accept: false, phone: '', kind: 'athlete', referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
+  const [f, setF] = useState<Form>({ accept: false, phone: '', kind: 'athlete', referral: new URLSearchParams(location.search).get('ref') ?? '', name: '', city: '', gender: '' as RegisterInput['gender'], birthYear: '', heightCm: '', weightKg: '', goal: 'fit' as RegisterInput['goal'], activityLevel: 'medium' as RegisterInput['activityLevel'], track: true, ago: '', cycleLength: '28', periodLength: '5' })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }))
   const n = (v: string) => Number(faDigitsToEn(v)) || undefined
 
@@ -98,12 +99,12 @@ export default function Login() {
     } else {
       const ph = { ...(byEmail ? { phone: f.phone } : {}), acceptTerms: f.accept }
       if (f.kind !== 'athlete') {
-        if (await runOk(() => registerUser({ ...ph, name: f.name, gender: '', accountType: f.kind as BusinessRole }))) moment('unlock', { title: `خوش آمدی، ${f.name}` })
+        if (await runOk(() => registerUser({ ...ph, name: f.name, city: f.city, gender: '', accountType: f.kind as BusinessRole }))) moment('unlock', { title: `خوش آمدی، ${f.name}` })
         setLoading(false)
         return
       }
       const cycle = f.gender === 'female' && f.track && f.ago !== '' ? { lastPeriodStart: daysAgoKey(n(f.ago) ?? 0), cycleLength: n(f.cycleLength) ?? 28, periodLength: n(f.periodLength) ?? 5 } : undefined
-      if (await runOk(() => registerUser({ ...ph, referral: f.referral || undefined, name: f.name, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))) moment('unlock', { title: `خوش آمدی، ${f.name}` })
+      if (await runOk(() => registerUser({ ...ph, referral: f.referral || undefined, name: f.name, city: f.city, gender: f.gender, birthYear: n(f.birthYear), heightCm: n(f.heightCm), weightKg: n(f.weightKg), goal: f.goal, activityLevel: f.activityLevel, cycle }))) moment('unlock', { title: `خوش آمدی، ${f.name}` })
     }
     setLoading(false)
   }
@@ -241,6 +242,7 @@ type Form = {
   kind: 'athlete' | BusinessRole
   referral: string
   name: string
+  city: string
   gender: RegisterInput['gender']
   birthYear: string
   heightCm: string
@@ -297,6 +299,17 @@ function PhoneField({ f, set }: { f: Form; set: <K extends keyof Form>(k: K, v: 
   )
 }
 
+/** شهر: باشگاه‌ها، چالش‌ها و رویدادهای همان شهر اول نشان داده می‌شوند */
+function CityField({ f, set, label }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void; label: string }) {
+  return (
+    <label className="block space-y-2">
+      <span className="text-xs text-white/50">{label} <span className="text-coral-300">*</span></span>
+      <input value={f.city} onChange={(e) => set('city', e.target.value)} list="ir-cities" autoComplete="address-level2" placeholder="مثلاً تهران" className={field} />
+      <CityList />
+    </label>
+  )
+}
+
 function Onboarding({ f, set, needPhone }: { f: Form; set: <K extends keyof Form>(k: K, v: Form[K]) => void; needPhone: boolean }) {
   if (f.kind !== 'athlete') {
     return (
@@ -307,6 +320,7 @@ function Onboarding({ f, set, needPhone }: { f: Form; set: <K extends keyof Form
           <span className="text-xs text-white/50">نام {f.kind === 'company' ? 'سازمان' : 'مجموعه یا کسب‌وکار'}</span>
           <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً باشگاه آیرون‌من" className={field} autoFocus />
         </label>
+        <CityField f={f} set={set} label="شهر محل فعالیت" />
         <AcceptTerms f={f} set={set} />
       </div>
     )
@@ -319,6 +333,7 @@ function Onboarding({ f, set, needPhone }: { f: Form; set: <K extends keyof Form
         <span className="text-xs text-white/50">نام و نام خانوادگی</span>
         <input value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="مثلاً سارا محمدی" className={field} autoFocus />
       </label>
+      <CityField f={f} set={set} label="شهر محل زندگی" />
       <label className="block space-y-2">
         <span className="text-xs text-white/50">کد معرفی دوست (اختیاری)</span>
         <input value={f.referral} onChange={(e) => set('referral', e.target.value.toUpperCase())} placeholder="مثلاً SARA24" dir="ltr" className={`${field} text-left tracking-wider`} />

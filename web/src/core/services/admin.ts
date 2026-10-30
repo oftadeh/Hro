@@ -19,13 +19,42 @@ export const setCommission = svc(
   A,
 )
 
-type NumSetting = 'challengeCreationFee' | 'minWithdraw' | 'shippingFee' | 'freeShippingOver' | 'referralReward' | 'orgDiscountPct'
+type NumSetting = 'challengeCreationFee' | 'minWithdraw' | 'shippingFee' | 'freeShippingOver' | 'referralReward' | 'orgDiscountPct' | 'lateCancelFeePct'
 export const setPlatformSetting = svc(
   'admin.setting',
   (key: NumSetting, value: number) => {
-    if (!['challengeCreationFee', 'minWithdraw', 'shippingFee', 'freeShippingOver', 'referralReward', 'orgDiscountPct'].includes(key)) throw new AppError('تنظیم معتبر نیست')
+    if (!['challengeCreationFee', 'minWithdraw', 'shippingFee', 'freeShippingOver', 'referralReward', 'orgDiscountPct', 'lateCancelFeePct'].includes(key)) throw new AppError('تنظیم معتبر نیست')
     mutate((d) => {
-      d.settings[key] = key === 'orgDiscountPct' ? Math.min(50, Math.max(0, value)) : Math.max(0, Math.round(value))
+      d.settings[key] = key === 'orgDiscountPct' ? Math.min(50, Math.max(0, value)) : key === 'lateCancelFeePct' ? Math.min(100, Math.max(0, Math.round(value))) : Math.max(0, Math.round(value))
+    })
+  },
+  A,
+)
+
+/** سقف قیمت سانس سطح استاندارد و ویژه؛ بالاتر از ویژه، لوکس حساب می‌شود */
+export const setTierCaps = svc(
+  'admin.tierCaps',
+  (caps: { standard: number; premium: number }) => {
+    const standard = Math.round(Number(caps.standard))
+    const premium = Math.round(Number(caps.premium))
+    if (!(standard >= 10_000 && premium > standard)) throw new AppError('سقف سطح ویژه باید بیشتر از سقف استاندارد باشد')
+    mutate((d) => {
+      d.settings.tierCaps = { standard, premium }
+    })
+  },
+  A,
+)
+
+/** دوره‌ی آزمایشی رایگان: روشن/خاموش، اعتبار و مدت */
+export const setTrial = svc(
+  'admin.trial',
+  (input: { enabled: boolean; credit: number; days: number }) => {
+    const credit = Math.round(Number(input.credit))
+    const days = Math.round(Number(input.days))
+    if (!(credit >= 0 && credit <= 5_000_000)) throw new AppError('اعتبار دوره‌ی آزمایشی معتبر نیست')
+    if (!(days >= 1 && days <= 30)) throw new AppError('مدت دوره‌ی آزمایشی باید ۱ تا ۳۰ روز باشد')
+    mutate((d) => {
+      d.settings.trial = { enabled: !!input.enabled, credit, days }
     })
   },
   A,

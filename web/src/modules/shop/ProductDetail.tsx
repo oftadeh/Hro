@@ -61,7 +61,7 @@ export default function ProductDetail() {
           </Card>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <Card className="flex items-center gap-2"><ShieldCheck className="text-brand-500" /> ضمانت اصالت کالا</Card>
-            <Card className="flex items-center gap-2"><Truck className="text-aqua-500" /> ارسال سریع اصفهان</Card>
+            <Card className="flex items-center gap-2"><Truck className="text-aqua-500" /> ارسال به سراسر ایران</Card>
           </div>
         </div>
       </div>

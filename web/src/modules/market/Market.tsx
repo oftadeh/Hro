@@ -9,6 +9,7 @@ import { reportContent } from '@/core/services/fitzone'
 import type { Listing } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, SectionTitle, Select, Sheet, Textarea } from '@/ui/kit'
 import { useBalance, useMe, useUserMap } from '@/ui/hooks'
+import { CityInput } from '@/ui/CityInput'
 import { run, runOk, ask, askText } from '@/ui/toast'
 
 type Cat = Listing['category']
@@ -175,7 +176,7 @@ export function ListingEditor() {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Field label="قیمت (تومان)"><NumberInput value={f.price} onChange={(v) => setF({ ...f, price: v })} /></Field>
-          <Field label="شهر"><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></Field>
+          <Field label="شهر"><CityInput value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></Field>
         </div>
         <Field label="توضیحات" hint="مدت استفاده، عیب‌ها، نحوه‌ی تحویل"><Textarea value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
         {f.category === 'supplement' && <div className="rounded-2xl bg-gold-300/15 p-3 text-xs">فقط مکمل پلمپ و دارای تاریخ انقضای معتبر مجاز است.</div>}

@@ -99,6 +99,8 @@ export interface Subscription {
   freeDoctorUsed: number
   /** اشتراک اهدایی سازمان */
   orgId?: ID
+  /** دوره‌ی آزمایشی رایگان */
+  trial?: boolean
 }
 
 /** مزایای قابل اجرای هر پلن؛ تخفیف‌ها از سهم کی‌فیت پرداخت می‌شود نه از سهم ارائه‌دهنده */
@@ -109,9 +111,14 @@ export interface PlanBenefits {
   badge: boolean
 }
 
+/** سطح باشگاه بر اساس قیمت سانس: هر عضویت چند سطح را پوشش می‌دهد */
+export type GymTier = 'standard' | 'premium' | 'elite'
+
 export interface SubscriptionPlan {
   id: ID
   name: string
+  /** سطح‌هایی که با اعتبار این عضویت می‌شود رفت؛ بقیه فقط با کیف پول */
+  tiers?: GymTier[]
   price: number
   credit: number
   durationDays: number
@@ -210,6 +217,23 @@ export interface Gym {
   classes?: GymClass[]
   /** تخفیف ساعات خلوت: از ساعت from تا to (۰ تا ۲۴) */
   offPeak?: { from: number; to: number; discountPct: number }
+  /** برند مشترک شعبه‌های یک صاحب (مثلاً «آیرون‌من») و نام این شعبه (مثلاً «شعبه‌ی سعادت‌آباد») */
+  brand?: string
+  branch?: string
+  /** باشگاه مختلط با سانس‌بندی: در این بازه‌ها فقط یک جنسیت وارد می‌شود؛ بیرون از آن‌ها مختلط نیست و طبق قانون باشگاه است */
+  genderHours?: GenderWindow[]
+  /** نوبت‌های کلاسِ لغوشده از طرف باشگاه (تعطیلی، نبود مربی و…) */
+  cancelledSlots?: { classId: ID; slotAt: ISODate; reason: string }[]
+  /** روزهای تعطیل باشگاه (کلید روز YYYY-MM-DD) */
+  closedDays?: { day: string; reason: string }[]
+}
+
+/** سانس جنسیتی: روزهای هفته (خالی = همه‌ی روزها) و ساعت شروع/پایان */
+export interface GenderWindow {
+  days?: number[]
+  from: number
+  to: number
+  gender: 'male' | 'female'
 }
 
 export type VenueKind = 'gym' | 'pool' | 'equestrian' | 'hall' | 'turf'
@@ -252,6 +276,8 @@ export interface GymClass {
   audience?: 'adult' | 'kids'
   ageMin?: number
   ageMax?: number
+  /** کلاس ویژه‌ی بانوان یا آقایان؛ خالی = طبق سانس همان ساعت */
+  gender?: 'male' | 'female'
 }
 
 /** بلیت ورود به باشگاه (سانس آزاد یا کلاس) */
@@ -673,6 +699,24 @@ export interface PlatformSettings {
   orgDiscountPct?: number
   /** انواع مجموعه‌های فعال در فیت‌یاب (فازبندی توسعه) */
   venueKinds?: VenueKind[]
+  /** درصدی از بهای کلاس که در لغو دیرهنگام (کمتر از مهلت لغو) به باشگاه می‌رسد */
+  lateCancelFeePct?: number
+  /** سقف قیمت سانس هر سطح (تومان)؛ بالاتر از ویژه = لوکس */
+  tierCaps?: { standard: number; premium: number }
+  /** دوره‌ی آزمایشی رایگان: یک بار برای هر شماره‌ی تأییدشده */
+  trial?: { enabled: boolean; credit: number; days: number }
+}
+
+/** لیست انتظار یک نوبت کلاس؛ با خالی شدن جا، نفر اول خودکار رزرو می‌شود */
+export interface WaitlistEntry {
+  id: ID
+  userId: ID
+  gymId: ID
+  classId: ID
+  slotAt: ISODate
+  memberId?: ID
+  prefer: 'subscription' | 'wallet'
+  createdAt: ISODate
 }
 
 /* ───────── نظرها، گزارش‌ها و پشتیبانی ───────── */

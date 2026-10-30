@@ -1,7 +1,7 @@
 import { AppError, mutate, currentUserId, db, svc } from '../store'
 import { findByVerifiedPhone } from './auth'
 import type { DBState } from '../state'
-import { SUBSCRIPTION_PLANS } from '../config'
+import { SUBSCRIPTION_PLANS, TRIAL_TIERS } from '../config'
 import { uid, now } from '../id'
 import type { ID, SubscriptionPlan } from '../types'
 import { applyPayment, grantReward, notify } from './ledger'
@@ -9,6 +9,46 @@ import { couponDiscount } from './commerce'
 import { toman } from '../format'
 
 export const planById = (id: string) => SUBSCRIPTION_PLANS.find((p) => p.id === id)
+
+/* ───────── دوره‌ی آزمایشی رایگان ───────── */
+
+export const TRIAL_PLAN_ID = 'plan-trial'
+/** پلن نمایشی دوره‌ی آزمایشی (قابل خرید نیست؛ اعتبار و مدت از تنظیمات مدیر) */
+export function trialPlan(s: Pick<DBState, 'settings'> = db()): SubscriptionPlan {
+  const t = s.settings.trial ?? { enabled: false, credit: 0, days: 7 }
+  return {
+    id: TRIAL_PLAN_ID, name: 'آزمایشی', price: 0, credit: t.credit, durationDays: t.days, color: 'from-ink-700 to-ink-800', tiers: TRIAL_TIERS,
+    perks: [`${toman(t.credit)} اعتبار ورود`, `${t.days} روز`], benefits: { discounts: {}, freeChallengeEntries: 0, freeDoctorVisits: 0, badge: false },
+  }
+}
+
+/** کلیدهای ضدتکرار: شماره‌ی تأییدشده و ایمیل؛ با ساخت حساب تازه با همین‌ها دوباره دوره‌ی آزمایشی داده نمی‌شود */
+const trialKeysOf = (u: { phone?: string; email?: string }) => [u.phone ? 'p:' + u.phone : '', u.email ? 'e:' + u.email : ''].filter(Boolean)
+
+/** دلیل نداشتن دوره‌ی آزمایشی، یا null اگر می‌تواند فعالش کند */
+export function trialBlocker(userId: ID, s: Pick<DBState, 'settings' | 'users' | 'subscriptions' | 'trialKeys'> = db()): string | null {
+  if (!s.settings.trial?.enabled) return 'دوره‌ی آزمایشی فعلاً فعال نیست'
+  const u = s.users.find((x) => x.id === userId)
+  if (!u) return 'کاربر یافت نشد'
+  if (!u.phone || u.phoneVerified === false) return 'برای دوره‌ی آزمایشی، شماره موبایلت باید با کد پیامکی تأیید شده باشد'
+  if (s.subscriptions.some((x) => x.userId === userId)) return 'دوره‌ی آزمایشی فقط برای اولین عضویت است'
+  // روی سرور فهرست کامل است؛ در مرورگر کاربر عادی فهرست خالی دیده می‌شود و سرور تصمیم نهایی را می‌گیرد
+  if ((s.trialKeys ?? []).some((k) => trialKeysOf(u).includes(k))) return 'این شماره یا ایمیل قبلاً از دوره‌ی آزمایشی استفاده کرده است'
+  return null
+}
+
+export const startTrial = svc('wallet.trial', () => {
+  const userId = currentUserId()
+  const why = trialBlocker(userId)
+  if (why) throw new AppError(why)
+  const plan = trialPlan()
+  mutate((d) => {
+    const u = d.users.find((x) => x.id === userId)!
+    d.subscriptions.push({ userId, planId: TRIAL_PLAN_ID, credit: plan.credit, startedAt: now(), expiresAt: new Date(Date.now() + plan.durationDays * 86_400_000).toISOString(), freeChallengeUsed: 0, freeDoctorUsed: 0, trial: true })
+    d.trialKeys = [...(d.trialKeys ?? []), ...trialKeysOf(u)]
+    notify(d, userId, 'دوره‌ی آزمایشی فعال شد', `${toman(plan.credit)} اعتبار ورود تا ${plan.durationDays} روز؛ یک باشگاه نزدیک انتخاب کن.`, '', '/fityab')
+  })
+})
 
 /** واریز شارژ تأییدشده‌ی درگاه به کیف پول (سرور پس از تأیید بانک صدا می‌زند) */
 export function creditTopUp(d: DBState, userId: ID, amount: number, ref?: string) {
@@ -25,15 +65,30 @@ export const topUp = svc('demo.topUp', (amount: number) => {
   mutate((d) => creditTopUp(d, userId, Math.round(amount)))
 })
 
+/** تمدید تا این چند روز پس از پایان اشتراک، اعتبار باقی‌مانده را نگه می‌دارد */
+export const RENEW_GRACE_DAYS = 7
+
+/**
+ * اعتبار منتقل‌شده به دوره‌ی بعد: باقی‌مانده‌ی دوره‌ی قبل تا سقف اعتبار پلن جدید.
+ * اعتبار دوره‌ی آزمایشی منتقل نمی‌شود؛ پس از مهلت تمدید هم اعتبار قبلی از بین رفته است.
+ */
+export function carryOver(existing: { credit: number; expiresAt: string; trial?: boolean } | undefined, plan: SubscriptionPlan, at = Date.now()) {
+  if (!existing || existing.trial) return 0
+  if (at - new Date(existing.expiresAt).getTime() > RENEW_GRACE_DAYS * 86_400_000) return 0
+  return Math.min(Math.max(0, existing.credit), plan.credit)
+}
+
 /** فعال‌سازی یا تمدید اشتراک (داخل mutate) */
 export function activatePlan(d: DBState, userId: ID, plan: SubscriptionPlan, orgId?: ID) {
   const existing = d.subscriptions.find((s) => s.userId === userId)
   const start = new Date()
-  const base = existing && new Date(existing.expiresAt) > start ? new Date(existing.expiresAt) : start
+  const base = existing && new Date(existing.expiresAt) > start && !existing.trial ? new Date(existing.expiresAt) : start
   const expires = new Date(base.getTime() + plan.durationDays * 86_400_000).toISOString()
   if (existing) {
+    const carried = carryOver(existing, plan)
     existing.planId = plan.id
-    existing.credit += plan.credit
+    existing.trial = undefined
+    existing.credit = carried + plan.credit
     existing.expiresAt = expires
     existing.startedAt = now()
     existing.freeChallengeUsed = 0
@@ -109,7 +164,7 @@ export const redeemGift = svc('wallet.redeem', (code: string) => {
 export function activeSubscription(userId: string, s: Pick<DBState, 'subscriptions'> = db()) {
   const x = s.subscriptions.find((v) => v.userId === userId)
   if (!x || new Date(x.expiresAt) < new Date()) return null
-  return { ...x, plan: planById(x.planId)! }
+  return { ...x, plan: planById(x.planId) ?? trialPlan() }
 }
 
 export const requestWithdraw = svc('wallet.withdraw', (rawAmount: number, iban: string) => {

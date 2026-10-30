@@ -3,15 +3,15 @@ import { Link, useParams } from 'react-router-dom'
 import clsx from 'clsx'
 import { CalendarClock, Clock, Heart, MapPin, Navigation, Phone, Share2, Star, Ticket, Users } from 'lucide-react'
 import { useDB } from '@/core/db'
-import { faDate, faTime, num, toman } from '@/core/format'
+import { dayKey, dec, distanceKm, faDate, faTime, num, toman } from '@/core/format'
 import { campaignOffer } from '@/core/services/members'
 import { ageOf, classEligibility } from '@/core/services/family'
-import { bookClass, bookedCount, checkIn, classPrice, occupancy, priceAt, reviewGym, ticketStatus, toggleFavoriteGym, upcomingClasses, weekdayLabel, weekdayOf } from '@/core/services/fityab'
+import { brandOf, branchesOf, gymTier, subCovers, tierLabel, tierOfPrice, classAllows, classGender, dayClosed, genderWindowsOn, sessionGender, joinWaitlist, leaveWaitlist, waitlistFor, bookClass, bookedCount, checkIn, classPrice, occupancy, priceAt, reviewGym, ticketStatus, toggleFavoriteGym, upcomingClasses, weekdayLabel, weekdayOf } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
-import type { GymClass } from '@/core/types'
+import type { GymClass, GymTier } from '@/core/types'
 import { Avatar, Badge, Button, Card, Cover, Empty, Field, PageHeader, SectionTitle, Select, Sheet, Stars, Textarea } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
-import { run, runOk, toast } from '@/ui/toast'
+import { ask, run, runOk, toast } from '@/ui/toast'
 import { GymMap } from './GymMap'
 import { GENDER_LABEL } from './GymCard'
 import { directionsUrl, neshanUrl, wazeUrl } from './nav'
@@ -27,7 +27,8 @@ import { moment } from '@/ui/moments'
 export default function GymDetail() {
   const { id } = useParams()
   const me = useMe()!
-  const gym = useDB((s) => s.gyms.find((g) => g.id === id))
+  const allGyms = useDB((s) => s.gyms)
+  const gym = allGyms.find((g) => g.id === id)
   const checkins = useDB((s) => s.checkins)
   const posts = useDB((s) => s.posts)
   const reviews = useDB((s) => s.reviews)
@@ -36,7 +37,8 @@ export default function GymDetail() {
   const bal = useBalance(me.id)
   const sub = activeSubscription(me.id)
   const [confirm, setConfirm] = useState(false)
-  const [book, setBook] = useState<{ cls: GymClass; at: Date }>()
+  const [book, setBook] = useState<{ cls: GymClass; at: Date; wait?: boolean }>()
+  const waitlist = useDB((s) => s.waitlist) ?? []
   const [memberId, setMemberId] = useState('')
   const campaigns = useDB((s) => s.campaigns)
   const [ticketId, setTicketId] = useState<string>()
@@ -54,6 +56,16 @@ export default function GymDetail() {
   const offer = campaignOffer({ campaigns }, me.id, gym.id)
   const withOffer = (p: number) => (offer ? Math.round((p * (100 - offer.pct!)) / 100 / 1000) * 1000 : p)
   const now = priceAt(gym)
+  const sessionTier = gymTier(gym)
+  const uncoveredFor = (tier: GymTier) => (sub && !subCovers(sub.planId, tier) ? `عضویت ${sub.plan.name} شامل باشگاه‌های سطح ${tierLabel(tier)} نیست؛ این بار از کیف پول پرداخت کن یا عضویتت را ارتقا بده.` : undefined)
+  const branches = branchesOf(gym, allGyms)
+  const nowAt = new Date()
+  const closedToday = dayClosed(gym, nowAt)
+  const sessionNow = sessionGender(gym, nowAt)
+  const sessionOk = !closedToday && (sessionNow === 'mixed' || !me.gender || sessionNow === me.gender)
+  const myWindows = me.gender && gym.gender === 'mixed' ? genderWindowsOn(gym, nowAt, me.gender) : []
+  const otherWindows = me.gender && gym.gender === 'mixed' ? genderWindowsOn(gym, nowAt, me.gender === 'female' ? 'male' : 'female') : []
+  const upcomingClosed = (gym.closedDays ?? []).filter((c) => c.day >= dayKey(nowAt)).slice(0, 3)
   const kidsOk = book?.cls.audience === 'kids' ? (me.family ?? []).filter((m) => !classEligibility(book.cls, m)) : []
   const occ = occupancy(gym, { checkins })
   const fav = me.favoriteGyms?.includes(gym.id)
@@ -79,6 +91,15 @@ export default function GymDetail() {
   const doBook = async (prefer: 'subscription' | 'wallet') => {
     if (!book) return
     const forMember = book.cls.audience === 'kids' ? memberId || kidsOk[0]?.id : undefined
+    if (book.wait) {
+      const pos = await run(() => joinWaitlist(gym.id, book.cls.id, book.at.toISOString(), prefer, forMember))
+      if (pos) {
+        toast.success(`در صف نفر ${num(pos)} هستی؛ با خالی شدن جا خودکار رزرو می‌شوی`)
+        setBook(undefined)
+        setMemberId('')
+      }
+      return
+    }
     const ci = await run(() => bookClass(gym.id, book.cls.id, book.at.toISOString(), prefer, forMember), )
     if (ci) moment('pay', { title: 'کلاس رزرو شد', sub: prefer === 'wallet' ? 'مبلغ از کیف پول کسر شد' : 'از اعتبار اشتراک کم شد' })
     if (ci) {
@@ -93,7 +114,7 @@ export default function GymDetail() {
       <PageHeader
         back="/fityab"
         title={gym.name}
-        subtitle={gym.tagline}
+        subtitle={gym.branch ? `${gym.branch}${gym.tagline ? ` · ${gym.tagline}` : ''}` : gym.tagline}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" size="sm" aria-label="علاقه‌مندی" icon={<Heart size={15} className={fav ? 'fill-coral-400 text-coral-400' : ''} />} onClick={() => run(() => toggleFavoriteGym(gym.id))} />
@@ -140,6 +161,7 @@ export default function GymDetail() {
             <div className="flex flex-wrap items-center gap-2">
               <Stars value={gym.rating} count={gym.reviews} />
               <Badge color="violet">{GENDER_LABEL[gym.gender]}</Badge>
+              {!gym.rental && <Badge color={sessionTier === 'standard' ? 'slate' : 'amber'}>سطح {tierLabel(sessionTier)}</Badge>}
               <Badge color={occ.tone}>
                 <Users size={12} /> الان {occ.label}
               </Badge>
@@ -165,6 +187,27 @@ export default function GymDetail() {
             </div>
           </Card>
 
+          {branches.length > 0 && (
+            <div>
+              <SectionTitle title={`شعبه‌های دیگر ${brandOf(gym)}`} />
+              <Card className="px-4 py-1">
+                {branches
+                  .map((b) => ({ b, km: distanceKm([gym.lat, gym.lng], [b.lat, b.lng]) }))
+                  .sort((x, y) => x.km - y.km)
+                  .map(({ b, km }) => (
+                    <Link key={b.id} to={`/fityab/${b.id}`} className="flex items-center gap-3 border-b hairline py-3 last:border-0">
+                      <Cover gradient={b.id} image={b.media.find((m) => m.type === 'image')?.url} className="h-11 w-11 shrink-0 rounded-xl" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-medium">{b.branch || b.name}</div>
+                        <div className="truncate text-[12px] text-ink-500">{b.city}{b.address ? ` · ${b.address}` : ''}</div>
+                      </div>
+                      <span className="shrink-0 text-[12px] tabular-nums text-ink-500">{dec(km)} کیلومتر</span>
+                    </Link>
+                  ))}
+              </Card>
+            </div>
+          )}
+
           {(gym.classes?.length ?? 0) > 0 && (
             <div>
               <SectionTitle title="کلاس‌های گروهی" action={<span className="text-xs text-ink-500">رزرو تا ۷ روز آینده</span>} />
@@ -188,6 +231,11 @@ export default function GymDetail() {
                     const left = cls.capacity - taken
                     const kids = cls.audience === 'kids'
                     const booked = !kids && mine.some((c) => c.classId === cls.id && c.slotAt === key && !c.memberId && (c.status === 'active' || c.status === 'used'))
+                    const queue = waitlistFor(cls.id, key, { waitlist })
+                    const myWait = queue.find((w) => w.userId === me.id)
+                    const cg = classGender(gym, cls, at)
+                    // کلاس کودکان: جنسیت فرزند در برگه‌ی رزرو بررسی می‌شود
+                    const genderOk = kids || classAllows(gym, cls, at, me.gender)
                     return (
                       <div key={cls.id + key} className="flex items-center gap-3 border-b hairline py-3 last:border-0">
                         <div className="w-14 text-center">
@@ -195,14 +243,24 @@ export default function GymDetail() {
                           <div className="text-[12px] text-ink-400">{num(cls.durationMin)} دقیقه</div>
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 truncate text-sm font-medium">{cls.title}{kids && <Badge color="violet">کودکان {num(cls.ageMin ?? 0)}–{num(cls.ageMax ?? 0)} سال</Badge>}</div>
+                          <div className="flex items-center gap-1.5 truncate text-sm font-medium">{cls.title}{kids && <Badge color="violet">کودکان {num(cls.ageMin ?? 0)}–{num(cls.ageMax ?? 0)} سال</Badge>}{cg !== 'mixed' && gym.gender === 'mixed' && <Badge color="rose">{GENDER_LABEL[cg]}</Badge>}</div>
                           <div className="truncate text-[12px] text-ink-500">
-                            {cls.coachName} · {left > 0 ? `${num(left)} جای خالی` : 'تکمیل'} · {toman(classPrice(gym, cls))}
+                            {cls.coachName} · {left > 0 ? `${num(left)} جای خالی` : queue.length ? `تکمیل · ${num(queue.length)} نفر در صف` : 'تکمیل'} · {toman(classPrice(gym, cls))}
                           </div>
                         </div>
-                        <Button size="sm" variant={booked ? 'secondary' : 'primary'} disabled={!booked && left <= 0} onClick={() => (booked ? setTicketId(mine.find((c) => c.classId === cls.id && c.slotAt === key)?.id) : setBook({ cls, at }))}>
-                          {booked ? 'بلیت من' : left > 0 ? 'رزرو' : 'تکمیل'}
-                        </Button>
+                        {booked ? (
+                          <Button size="sm" variant="secondary" onClick={() => setTicketId(mine.find((c) => c.classId === cls.id && c.slotAt === key)?.id)}>بلیت من</Button>
+                        ) : !genderOk ? (
+                          <Button size="sm" variant="secondary" disabled>ویژه‌ی {GENDER_LABEL[cg]}</Button>
+                        ) : left > 0 ? (
+                          <Button size="sm" onClick={() => setBook({ cls, at })}>رزرو</Button>
+                        ) : myWait ? (
+                          <Button size="sm" variant="secondary" onClick={async () => { if (await ask('از لیست انتظار این کلاس خارج می‌شوی؟')) await runOk(() => leaveWaitlist(myWait.id), 'از صف خارج شدی') }}>
+                            نفر {num(queue.indexOf(myWait) + 1)} صف
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => setBook({ cls, at, wait: true })}>صف انتظار</Button>
+                        )}
                       </div>
                     )
                   })
@@ -280,10 +338,22 @@ export default function GymDetail() {
                 <div className={clsx('h-full rounded-full', occ.tone === 'emerald' ? 'bg-aqua-400' : occ.tone === 'amber' ? 'bg-gold-300' : 'bg-coral-400')} style={{ width: `${Math.max(4, Math.min(100, occ.ratio * 100))}%` }} />
               </div>
             </div>
+            {(myWindows.length > 0 || otherWindows.length > 0) && (
+              <div className="mt-3 rounded-2xl bg-coral-400/10 p-3 text-xs leading-6">
+                <div className="font-semibold">سانس‌های امروز</div>
+                {myWindows.map((w, i) => <div key={'m' + i}>ویژه‌ی {GENDER_LABEL[w.gender]}: ساعت {num(w.from)} تا {num(w.to)}</div>)}
+                {otherWindows.map((w, i) => <div key={'o' + i} className="opacity-60">ویژه‌ی {GENDER_LABEL[w.gender]}: ساعت {num(w.from)} تا {num(w.to)}</div>)}
+              </div>
+            )}
+            {upcomingClosed.length > 0 && (
+              <div className="mt-3 rounded-2xl bg-gold-300/15 p-3 text-xs leading-6">
+                {upcomingClosed.map((c) => <div key={c.day}>تعطیل: {faDate(c.day)}{c.reason ? ` · ${c.reason}` : ''}</div>)}
+              </div>
+            )}
             <div className="mt-3 rounded-2xl bg-ink-900/[.04] p-3 text-xs leading-6 text-ink-600 dark:bg-white/5 dark:text-ink-300">
               بدون ثبت‌نام و پرداخت در باشگاه
               <br />
-              بلیت تا پایان امروز معتبر است
+              {gym.genderHours?.length ? 'بلیت تا پایان سانس شما معتبر است' : 'بلیت تا پایان امروز معتبر است'}
               <br />
               QR را در پذیرش نشان دهید
             </div>
@@ -292,8 +362,8 @@ export default function GymDetail() {
                 نمایش بلیت فعال
               </Button>
             ) : (
-              <Button className="mt-4 w-full" size="lg" icon={<Ticket size={18} />} onClick={() => setConfirm(true)} disabled={!gym.approved}>
-                خرید بلیت امروز
+              <Button className="mt-4 w-full" size="lg" icon={<Ticket size={18} />} onClick={() => setConfirm(true)} disabled={!gym.approved || !sessionOk}>
+                {closedToday ? 'امروز تعطیل است' : !sessionOk ? `الان سانس ${GENDER_LABEL[sessionNow]} است` : 'خرید بلیت امروز'}
               </Button>
             )}
             </>
@@ -322,15 +392,19 @@ export default function GymDetail() {
         credit={sub?.credit}
         balance={bal}
         onPay={doCheckIn}
+        uncovered={uncoveredFor(sessionTier)}
       >
         {offer && <div className="rounded-2xl bg-aqua-400/10 p-3 text-xs">تخفیف ویژه‌ی {gym.name} برای شما: {num(offer.pct!)}٪</div>}
       </PaySheet>
       <PaySheet
         open={!!book}
         onClose={() => setBook(undefined)}
-        title={book ? `رزرو کلاس ${book.cls.title}` : ''}
+        title={book ? `${book.wait ? 'لیست انتظار' : 'رزرو'} کلاس ${book.cls.title}` : ''}
+        cta={book?.wait ? 'ماندن در صف' : undefined}
+        note={book?.wait ? 'فعلاً چیزی کسر نمی‌شود؛ اگر کسی لغو کند، به ترتیب صف خودکار رزرو می‌شوی و مبلغ از همین روش پرداخت کسر می‌شود.' : undefined}
         desc={book ? `${weekdayLabel(weekdayOf(book.at))} ${faDate(book.at.toISOString())} ساعت ${faTime(book.at.toISOString())} · مربی: ${book.cls.coachName}` : ''}
         price={book ? withOffer(classPrice(gym, book.cls)) : 0}
+        uncovered={book ? uncoveredFor(tierOfPrice(classPrice(gym, book.cls))) : undefined}
         credit={sub?.credit}
         balance={bal}
         onPay={doBook}

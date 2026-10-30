@@ -56,6 +56,17 @@ function reminders() {
       if (st && st.daysToNext === 2 && once(`rem:${u.id}:period:${today}`)) due.push({ userId: u.id, title: 'یادآور چرخه', body: 'حدود ۲ روز تا شروع پریود بعدی؛ برنامه‌ی تمرینت را سبک‌تر بچین.', link: '/profile?tab=health' })
     }
   }
+  // تمدید: ۳ روز و ۱ روز مانده به پایان اشتراک (ساعت ۱۱)
+  for (const sub of s.subscriptions) {
+    const left = Math.ceil((new Date(sub.expiresAt).getTime() - now.getTime()) / 86_400_000)
+    if ((left === 3 || left === 1) && h === 11 && once(`rem:${sub.userId}:renew:${today}`))
+      due.push({
+        userId: sub.userId,
+        title: sub.trial ? 'دوره‌ی آزمایشی رو به پایان است' : 'اشتراکت رو به پایان است',
+        body: sub.trial ? `${left} روز مانده؛ با خرید عضویت ادامه بده.` : `${left} روز مانده؛ با تمدید تا ۷ روز پس از پایان، اعتبار باقی‌مانده تا سقف پلن جدید منتقل می‌شود.`,
+        link: '/wallet',
+      })
+  }
   // کلاس آنلاین: ۱۵ دقیقه قبل؛ رویداد: یک روز قبل
   for (const c of s.liveClasses ?? []) {
     const left = new Date(c.at).getTime() - now.getTime()

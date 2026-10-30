@@ -9,6 +9,7 @@ import { activePolicy } from '@/core/services/insurance'
 import type { SportEvent } from '@/core/types'
 import { Avatar, Badge, Button, Card, Chips, Cover, Empty, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
 import { useBalance, useMe, useUserMap } from '@/ui/hooks'
+import { CityInput } from '@/ui/CityInput'
 import { isBusiness } from '@/core/roles'
 import { run, runOk, ask, toast } from '@/ui/toast'
 
@@ -194,7 +195,8 @@ export function EventDetail() {
 
 export function CreateEvent() {
   const nav = useNavigate()
-  const [f, setF] = useState<NewEvent>({ title: '', kind: 'race', sport: 'دویدن', description: '', at: '', location: '', city: 'اصفهان', fee: 0, capacity: 100, categories: [], gender: 'mixed' })
+  const me = useMe()!
+  const [f, setF] = useState<NewEvent>({ title: '', kind: 'race', sport: 'دویدن', description: '', at: '', location: '', city: me.city ?? '', fee: 0, capacity: 100, categories: [], gender: 'mixed' })
   const [cats, setCats] = useState('')
   return (
     <div className="animate-fade-up">
@@ -212,7 +214,7 @@ export function CreateEvent() {
         <Field label="زمان"><Input type="datetime-local" dir="ltr" value={f.at} onChange={(e) => setF({ ...f, at: e.target.value })} /></Field>
         <div className="grid grid-cols-2 gap-2">
           <Field label="محل برگزاری"><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} /></Field>
-          <Field label="شهر"><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></Field>
+          <Field label="شهر"><CityInput value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></Field>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Field label="ورودی (تومان)" hint="۰ = رایگان"><NumberInput value={f.fee} onChange={(v) => setF({ ...f, fee: v })} /></Field>

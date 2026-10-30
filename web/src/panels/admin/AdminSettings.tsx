@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useDB } from '@/core/db'
-import { MODULE_LABEL } from '@/core/config'
-import { broadcast, saveCoupon, setCommission, setPlatformSetting, setVenueKinds } from '@/core/services/admin'
+import { DEFAULT_TIER_CAPS, MODULE_LABEL } from '@/core/config'
+import { broadcast, saveCoupon, setCommission, setPlatformSetting, setTierCaps, setTrial, setVenueKinds } from '@/core/services/admin'
 import { VENUE_KINDS } from '@/core/config'
 import type { VenueKind } from '@/core/types'
 import type { Coupon } from '@/core/types'
@@ -16,7 +16,10 @@ export default function AdminSettings() {
   const [body, setBody] = useState('')
   const coupons = useDB((s) => s.coupons)
   const [cp, setCp] = useState<Partial<Coupon>>({ code: '', pct: 10, maxAmount: 200_000, module: 'all', maxUses: 100 })
-  const num0 = (k: 'shippingFee' | 'freeShippingOver' | 'referralReward' | 'orgDiscountPct') => settings[k] ?? 0
+  const num0 = (k: 'shippingFee' | 'freeShippingOver' | 'referralReward' | 'orgDiscountPct' | 'lateCancelFeePct') => settings[k] ?? 0
+  const trial = settings.trial ?? { enabled: false, credit: 300_000, days: 7 }
+  const caps = settings.tierCaps ?? DEFAULT_TIER_CAPS
+  const [capsDraft, setCapsDraft] = useState(caps)
   return (
     <div className="animate-fade-up">
       <PageHeader title="کمیسیون و تنظیمات" />
@@ -54,6 +57,28 @@ export default function AdminSettings() {
               <Field label="تخفیف سازمانی (٪)">
                 <NumberInput value={num0('orgDiscountPct')} onChange={(v) => setPlatformSetting('orgDiscountPct', v)} />
               </Field>
+              <Field label="هزینه‌ی لغو دیرهنگام (٪)" hint="سهم باشگاه وقتی کمتر از ۲ ساعت به کلاس لغو شود">
+                <NumberInput value={num0('lateCancelFeePct')} onChange={(v) => setPlatformSetting('lateCancelFeePct', v)} />
+              </Field>
+            </div>
+            <div className="rounded-2xl bg-ink-900/[.04] p-3 dark:bg-white/[.05]">
+              <div className="text-sm font-semibold">سطح باشگاه‌ها بر اساس قیمت سانس</div>
+              <p className="mt-1 text-xs leading-6 text-ink-500">نقره‌ای فقط استاندارد، طلایی استاندارد و ویژه، الماس همه‌ی سطح‌ها را پوشش می‌دهد. بقیه با کیف پول.</p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <Field label="سقف استاندارد (تومان)"><NumberInput value={capsDraft.standard} onChange={(v) => setCapsDraft({ ...capsDraft, standard: v })} /></Field>
+                <Field label="سقف ویژه (تومان)" hint="بیشتر از این: لوکس"><NumberInput value={capsDraft.premium} onChange={(v) => setCapsDraft({ ...capsDraft, premium: v })} /></Field>
+              </div>
+              <Button size="sm" variant="secondary" className="mt-2" disabled={capsDraft.standard === caps.standard && capsDraft.premium === caps.premium} onClick={() => run(() => setTierCaps(capsDraft), 'سطح‌ها ذخیره شد')}>ذخیره‌ی سطح‌ها</Button>
+            </div>
+            <div className="rounded-2xl bg-ink-900/[.04] p-3 dark:bg-white/[.05]">
+              <label className="flex items-center justify-between gap-3 text-sm font-semibold">
+                دوره‌ی آزمایشی رایگان (یک بار برای هر شماره)
+                <input type="checkbox" checked={trial.enabled} onChange={(e) => run(() => setTrial({ ...trial, enabled: e.target.checked }))} className="h-5 w-5 accent-brand-500" />
+              </label>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <Field label="اعتبار (تومان)"><NumberInput value={trial.credit} onChange={(v) => run(() => setTrial({ ...trial, credit: v }))} /></Field>
+                <Field label="مدت (روز)"><NumberInput value={trial.days} onChange={(v) => run(() => setTrial({ ...trial, days: v }))} /></Field>
+              </div>
             </div>
           </Card>
           <Card className="space-y-3">

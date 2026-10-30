@@ -11,7 +11,7 @@ import type { DBState } from '../state'
 import { uid, now } from '../id'
 import type { Listing } from '../types'
 import { applyPayment, notify, reversePayment } from './ledger'
-import { LISTING_CATEGORY, LISTING_CONDITION } from '../config'
+import { LISTING_CATEGORY, LISTING_CONDITION, cleanCity } from '../config'
 import { toman } from '../format'
 
 export const AUTO_RELEASE_DAYS = 7
@@ -27,7 +27,9 @@ function clean(input: ListingInput) {
   if (!(input.price >= 10_000 && input.price <= 500_000_000)) throw new AppError('قیمت معتبر نیست')
   const photos = (input.photos ?? []).filter((p) => typeof p === 'string' && p.length < 3_000_000).slice(0, 6)
   if (!photos.length) throw new AppError('حداقل یک عکس از کالا بگذارید')
-  return { title: title.slice(0, 80), category: input.category, condition: input.condition, price: Math.round(input.price), description: String(input.description ?? '').slice(0, 1500), photos, city: String(input.city || 'اصفهان').slice(0, 30) }
+  const city = cleanCity(input.city)
+  if (city.length < 2) throw new AppError('شهر محل فروش را بنویسید')
+  return { title: title.slice(0, 80), category: input.category, condition: input.condition, price: Math.round(input.price), description: String(input.description ?? '').slice(0, 1500), photos, city }
 }
 
 export const createListing = svc('market.create', (input: ListingInput) => {

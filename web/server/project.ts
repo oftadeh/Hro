@@ -99,6 +99,9 @@ export function project(s: DBState, uid: string): DBState {
     liveClasses: s.liveClasses.filter((c) => c.status === 'scheduled' || c.hostId === uid || c.attendees.includes(uid) || admin).map(liveView),
     campaigns: admin ? s.campaigns : s.campaigns.filter((c) => myGyms.has(c.gymId)).concat(s.campaigns.filter((c) => !myGyms.has(c.gymId) && c.recipients.includes(uid)).map(campaignView)),
     events: s.events.filter((e) => e.approved || e.organizerId === uid || admin).map(eventView),
+    // لیست انتظار: ردیف‌های دیگران بی‌نام (فقط برای نوبت و تعداد)
+    waitlist: (s.waitlist ?? []).map((w) => (w.userId === uid || admin || myGyms.has(w.gymId) ? w : { ...w, userId: 'anon', memberId: undefined })),
+    trialKeys: admin ? s.trialKeys ?? [] : [],
     listings: s.listings.filter((l) => l.status === 'active' || l.sellerId === uid || l.deal?.buyerId === uid || admin).map(listingView),
   }
 }

@@ -31,7 +31,7 @@ export function ProfileHero({ user, actions, extra }: { user: User; actions?: Re
           <div className="min-w-0 flex-1 pt-1">
             <h1 className="truncate font-display text-[2rem] leading-[1.1]">{user.name}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-white/60">
-              <span className="flex items-center gap-1"><Pin size={11} /> {user.city}</span>
+              {user.city && <span className="flex items-center gap-1"><Pin size={11} /> {user.city}</span>}
               <span>عضو از {since}</span>
               {user.goal && <span>هدف: {GOALS[user.goal]}</span>}
             </div>

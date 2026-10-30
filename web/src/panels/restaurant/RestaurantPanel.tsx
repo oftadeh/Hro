@@ -6,6 +6,7 @@ import { deleteFood, saveFood, saveRestaurant } from '@/core/services/commerce'
 import type { Food, Restaurant } from '@/core/types'
 import { Badge, Button, Card, Cover, Empty, Field, ImagePicker, Input, NumberInput, PageHeader, Select, Sheet, Textarea } from '@/ui/kit'
 import { useMe } from '@/ui/hooks'
+import { cityCenter } from '@/core/config'
 import { run, runOk, ask } from '@/ui/toast'
 import { LocationPicker } from '../shared/LocationPicker'
 import { FoodIcon } from '@/ui/icons'
@@ -19,13 +20,17 @@ export default function RestaurantPanel() {
   const current = mine.find((r) => r.id === rid) ?? mine[0]
   const [editR, setEditR] = useState<Partial<Restaurant>>()
   const [editF, setEditF] = useState<Partial<Food>>()
+  const blankRestaurant = (): Partial<Restaurant> => {
+    const [lat, lng] = cityCenter(me.city)
+    return { name: '', description: '', address: '', deliveryMinutes: 40, lat, lng }
+  }
   const menu = current ? foods.filter((f) => f.restaurantId === current.id) : []
 
   return (
     <div className="animate-fade-up">
-      <PageHeader title="منو و رستوران" subtitle="غذاهای رژیمی شما در ماژول بوفه" actions={<Button size="sm" variant="outline" icon={<Plus size={16} />} onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 32.6546, lng: 51.668 })}>رستوران جدید</Button>} />
+      <PageHeader title="منو و رستوران" subtitle="غذاهای رژیمی شما در ماژول بوفه" actions={<Button size="sm" variant="outline" icon={<Plus size={16} />} onClick={() => setEditR(blankRestaurant())}>رستوران جدید</Button>} />
       {mine.length === 0 ? (
-        <Empty icon="" title="هنوز رستورانی ثبت نکرده‌اید" action={<Button onClick={() => setEditR({ name: '', description: '', address: '', deliveryMinutes: 40, lat: 32.6546, lng: 51.668 })}>ثبت رستوران</Button>} />
+        <Empty icon="" title="هنوز رستورانی ثبت نکرده‌اید" action={<Button onClick={() => setEditR(blankRestaurant())}>ثبت رستوران</Button>} />
       ) : (
         <>
           {mine.length > 1 && (

@@ -10,7 +10,7 @@ import { uid, now } from '../id'
 import type { SportEvent } from '../types'
 import { applyPayment, notify, reversePayment } from './ledger'
 import { addXP } from './engagement'
-import { EVENT_KINDS, GRADIENTS } from '../config'
+import { EVENT_KINDS, GRADIENTS, cleanCity } from '../config'
 import { faDateTime, toman } from '../format'
 
 export const EVENT_CANCEL_HOURS = 48
@@ -28,11 +28,12 @@ function clean(input: NewEvent) {
   const at = new Date(input.at)
   if (isNaN(at.getTime()) || at.getTime() < Date.now() + 24 * 3_600_000) throw new AppError('زمان رویداد باید حداقل یک روز بعد باشد')
   if (!String(input.location ?? '').trim()) throw new AppError('محل برگزاری را بنویسید')
+  if (cleanCity(input.city).length < 2) throw new AppError('شهر برگزاری را بنویسید')
   if (!(input.capacity >= 2 && input.capacity <= 20_000)) throw new AppError('ظرفیت معتبر نیست')
   if (!(input.fee === 0 || input.fee >= 10_000)) throw new AppError('ورودی معتبر نیست (رایگان یا حداقل ۱۰ هزار تومان)')
   return {
     title: title.slice(0, 90), kind: input.kind, sport: String(input.sport || EVENT_KINDS[input.kind]).slice(0, 30), description: String(input.description ?? '').slice(0, 2000),
-    at: at.toISOString(), location: String(input.location).trim().slice(0, 150), city: String(input.city || 'اصفهان').slice(0, 30), lat: input.lat, lng: input.lng,
+    at: at.toISOString(), location: String(input.location).trim().slice(0, 150), city: cleanCity(input.city), lat: input.lat, lng: input.lng,
     fee: Math.round(input.fee), capacity: Math.round(input.capacity), categories: (input.categories ?? []).map((c) => String(c).trim()).filter(Boolean).slice(0, 8),
     gender: (['male', 'female', 'mixed'].includes(input.gender) ? input.gender : 'mixed') as SportEvent['gender'],
   }

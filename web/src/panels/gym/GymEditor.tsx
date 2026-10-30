@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Plus, Trash2, Upload } from 'lucide-react'
 import { uploadVideo } from '@/core/client/remote'
-import { VENUE_KINDS } from '@/core/config'
+import { IR_CITIES, VENUE_KINDS, cityCenter } from '@/core/config'
+import { CityInput } from '@/ui/CityInput'
+import { useMe } from '@/ui/hooks'
 import type { VenueKind } from '@/core/types'
 import { weekdayLabel } from '@/core/services/fityab'
 import { uid } from '@/core/id'
 import { useDB } from '@/core/db'
 import { saveGym } from '@/core/services/fityab'
-import type { Gym, GymClass, Media } from '@/core/types'
+import type { GenderWindow, Gym, GymClass, Media } from '@/core/types'
 import { Button, Card, Field, ImagePicker, Input, NumberInput, PageHeader, SectionTitle, Select, Textarea } from '@/ui/kit'
 import { run, toast } from '@/ui/toast'
 import { LocationPicker } from '../shared/LocationPicker'
@@ -19,9 +21,29 @@ export default function GymEditor() {
   const { id } = useParams()
   const nav = useNavigate()
   const existing = useDB((s) => s.gyms.find((g) => g.id === id))
-  const [f, setF] = useState<Partial<Gym>>(
-    existing ?? { name: '', tagline: '', description: '', address: '', phone: '', sessionPrice: 100_000, facilities: [], sports: [], hours: '۸ صبح تا ۱۰ شب', gender: 'mixed', lat: 32.6546, lng: 51.668, media: [], capacity: 50, classes: [] },
-  )
+  const me = useMe()
+  // «افزودن شعبه»: اطلاعات مشترک از شعبه‌ی مبدأ کپی می‌شود؛ نشانی، موقعیت و تصاویر هر شعبه جداست
+  const [search] = useSearchParams()
+  const source = useDB((s) => s.gyms.find((g) => g.id === search.get('from') && g.ownerId === me?.id))
+  const [f, setF] = useState<Partial<Gym>>(() => {
+    if (existing) return existing
+    if (source) {
+      const [lat, lng] = cityCenter(source.city)
+      return {
+        name: source.name, brand: source.brand || source.name, branch: '', tagline: source.tagline, description: source.description, address: '', city: source.city, phone: source.phone,
+        sessionPrice: source.sessionPrice, facilities: source.facilities, sports: source.sports, hours: source.hours, gender: source.gender, genderHours: source.genderHours,
+        offPeak: source.offPeak, kind: source.kind, rental: source.rental, capacity: source.capacity, lat, lng, media: [],
+        classes: (source.classes ?? []).map((c) => ({ ...c, id: uid('k-') })),
+      }
+    }
+    const [lat, lng] = cityCenter(me?.city)
+    return { name: '', tagline: '', description: '', address: '', city: me?.city ?? '', phone: '', sessionPrice: 100_000, facilities: [], sports: [], hours: '۸ صبح تا ۱۰ شب', gender: 'mixed', lat, lng, media: [], capacity: 50, classes: [] }
+  })
+  /** با عوض شدن شهرِ مجموعه‌ی تازه، نقشه‌ی انتخاب مکان به همان شهر می‌رود */
+  const setCity = (city: string) => {
+    const c = IR_CITIES.find((x) => x.name === city.trim())
+    setF((x) => ({ ...x, city, ...(!existing && c ? { lat: c.lat, lng: c.lng } : {}) }))
+  }
   const [facilities, setFacilities] = useState((existing?.facilities ?? []).join('، '))
   const [sports, setSports] = useState((existing?.sports ?? []).join('، '))
   const [video, setVideo] = useState('')
@@ -48,6 +70,10 @@ export default function GymEditor() {
             </Select>
           </Field>
           <Field label="نام مجموعه"><Input value={f.name} onChange={(e) => set('name', e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="برند (برای چند شعبه)" hint="همه‌ی شعبه‌ها یک برند داشته باشند"><Input value={f.brand ?? ''} onChange={(e) => set('brand', e.target.value)} placeholder="مثلاً آیرون‌من" /></Field>
+            <Field label="نام شعبه"><Input value={f.branch ?? ''} onChange={(e) => set('branch', e.target.value)} placeholder="مثلاً شعبه‌ی سعادت‌آباد" /></Field>
+          </div>
           <Field label="شعار کوتاه"><Input value={f.tagline} onChange={(e) => set('tagline', e.target.value)} placeholder="مثلاً: بدنسازی حرفه‌ای با تجهیزات روز" /></Field>
           <Field label="معرفی کامل"><Textarea value={f.description} onChange={(e) => set('description', e.target.value)} /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -62,6 +88,7 @@ export default function GymEditor() {
               <Field label="هزینه‌ی هر سانس (تومان)"><NumberInput value={f.sessionPrice ?? 0} onChange={(v) => set('sessionPrice', v)} /></Field>
             )}
             <Field label="ساعات کاری"><Input value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
+            <Field label="شهر"><CityInput value={f.city ?? ''} onChange={(e) => setCity(e.target.value)} /></Field>
             <Field label="تلفن"><Input value={f.phone} onChange={(e) => set('phone', e.target.value)} dir="ltr" className="text-left" /></Field>
             <Field label="جنسیت">
               <Select value={f.gender} onChange={(e) => set('gender', e.target.value as Gym['gender'])}>
@@ -83,6 +110,37 @@ export default function GymEditor() {
             <Field label="تخفیف (درصد)" hint="۰ یعنی غیرفعال"><NumberInput value={f.offPeak?.discountPct ?? 0} onChange={(v) => set('offPeak', { from: f.offPeak?.from ?? 10, to: f.offPeak?.to ?? 16, discountPct: v })} /></Field>
           </div>
         </Card>
+
+        {f.gender === 'mixed' && !rentalKind && (
+          <Card className="space-y-3 lg:col-span-2">
+            <SectionTitle
+              title="سانس بانوان و آقایان"
+              action={
+                <Button size="sm" variant="secondary" icon={<Plus size={14} />} onClick={() => set('genderHours', [...(f.genderHours ?? []), { from: 8, to: 12, gender: 'female' }])}>
+                  افزودن سانس
+                </Button>
+              }
+            />
+            <p className="text-xs leading-6 text-ink-500">در این بازه‌ها فقط همان جنسیت بلیت می‌گیرد و وارد می‌شود. بلیت هر نفر تا پایان سانس خودش معتبر است. کلاس‌هایی که جنسیت ندارند، از سانس همان ساعت پیروی می‌کنند.</p>
+            {(f.genderHours ?? []).map((w, i) => {
+              const up = (patch: Partial<GenderWindow>) => set('genderHours', (f.genderHours ?? []).map((x, j) => (j === i ? { ...x, ...patch } : x)))
+              return (
+                <div key={i} className="grid grid-cols-2 items-center gap-2 rounded-2xl bg-ink-900/[.03] p-3 sm:grid-cols-5 dark:bg-white/[.04]">
+                  <Select value={w.gender} onChange={(e) => up({ gender: e.target.value as GenderWindow['gender'] })}>
+                    <option value="female">بانوان</option><option value="male">آقایان</option>
+                  </Select>
+                  <Select value={w.days?.length === 1 ? w.days[0] : -1} onChange={(e) => up({ days: Number(e.target.value) < 0 ? undefined : [Number(e.target.value)] })}>
+                    <option value={-1}>همه‌ی روزها</option>
+                    {[0, 1, 2, 3, 4, 5, 6].map((d) => <option key={d} value={d}>{weekdayLabel(d)}</option>)}
+                  </Select>
+                  <label className="flex items-center gap-1 text-xs">از ساعت <NumberInput value={w.from} onChange={(v) => up({ from: v })} aria-label="از ساعت" /></label>
+                  <label className="flex items-center gap-1 text-xs">تا <NumberInput value={w.to} onChange={(v) => up({ to: v })} aria-label="تا ساعت" /></label>
+                  <button onClick={() => set('genderHours', (f.genderHours ?? []).filter((_, j) => j !== i))} className="justify-self-end rounded-full p-2 text-coral-500" aria-label="حذف سانس"><Trash2 size={15} /></button>
+                </div>
+              )
+            })}
+          </Card>
+        )}
 
         <Card className="space-y-3 lg:col-span-2">
           <SectionTitle
@@ -109,6 +167,11 @@ export default function GymEditor() {
                   <NumberInput value={c.price ?? 0} onChange={(v) => up({ price: v || undefined })} placeholder="قیمت" aria-label="قیمت" />
                   <button onClick={() => set('classes', classes.filter((_, j) => j !== i))} className="shrink-0 rounded-full p-2 text-coral-500" aria-label="حذف کلاس"><Trash2 size={15} /></button>
                 </div>
+                {f.gender === 'mixed' && (
+                  <Select className="col-span-2" value={c.gender ?? ''} onChange={(e) => up({ gender: (e.target.value || undefined) as GymClass['gender'] })} aria-label="جنسیت کلاس">
+                    <option value="">طبق سانس همان ساعت</option><option value="female">ویژه‌ی بانوان</option><option value="male">ویژه‌ی آقایان</option>
+                  </Select>
+                )}
                 <label className="col-span-2 flex items-center gap-2 text-xs sm:col-span-3">
                   <input type="checkbox" checked={c.audience === 'kids'} onChange={(e) => up(e.target.checked ? { audience: 'kids', ageMin: c.ageMin ?? 5, ageMax: c.ageMax ?? 12 } : { audience: undefined, ageMin: undefined, ageMax: undefined })} />
                   کلاس کودکان

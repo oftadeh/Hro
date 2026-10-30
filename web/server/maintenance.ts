@@ -21,6 +21,12 @@ export function dailyCleanup(today: string) {
       d.stories = d.stories.filter((s) => now - new Date(s.createdAt).getTime() <= 3 * DAY)
     })
 
+  // لیست انتظار نوبت‌های گذشته
+  if ((getState().waitlist ?? []).some((w) => new Date(w.slotAt).getTime() < now))
+    mutate((d) => {
+      d.waitlist = d.waitlist.filter((w) => new Date(w.slotAt).getTime() >= now)
+    })
+
   // فایل‌های آپلودی که دو روز است در هیچ جای داده به آن‌ها اشاره نشده
   const dir = path.join(env.dataDir, 'uploads')
   const all = JSON.stringify(getState())

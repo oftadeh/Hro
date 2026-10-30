@@ -1,15 +1,18 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { Award, Baby, Building2, Crosshair, Dumbbell, Flag, LayoutGrid, List, Map as MapIcon, Navigation, Search, Sparkles, Waves, X, type LucideIcon } from 'lucide-react'
+import { Award, Baby, BadgeCheck, Building2, CalendarClock, Crosshair, Dumbbell, Flag, LayoutGrid, List, Map as MapIcon, Navigation, Search, Sparkles, Waves, X, type LucideIcon } from 'lucide-react'
 import { useDB } from '@/core/db'
-import { DEFAULT_CENTER, VENUE_KINDS } from '@/core/config'
+import { VENUE_KINDS, cityCenter } from '@/core/config'
 import type { VenueKind } from '@/core/types'
 import { dec, distanceKm, num } from '@/core/format'
 import { Button, Cover, Input, PageHeader, Tabs } from '@/ui/kit'
 import { toast } from '@/ui/toast'
 import { GymMap } from './GymMap'
 import { GymCard } from './GymCard'
+import { ClassFinder } from './ClassFinder'
+import { gymTier, rentalTier, subCovers } from '@/core/services/fityab'
+import { activeSubscription } from '@/core/services/wallet'
 import { directionsUrl } from './nav'
 import { useMe } from '@/ui/hooks'
 
@@ -17,22 +20,27 @@ const KIND_ICON: Record<VenueKind, LucideIcon> = { gym: Dumbbell, pool: Waves, e
 
 export default function FitYab() {
   const gyms = useDB((s) => s.gyms)
-  const [view, setView] = useState<'map' | 'list'>('map')
   const [q, setQ] = useState('')
   const me = useMe()
   const [params] = useSearchParams()
+  const [view, setView] = useState<'map' | 'list' | 'classes'>(params.get('view') === 'classes' ? 'classes' : 'map')
   const [sport, setSport] = useState(params.get('sport') ?? 'all')
   const [womenOnly, setWomenOnly] = useState(false)
   const [kidsOnly, setKidsOnly] = useState(params.get('kids') === '1')
+  const [coveredOnly, setCoveredOnly] = useState(false)
+  useDB((s) => s.subscriptions)
+  const sub = me ? activeSubscription(me.id) : null
   const enabled = useDB((s) => s.settings.venueKinds) ?? ['gym']
   const [kind, setKind] = useState<VenueKind | 'all'>((params.get('kind') as VenueKind) ?? 'all')
   const visibleGyms = useMemo(() => gyms.filter((g) => enabled.includes(g.kind ?? 'gym')), [gyms, enabled])
   const [sort, setSort] = useState<'near' | 'price' | 'rating'>('near')
   const [user, setUser] = useState<[number, number]>()
-  const [center, setCenter] = useState<[number, number]>(DEFAULT_CENTER)
+  // بدون موقعیت دقیق، نقشه و فاصله‌ها از مرکز شهر کاربر حساب می‌شود
+  const home = useMemo(() => cityCenter(me?.city), [me?.city])
+  const [center, setCenter] = useState<[number, number]>(home)
   const [selected, setSelected] = useState<string>()
 
-  const origin = user ?? DEFAULT_CENTER
+  const origin = user ?? home
   const sports = useMemo(() => {
     const all = [...new Set(visibleGyms.filter((g) => g.approved && (kind === 'all' || (g.kind ?? 'gym') === kind)).flatMap((g) => g.sports))].slice(0, 10)
     return sport !== 'all' && !all.includes(sport) ? [sport, ...all] : all
@@ -47,10 +55,12 @@ export default function FitYab() {
       .filter((g) => !kidsOnly || !!g.classes?.some((c) => c.audience === 'kids'))
       .filter((g) => !womenOnly || g.gender === 'female')
       .filter((g) => sport === 'all' || g.sports.includes(sport))
-      .filter((g) => !q || g.name.includes(q) || g.address.includes(q) || g.sports.some((s) => s.includes(q)))
+      .filter((g) => !q || g.name.includes(q) || g.address.includes(q) || !!g.brand?.includes(q) || !!g.branch?.includes(q) || g.sports.some((s) => s.includes(q)))
+      // فقط باشگاه‌هایی که با اعتبار عضویت فعلی می‌شود رفت
+      .filter((g) => !coveredOnly || !sub?.planId || subCovers(sub.planId, g.rental ? rentalTier(g) : gymTier(g)))
       .map((g) => ({ g, d: distanceKm(origin, [g.lat, g.lng]) }))
     return l.sort((a, b) => (sort === 'near' ? a.d - b.d : sort === 'price' ? (a.g.rental?.hourlyPrice ?? a.g.sessionPrice) - (b.g.rental?.hourlyPrice ?? b.g.sessionPrice) : b.g.rating - a.g.rating))
-  }, [visibleGyms, kind, sport, q, sort, origin, me?.gender, womenOnly, kidsOnly])
+  }, [visibleGyms, kind, sport, q, sort, origin, me?.gender, womenOnly, kidsOnly, coveredOnly, sub?.planId])
 
   const sel = list.find((x) => x.g.id === selected)
 
@@ -80,6 +90,7 @@ export default function FitYab() {
             items={[
               { value: 'map', label: <><MapIcon size={16} /><span className="sr-only">نقشه</span></> },
               { value: 'list', label: <><List size={16} /><span className="sr-only">فهرست</span></> },
+              { value: 'classes', label: <><CalendarClock size={16} /><span className="sr-only">کلاس‌ها بر اساس ساعت</span></> },
             ]}
           />
         }
@@ -115,6 +126,11 @@ export default function FitYab() {
             <Sparkles size={14} /> ویژه‌ی بانوان
           </button>
         )}
+        {sub && (
+          <button onClick={() => setCoveredOnly((v) => !v)} aria-pressed={coveredOnly} className={clsx('press flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px]', coveredOnly ? 'card-lime font-semibold' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300')}>
+            <BadgeCheck size={14} /> شامل عضویت {sub.plan.name}
+          </button>
+        )}
         <button onClick={() => setKidsOnly((v) => !v)} aria-pressed={kidsOnly} className={clsx('press flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px]', kidsOnly ? 'card-peach font-semibold' : 'bg-ink-900/[.05] text-ink-600 dark:bg-white/[.06] dark:text-ink-300')}>
           <Baby size={14} /> کودکان
         </button>
@@ -126,7 +142,9 @@ export default function FitYab() {
         ))}
       </div>
 
-      {view === 'map' ? (
+      {view === 'classes' ? (
+        <ClassFinder list={list} sport={sport} kidsOnly={kidsOnly} gender={me?.gender} />
+      ) : view === 'map' ? (
         <div className="relative mt-3">
           <GymMap gyms={list.map((x) => x.g)} center={center} user={user} selected={selected} onSelect={(id) => { setSelected(id); const g = gyms.find((x) => x.id === id); if (g) setCenter([g.lat, g.lng]) }} className="h-[calc(100dvh-24rem)] min-h-[22rem] shadow-card lg:h-[64dvh]" />
           {sel && (

@@ -6,7 +6,7 @@ import { levelOf } from './engagement'
 import { hasBadge } from './perks'
 import { notify } from './ledger'
 import { faDigitsToEn } from '../format'
-import { ROLE_META } from '../config'
+import { ROLE_META, cleanCity } from '../config'
 import { TERMS_VERSION } from '../legal'
 import { setupCycleFor } from './cycle'
 import { type BusinessRole, isBusiness, isBusinessRole, needsVerification } from '../roles'
@@ -40,6 +40,8 @@ export interface ProfileInput {
   accountType?: BusinessRole
   /** فقط در ثبت‌نام با ایمیل: شماره‌ی موبایل (هنوز تأییدنشده) */
   phone?: string
+  /** شهر محل زندگی یا فعالیت (الزامی) */
+  city?: string
   /** پذیرش قوانین و حریم خصوصی (الزامی) */
   acceptTerms?: boolean
 }
@@ -70,7 +72,9 @@ export function createUser(phone: string, input: ProfileInput, extra: IdentityEx
   if (business !== undefined && !isBusinessRole(business)) throw new AppError('نوع حساب معتبر نیست')
   const name = String(input.name ?? '').trim()
   if (name.length < 2) throw new AppError(business ? 'نام کسب‌وکار را وارد کنید' : 'نام و نام خانوادگی را وارد کنید')
-  if (business) return createBusinessUser(phone, name, business, extra)
+  const city = cleanCity(input.city)
+  if (city.length < 2) throw new AppError(business ? 'شهر محل فعالیت را وارد کنید' : 'شهر محل زندگی را وارد کنید')
+  if (business) return createBusinessUser(phone, name, business, extra, city)
   if (input.gender !== 'male' && input.gender !== 'female') throw new AppError('لطفاً جنسیت خود را انتخاب کنید')
   if (input.birthYear && (input.birthYear < 1300 || input.birthYear > 1400)) throw new AppError('سال تولد معتبر نیست')
   if (input.heightCm && (input.heightCm < 100 || input.heightCm > 230)) throw new AppError('قد معتبر نیست')
@@ -86,7 +90,7 @@ export function createUser(phone: string, input: ProfileInput, extra: IdentityEx
     name,
     phone,
     ...identity(extra),
-    city: 'اصفهان',
+    city,
     gender: input.gender,
     birthYear: input.birthYear || undefined,
     heightCm: input.heightCm || undefined,
@@ -123,7 +127,7 @@ const identity = (extra: IdentityExtra): Partial<User> => ({
 })
 
 /** حساب کسب‌وکار: فقط پنل ماژول خودش + فیت‌زون و چالش‌ها */
-function createBusinessUser(phone: string, name: string, role: BusinessRole, extra: IdentityExtra): User {
+function createBusinessUser(phone: string, name: string, role: BusinessRole, extra: IdentityExtra, city: string): User {
   const id = uid('u-')
   const created: User = {
     id,
@@ -131,7 +135,7 @@ function createBusinessUser(phone: string, name: string, role: BusinessRole, ext
     name,
     phone,
     ...identity(extra),
-    city: 'اصفهان',
+    city,
     privacy: { publicProfile: true, showBody: false },
     roles: [role],
     xp: 0,

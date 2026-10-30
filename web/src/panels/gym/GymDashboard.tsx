@@ -7,6 +7,7 @@ import { dayKey, num, toman } from '@/core/format'
 import { Badge, Button, Card, Cover, Empty, PageHeader, SectionTitle, Stars, Stat } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
 import { MiniBars } from '../shared/MiniBars'
+import { GymSchedule } from './GymSchedule'
 
 export default function GymDashboard() {
   const me = useMe()!
@@ -75,18 +76,27 @@ export default function GymDashboard() {
             </Cover>
             <div className="flex items-center gap-3 p-4">
               <div className="min-w-0 flex-1">
-                <div className="font-semibold">{g.name}</div>
+                <div className="font-semibold">{g.name}{g.branch && <span className="font-normal text-ink-500"> · {g.branch}</span>}</div>
                 <div className="text-xs text-ink-500">{toman(g.sessionPrice)} / سانس · {num(myCheckins.filter((c) => c.gymId === g.id).length)} ورود</div>
                 <Stars value={g.rating} count={g.reviews} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Link to={`edit/${g.id}`}><Button size="sm" variant="outline" className="w-full" icon={<Pencil size={14} />}>ویرایش</Button></Link>
+                <Link to={`edit?from=${g.id}`}><Button size="sm" variant="ghost" className="w-full" icon={<Plus size={14} />}>افزودن شعبه</Button></Link>
                 {g.approved && <Button size="sm" variant="secondary" icon={<PenSquare size={14} />} onClick={() => setPostGym(g.id)}>پست در فیت‌زون</Button>}
               </div>
             </div>
           </Card>
         ))}
       </div>
+      {mine.some((g) => g.approved) && (
+        <>
+          <SectionTitle title="تعطیلی و لغو نوبت" />
+          <div className="grid gap-4 lg:grid-cols-2">
+            {mine.filter((g) => g.approved).map((g) => <GymSchedule key={g.id} gym={g} />)}
+          </div>
+        </>
+      )}
       <CreatePostSheet open={!!postGym} onClose={() => setPostGym(undefined)} gymId={postGym} />
     </div>
   )

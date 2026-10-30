@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom'
 import { Navigation, Undo2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { faDateTime, toman } from '@/core/format'
-import { CANCEL_GRACE_MIN, cancelTicket, CLASS_CANCEL_HOURS, inCancelGrace, RENTAL_CANCEL_HOURS, ticketStatus } from '@/core/services/fityab'
+import { CANCEL_GRACE_MIN, cancelQuote, cancelTicket, CLASS_CANCEL_HOURS, inCancelGrace, NO_SHOW_LIMIT, ticketStatus } from '@/core/services/fityab'
+import { useDB } from '@/core/db'
 import type { CheckIn, Gym } from '@/core/types'
 import { Badge, Button, Sheet } from '@/ui/kit'
 import { runOk, ask } from '@/ui/toast'
@@ -20,9 +21,9 @@ export const TICKET_STATUS: Record<CheckIn['status'], { label: string; color: 'e
 export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckIn; gym?: Gym; onClose: () => void; onShare?: () => void }) {
   const cls = ticket?.classId ? gym?.classes?.find((c) => c.id === ticket.classId) : undefined
   const st = ticket ? ticketStatus(ticket) : 'active'
-  const win = ticket?.rentalEnd ? RENTAL_CANCEL_HOURS : CLASS_CANCEL_HOURS
+  const settings = useDB((s) => s.settings)
   const grace = !!ticket && inCancelGrace(ticket)
-  const lateCancel = !!ticket?.slotAt && !grace && new Date(ticket.slotAt).getTime() - Date.now() < win * 3_600_000
+  const q = ticket ? cancelQuote(ticket, Date.now(), { settings }) : undefined
   return (
     <Sheet open={!!ticket} onClose={onClose} title={cls ? `بلیت کلاس ${cls.title}` : ticket?.rentalEnd ? 'رزرو اجاره' : 'بلیت ورود'}>
       {ticket && gym && (
@@ -65,15 +66,17 @@ export function TicketSheet({ ticket, gym, onClose, onShare }: { ticket?: CheckI
                 variant="ghost"
                 className="mt-2 w-full text-coral-500"
                 icon={<Undo2 size={16} />}
-                disabled={lateCancel}
+                disabled={!q?.allowed}
                 onClick={async () => {
-                  if (!(await ask('بلیت لغو و مبلغ آن برگشت داده شود؟'))) return
-                  if (await runOk(() => cancelTicket(ticket.id), 'بلیت لغو شد و مبلغ برگشت داده شد')) onClose()
+                  const msg = q?.late ? `کمتر از ${q.window.toLocaleString('fa-IR')} ساعت به شروع مانده؛ با لغو، ${toman(q.fee)} به باشگاه می‌رسد و ${toman(q.refund)} برمی‌گردد. لغو شود؟` : 'بلیت لغو و کل مبلغ برگشت داده شود؟'
+                  if (!(await ask(msg))) return
+                  if (await runOk(() => cancelTicket(ticket.id), 'بلیت لغو شد')) onClose()
                 }}
               >
-                {lateCancel ? `لغو تا ${win} ساعت قبل از شروع ممکن است` : 'لغو و بازگشت وجه'}
+                {!q?.allowed ? 'نوبت شروع شده و قابل لغو نیست' : q.late ? `لغو با بازگشت ${toman(q.refund)}` : 'لغو و بازگشت کامل وجه'}
               </Button>
-              {grace && ticket.slotAt && <p className="mt-1 text-[12px] text-ink-500">تا {CANCEL_GRACE_MIN.toLocaleString('fa-IR')} دقیقه پس از خرید، لغو بدون محدودیت زمانی ممکن است.</p>}
+              {grace && ticket.slotAt && <p className="mt-1 text-[12px] text-ink-500">تا {CANCEL_GRACE_MIN.toLocaleString('fa-IR')} دقیقه پس از خرید، لغو با بازگشت کامل ممکن است.</p>}
+              {ticket.classId && <p className="mt-1 text-[12px] text-ink-500">نیامدن بدون لغو، غیبت حساب می‌شود؛ با {NO_SHOW_LIMIT.toLocaleString('fa-IR')} غیبت در ۳۰ روز، رزرو کلاس موقتاً بسته می‌شود.</p>}
             </>
           )}
           {st === 'used' && onShare && (
@@ -102,7 +105,16 @@ export function PaySheet({
   onPay,
   children,
   disabled,
+  note,
+  cta,
+  uncovered,
 }: {
+  /** اگر عضویت این سطح را پوشش ندهد، دلیلش (پرداخت فقط از کیف پول) */
+  uncovered?: string
+  /** پیشوند دکمه‌ها (مثلاً «ماندن در صف») */
+  cta?: string
+  /** متن پایین برگه (پیش‌فرض: قانون لغو) */
+  note?: string
   children?: ReactNode
   disabled?: boolean
   open: boolean
@@ -114,21 +126,22 @@ export function PaySheet({
   balance: number
   onPay: (prefer: 'subscription' | 'wallet') => void
 }) {
-  const canSub = credit !== undefined && credit >= price
+  const canSub = credit !== undefined && credit >= price && !uncovered
   return (
     <Sheet open={open} onClose={onClose} title={title}>
       <div className="space-y-3">
         <p className="text-sm leading-7 text-ink-500">{desc}</p>
         {children}
+        {uncovered && <div className="rounded-2xl bg-gold-300/15 p-3 text-xs leading-6">{uncovered}</div>}
         <div className="flex items-baseline justify-between rounded-2xl bg-ink-900/[.04] p-4 dark:bg-white/[.05]">
           <span className="text-xs text-ink-500">مبلغ قابل پرداخت</span>
           <span className="font-display text-3xl">{toman(price)}</span>
         </div>
         <Button className="w-full" size="lg" disabled={!canSub || disabled} onClick={() => onPay('subscription')}>
-          پرداخت از اشتراک {credit !== undefined ? `(اعتبار: ${toman(credit)})` : '(اشتراک ندارید)'}
+          {cta ? `${cta} · ` : ''}پرداخت از اشتراک {credit !== undefined ? `(اعتبار: ${toman(credit)})` : '(اشتراک ندارید)'}
         </Button>
         <Button className="w-full" size="lg" variant="outline" disabled={balance < price || disabled} onClick={() => onPay('wallet')}>
-          پرداخت از کیف پول (موجودی: {toman(balance)})
+          {cta ? `${cta} · ` : ''}پرداخت از کیف پول (موجودی: {toman(balance)})
         </Button>
         {!canSub && balance < price && (
           <Link to="/wallet">
@@ -137,7 +150,7 @@ export function PaySheet({
             </Button>
           </Link>
         )}
-        <p className="text-center text-[12px] text-ink-400">لغو سانس آزاد تا قبل از ورود و لغو کلاس تا {CLASS_CANCEL_HOURS} ساعت قبل، با بازگشت کامل وجه.</p>
+        <p className="text-center text-[12px] text-ink-400">{note ?? `لغو سانس آزاد تا قبل از ورود و لغو کلاس تا ${CLASS_CANCEL_HOURS.toLocaleString('fa-IR')} ساعت قبل، با بازگشت کامل وجه؛ دیرتر از آن، بخشی از مبلغ کسر می‌شود.`}</p>
       </div>
     </Sheet>
   )
