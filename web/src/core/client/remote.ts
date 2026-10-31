@@ -147,9 +147,34 @@ export async function uploadDoc(file: File): Promise<string> {
   return r.name
 }
 
+/** داخل اپ اندروید (Capacitor) اجرا می‌شود؟ */
+export const isNativeApp = typeof navigator !== 'undefined' && /KeyFitAndroid/.test(navigator.userAgent)
+
+/** نمایش تصویر مدرک روی همان صفحه (اپ اندروید زبانه‌ی جدید ندارد) */
+function showInApp(url: string, isPdf: boolean) {
+  const box = document.createElement('div')
+  box.setAttribute('role', 'dialog')
+  box.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(10,9,14,.94);display:flex;align-items:center;justify-content:center;padding:16px'
+  const close = () => {
+    box.remove()
+    URL.revokeObjectURL(url)
+  }
+  box.onclick = close
+  if (isPdf) {
+    box.innerHTML = '<div style="color:#eeebf3;font:15px/1.9 Vazirmatn,sans-serif;text-align:center;max-width:320px">فایل PDF در اپ نمایش داده نمی‌شود؛ آن را از نسخه‌ی وب کی‌فیت (keyfitapp.ir) باز کنید.<br><br>برای بستن بزنید</div>'
+  } else {
+    const img = document.createElement('img')
+    img.src = url
+    img.alt = 'مدرک'
+    img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;border-radius:12px'
+    box.appendChild(img)
+  }
+  document.body.appendChild(box)
+}
+
 /** باز کردن مدرک در زبانه‌ی جدید (با توکن ورود؛ نشانی عمومی ندارد) */
 export async function openDoc(ref: string) {
-  const w = window.open('', '_blank')
+  const w = isNativeApp ? null : window.open('', '_blank')
   try {
     let blob: Blob
     if (ref.startsWith('data:')) blob = await (await fetch(ref)).blob()
@@ -160,6 +185,7 @@ export async function openDoc(ref: string) {
       blob = await res.blob()
     }
     const u = URL.createObjectURL(blob)
+    if (isNativeApp) return showInApp(u, blob.type === 'application/pdf' || ref.endsWith('.pdf'))
     if (w) w.location.href = u
     else window.open(u, '_blank')
     setTimeout(() => URL.revokeObjectURL(u), 60_000)

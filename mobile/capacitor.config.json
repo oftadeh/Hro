@@ -1,0 +1,33 @@
+{
+  "appId": "ir.keyfitapp.app",
+  "appName": "کی‌فیت",
+  "webDir": "www",
+  "server": {
+    "url": "https://keyfitapp.ir",
+    "cleartext": false,
+    "errorPath": "offline.html",
+    "allowNavigation": [
+      "keyfitapp.ir",
+      "*.keyfitapp.ir",
+      "payment.zarinpal.com",
+      "sandbox.zarinpal.com",
+      "*.shaparak.ir"
+    ]
+  },
+  "android": {
+    "appendUserAgent": "KeyFitAndroid",
+    "backgroundColor": "#131118",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false,
+    "adjustMarginsForEdgeToEdge": "auto"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#131118",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    }
+  }
+}

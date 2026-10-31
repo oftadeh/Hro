@@ -1,0 +1,20 @@
+{
+  "name": "keyfit-mobile",
+  "private": true,
+  "version": "1.0.0",
+  "description": "نسخه‌ی اندروید کی‌فیت (Capacitor) — همان سایت keyfitapp.ir داخل اپ بومی",
+  "scripts": {
+    "icons": "node scripts/make-assets.mjs && capacitor-assets generate --android --iconBackgroundColor '#131118' --iconBackgroundColorDark '#131118' --splashBackgroundColor '#131118' --splashBackgroundColorDark '#131118'",
+    "android:add": "cap add android && node scripts/patch-android.mjs",
+    "android:sync": "cap sync android && node scripts/patch-android.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/core": "^7.4.0",
+    "@capacitor/splash-screen": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.4.0"
+  }
+}
