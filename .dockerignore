@@ -1,0 +1,7 @@
+web/node_modules
+web/dist
+web/dist-remote
+web/dist-server
+data
+.git
+*.log
