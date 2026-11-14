@@ -128,6 +128,8 @@ export interface SubscriptionPlan {
   perks: string[]
   benefits: PlanBenefits
   popular?: boolean
+  /** سقف کسر از اعتبار برای هر ورود (پلن جلسه‌ای): اگر قیمت باشگاه بالاتر برود، مابه‌التفاوت با کی‌فیت است */
+  sessionCap?: number
 }
 
 export type TxType =
@@ -198,6 +200,8 @@ export interface Gym {
   lng: number
   phone: string
   sessionPrice: number
+  /** قیمت ویژه‌ی اعضای اشتراک برای سانس آزاد (کمتر از قیمت عادی؛ باشگاه برای مشتری بیشتر تخفیف می‌دهد) */
+  memberPrice?: number
   facilities: string[]
   sports: string[]
   hours: string

@@ -50,7 +50,7 @@ export function PartnerGyms({ info }: { info: PublicInfo | null }) {
   return (
     <section aria-labelledby="partners" id="partners" className="scroll-mt-20">
       <h2 id="partners" className="max-w-xl text-[32px] font-black leading-tight">باشگاه خودت هست؟</h2>
-      <p className="mt-2 max-w-xl text-[15px] leading-8 text-white/60">قبل از ثبت‌نام، باشگاه‌ها و قیمت هر جلسه را ببین. همین قیمت از اعتبار اشتراکت کم می‌شود.</p>
+      <p className="mt-2 max-w-xl text-[15px] leading-8 text-white/60">قبل از ثبت‌نام، باشگاه‌ها و قیمت هر جلسه را ببین. همین قیمت از اعتبار اشتراکت کم می‌شود، و جایی که «قیمت اعضا» دارد، کمتر.</p>
 
       {info && (
         <ul className="mt-6 flex flex-wrap gap-2 text-[13px]" aria-label="آمار ارائه‌دهنده‌های فعال">
@@ -105,6 +105,9 @@ export function PartnerGyms({ info }: { info: PublicInfo | null }) {
                   <div className="mt-2 text-[14px] font-extrabold text-[#dcff5a]">
                     {toman(g.sessionPrice)} <span className="text-[12px] font-semibold text-white/50">{g.kind === 'hall' || g.kind === 'turf' ? 'هر ساعت' : 'هر جلسه'}</span>
                   </div>
+                  {g.memberPrice && (
+                    <div className="mt-1 text-[12px] font-bold text-white/80">اعضای کی‌فیت: {toman(g.memberPrice)}</div>
+                  )}
                 </div>
               </li>
             ))}
@@ -162,7 +165,7 @@ export function Plans({ info }: { info: PublicInfo | null }) {
         </div>
       )}
 
-      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {SUBSCRIPTION_PLANS.map((p) => (
           <li key={p.id} className={clsx('flex h-full flex-col rounded-[28px] p-5', p.popular ? 'card-violet text-white' : 'bg-white/[.05]')}>
             <div className="flex items-center justify-between">

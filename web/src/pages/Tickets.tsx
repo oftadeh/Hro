@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import { CalendarClock, MapPin, QrCode, Ticket } from 'lucide-react'
 import { useDB } from '@/core/db'
 import { faDateTime, toman } from '@/core/format'
-import { answerEntryRequest, priceAt, ticketStatus, gymTitle } from '@/core/services/fityab'
+import { answerEntryRequest, memberPriceAt, priceAt, subscriptionCharge, ticketStatus, gymTitle } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
 import { Badge, Button, Card, Empty, PageHeader, Tabs, toneFor } from '@/ui/kit'
 import { useMe, useBalance } from '@/ui/hooks'
@@ -124,6 +124,7 @@ export default function Tickets() {
           title={`ورود به ${reqGym.name}`}
           desc="با پرداخت، ورود شما فوراً در پذیرش ثبت می‌شود."
           price={priceAt(reqGym).price}
+          subPrice={sub ? subscriptionCharge(memberPriceAt(reqGym) ?? priceAt(reqGym).price, sub.planId).charge : undefined}
           credit={sub?.credit}
           balance={bal}
           onPay={async (prefer) => {

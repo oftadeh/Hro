@@ -48,7 +48,7 @@ export default function DoctorDetail() {
           <div className="text-lg font-semibold">{user.name}</div>
           <div className="text-sm text-ink-500">{doc.specialty}</div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-            <Stars value={doc.rating} /> <span>{num(doc.visits)} ویزیت موفق</span>
+            <Stars value={doc.rating} /> {doc.visits > 0 && <span>{num(doc.visits)} ویزیت موفق</span>}
             {doc.medicalCode && <Badge color="sky">{doc.medicalCode}</Badge>}
             {modes.map((x) => <Badge key={x} color={x === 'online' ? 'emerald' : 'violet'}>{x === 'online' ? 'جلسه‌ی آنلاین' : 'حضوری'}</Badge>)}
           </div>

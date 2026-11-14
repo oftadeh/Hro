@@ -51,6 +51,30 @@ export function priceAt(gym: Gym, at = new Date()) {
 
 export const classPrice = (gym: Gym, c: GymClass) => c.price ?? gym.sessionPrice
 
+/** قیمت ویژه‌ی اعضا، فقط اگر از قیمت عادی کمتر باشد */
+export const memberPriceOf = (gym: Pick<Gym, 'memberPrice' | 'sessionPrice'>) =>
+  gym.memberPrice && gym.memberPrice > 0 && gym.memberPrice < gym.sessionPrice ? gym.memberPrice : undefined
+
+/** قیمت سانس آزاد برای عضو اشتراک در یک زمان (تخفیف ساعت خلوت روی قیمت اعضا هم اعمال می‌شود) */
+export function memberPriceAt(gym: Gym, at = new Date()) {
+  const m = memberPriceOf(gym)
+  if (!m) return undefined
+  const { offPeak } = priceAt(gym, at)
+  return offPeak ? Math.round((m * (100 - gym.offPeak!.discountPct)) / 100 / 1000) * 1000 : m
+}
+
+/** سقف کسر از اعتبار برای هر ورود در یک پلن (پلن جلسه‌ای) */
+export const planSessionCap = (planId?: string) => SUBSCRIPTION_PLANS.find((p) => p.id === planId)?.sessionCap
+
+/**
+ * پرداخت یک ورود از اشتراک: gym سهمی است که باشگاه بر اساس آن تسویه می‌شود (قیمت اعضا در صورت وجود)،
+ * charge مبلغی است که از اعتبار کم می‌شود (حداکثر سقف پلن جلسه‌ای؛ مابه‌التفاوت با کی‌فیت).
+ */
+export function subscriptionCharge(gymAmount: number, planId?: string) {
+  const cap = planSessionCap(planId)
+  return { gym: gymAmount, charge: cap ? Math.min(gymAmount, cap) : gymAmount }
+}
+
 /** زمان شروع یک کلاس در تاریخ مشخص */
 function classStart(c: GymClass, day: Date) {
   const [hh, mm] = c.time.split(':').map(Number)
@@ -203,13 +227,16 @@ function issueTicket(
   const base = o.cls ? { price: classPrice(gym, o.cls), offPeak: false } : priceAt(gym, at)
   // تخفیف کمپین باشگاه (هزینه‌اش با خود باشگاه است)
   const offer = campaignOffer(d, user.id, gym.id, at)
-  const price = offer ? Math.round((base.price * (100 - offer.pct!)) / 100 / 1000) * 1000 : base.price
+  const withOffer = (p: number) => (offer ? Math.round((p * (100 - offer.pct!)) / 100 / 1000) * 1000 : p)
+  const price = withOffer(base.price)
   const offPeak = base.offPeak
   const sub = d.subscriptions.find((s) => s.userId === user.id && new Date(s.expiresAt) > at)
   // سطح بر اساس قیمت اعلامی؛ اگر عضویت این سطح را پوشش ندهد، فقط از کیف پول
   const tier = tierOfPrice(o.cls ? classPrice(gym, o.cls) : gym.sessionPrice, d)
   const covered = !!sub && subCovers(sub.planId, tier)
-  const useSub = o.prefer === 'subscription' && covered && sub!.credit >= price
+  // عضو اشتراک: قیمت ویژه‌ی اعضا (سانس آزاد) و سقف پلن جلسه‌ای
+  const subPay = subscriptionCharge(withOffer((!o.cls && memberPriceAt(gym, at)) || base.price), sub?.planId)
+  const useSub = o.prefer === 'subscription' && covered && sub!.credit >= subPay.charge
   if (o.prefer === 'subscription' && !useSub && (d.wallets[user.id] ?? 0) < price)
     throw new AppError(
       sub && !covered
@@ -222,14 +249,15 @@ function issueTicket(
     from: useSub ? 'subscription' : user.id,
     payerId: user.id,
     to: gym.ownerId,
-    amount: price,
+    amount: useSub ? subPay.gym : price,
+    discountAmount: useSub ? subPay.gym - subPay.charge : undefined,
     module: 'fityab',
     refId: id,
-    description: `${o.cls ? `کلاس ${o.cls.title}` : 'ورود'} ${o.member ? o.member.name : user.name} — ${gym.name}${offPeak ? ' (ساعت خلوت)' : ''}${offer ? ` (تخفیف ${offer.pct}٪ باشگاه)` : ''}`,
+    description: `${o.cls ? `کلاس ${o.cls.title}` : 'ورود'} ${o.member ? o.member.name : user.name} — ${gym.name}${offPeak ? ' (ساعت خلوت)' : ''}${offer ? ` (تخفیف ${offer.pct}٪ باشگاه)` : ''}${useSub && subPay.gym < price ? ' (قیمت اعضا)' : ''}`,
   })
   const validUntil = o.cls && o.slotAt ? new Date(new Date(o.slotAt).getTime() + (o.cls.durationMin + 30) * 60_000) : accessUntil(gym, user.gender, at)
   const t: CheckIn = {
-    id, userId: user.id, gymId: gym.id, price: gym.sessionPrice, paid: price, code: entryCode(), paidWith: useSub ? 'subscription' : 'wallet',
+    id, userId: user.id, gymId: gym.id, price: gym.sessionPrice, paid: useSub ? subPay.charge : price, code: entryCode(), paidWith: useSub ? 'subscription' : 'wallet',
     status: 'active', classId: o.cls?.id, slotAt: o.slotAt, validUntil: validUntil.toISOString(), offPeak, viaReception: o.viaReception, txId: tx.id, createdAt: now(),
     memberId: o.member?.id, memberName: o.member?.name, campaignId: offer?.id,
   }
@@ -826,13 +854,19 @@ export function gymMissing(g: Partial<Gym>): { key: string; label: string }[] {
   return out
 }
 
-const GYM_FIELDS = ['name', 'tagline', 'description', 'address', 'city', 'lat', 'lng', 'phone', 'sessionPrice', 'facilities', 'sports', 'hours', 'gender', 'media', 'capacity', 'classes', 'offPeak', 'kind', 'rental', 'genderHours', 'brand', 'branch', 'license'] as const
+const GYM_FIELDS = ['name', 'tagline', 'description', 'address', 'city', 'lat', 'lng', 'phone', 'sessionPrice', 'memberPrice', 'facilities', 'sports', 'hours', 'gender', 'media', 'capacity', 'classes', 'offPeak', 'kind', 'rental', 'genderHours', 'brand', 'branch', 'license'] as const
 
 function cleanGym(input: Partial<Gym>) {
   const out: Partial<Gym> = {}
   for (const k of GYM_FIELDS) if (k in input) (out as Record<string, unknown>)[k] = input[k]
   if (out.capacity !== undefined && (out.capacity < 1 || out.capacity > 2000)) throw new AppError('ظرفیت سالن معتبر نیست')
   if (out.kind !== undefined && !(out.kind in VENUE_KINDS)) throw new AppError('نوع مجموعه معتبر نیست')
+  if ('memberPrice' in out) {
+    const m = Math.round(Number(out.memberPrice) || 0)
+    if (m && m < 10_000) throw new AppError('قیمت ویژه‌ی اعضا معتبر نیست')
+    if (m && input.sessionPrice !== undefined && m >= input.sessionPrice) throw new AppError('قیمت ویژه‌ی اعضا باید از قیمت عادی سانس کمتر باشد')
+    out.memberPrice = m || undefined
+  }
   if (out.rental) {
     const r = out.rental
     if (!(r.hourlyPrice >= 50_000)) throw new AppError('اجاره‌ی هر ساعت را وارد کنید')

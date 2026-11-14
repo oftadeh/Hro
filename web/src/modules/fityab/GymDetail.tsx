@@ -6,7 +6,7 @@ import { useDB } from '@/core/db'
 import { dayKey, dec, distanceKm, faDate, faTime, num, toman } from '@/core/format'
 import { campaignOffer } from '@/core/services/members'
 import { ageOf, classEligibility } from '@/core/services/family'
-import { brandOf, branchesOf, gymTier, subCovers, tierLabel, tierOfPrice, classAllows, classGender, dayClosed, genderWindowsOn, sessionGender, joinWaitlist, leaveWaitlist, waitlistFor, bookClass, bookedCount, checkIn, classPrice, occupancy, priceAt, reviewGym, ticketStatus, toggleFavoriteGym, upcomingClasses, weekdayLabel, weekdayOf } from '@/core/services/fityab'
+import { brandOf, branchesOf, gymTier, subCovers, tierLabel, tierOfPrice, classAllows, classGender, dayClosed, genderWindowsOn, sessionGender, joinWaitlist, leaveWaitlist, waitlistFor, bookClass, bookedCount, checkIn, classPrice, memberPriceAt, memberPriceOf, occupancy, priceAt, subscriptionCharge, reviewGym, ticketStatus, toggleFavoriteGym, upcomingClasses, weekdayLabel, weekdayOf } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
 import type { GymClass, GymTier } from '@/core/types'
 import { Avatar, Badge, Button, Card, Cover, Empty, Field, PageHeader, SectionTitle, Select, Sheet, Stars, Textarea } from '@/ui/kit'
@@ -162,6 +162,7 @@ export default function GymDetail() {
               <Stars value={gym.rating} count={gym.reviews} />
               <Badge color="violet">{GENDER_LABEL[gym.gender]}</Badge>
               {!gym.rental && <Badge color={sessionTier === 'standard' ? 'slate' : 'amber'}>سطح {tierLabel(sessionTier)}</Badge>}
+              {!gym.rental && memberPriceOf(gym) && <Badge color="emerald">قیمت اعضا {toman(memberPriceOf(gym)!)}</Badge>}
               <Badge color={occ.tone}>
                 <Users size={12} /> الان {occ.label}
               </Badge>
@@ -273,7 +274,7 @@ export default function GymDetail() {
 
           <div>
             <SectionTitle
-              title={`نظرات (${num(gymReviews.length)})`}
+              title={gymReviews.length ? `نظرات (${num(gymReviews.length)})` : 'نظرات'}
               action={canReview ? <Button size="sm" variant="secondary" onClick={() => setRv({ open: true, stars: 5, text: '' })}>ثبت نظر</Button> : undefined}
             />
             {gymReviews.length ? (
@@ -389,6 +390,7 @@ export default function GymDetail() {
         title="بلیت سانس آزاد"
         desc={`ورود به «${gym.name}» تا پایان امروز${now.offPeak ? ' — با تخفیف ساعت خلوت' : ''}.`}
         price={withOffer(now.price)}
+        subPrice={sub ? subscriptionCharge(withOffer(memberPriceAt(gym) ?? now.price), sub.planId).charge : undefined}
         credit={sub?.credit}
         balance={bal}
         onPay={doCheckIn}
@@ -404,6 +406,7 @@ export default function GymDetail() {
         note={book?.wait ? 'فعلاً چیزی کسر نمی‌شود؛ اگر کسی لغو کند، به ترتیب صف خودکار رزرو می‌شوی و مبلغ از همین روش پرداخت کسر می‌شود.' : undefined}
         desc={book ? `${weekdayLabel(weekdayOf(book.at))} ${faDate(book.at.toISOString())} ساعت ${faTime(book.at.toISOString())} · مربی: ${book.cls.coachName}` : ''}
         price={book ? withOffer(classPrice(gym, book.cls)) : 0}
+        subPrice={book && sub ? subscriptionCharge(withOffer(classPrice(gym, book.cls)), sub.planId).charge : undefined}
         uncovered={book ? uncoveredFor(tierOfPrice(classPrice(gym, book.cls))) : undefined}
         credit={sub?.credit}
         balance={bal}

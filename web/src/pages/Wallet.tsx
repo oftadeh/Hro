@@ -112,7 +112,7 @@ export default function WalletPage() {
             <KeyCard
               tone={sub.plan.id === 'plan-diamond' ? 'mint' : sub.plan.id === 'plan-gold' ? 'lavender' : sub.plan.id === 'plan-start' ? 'mint' : 'peach'}
               title={`KEYFIT · ${sub.plan.name}`}
-              subtitle="اعتبار ورود به باشگاه‌ها"
+              subtitle={sub.plan.sessionCap ? `هر ورود حداکثر ${toman(sub.plan.sessionCap)}` : 'اعتبار ورود به باشگاه‌ها'}
               amount={sub.credit}
               footer={<><span>{me.name}</span><span>{num(daysLeft(sub.expiresAt))} روز باقی‌مانده</span></>}
             />
@@ -161,7 +161,7 @@ export default function WalletPage() {
       {!biz && (<>
       <div id="plans" /><SectionTitle title="عضویت‌ها" />
       <p className="-mt-2 mb-4 text-[13px] leading-6 text-ink-500">هر پلن به اندازه‌ی مبلغش اعتبار ورود دارد و هر جلسه به قیمت خود باشگاه کم می‌شود. با لغو، اعتبار استفاده‌نشده به کیف پول برمی‌گردد.</p>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {SUBSCRIPTION_PLANS.map((p, i) => (
           <div key={p.id} className={clsx('relative flex flex-col rounded-[30px] p-6 text-ink-950', ['card-mint', 'card-peach', 'card-violet', 'card-pink'][i % 4], p.popular && 'ring-2 ring-ink-950 ring-offset-4 ring-offset-ink-50 dark:ring-white dark:ring-offset-ink-950')}>
             {p.popular && <span className="absolute left-5 top-5 rounded-full bg-ink-950 px-3 py-1 text-[12px] font-bold text-white">پیشنهاد ما</span>}

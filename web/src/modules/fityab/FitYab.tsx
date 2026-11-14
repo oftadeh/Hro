@@ -11,7 +11,7 @@ import { toast } from '@/ui/toast'
 import { GymMap } from './GymMap'
 import { GymCard } from './GymCard'
 import { ClassFinder } from './ClassFinder'
-import { gymTier, rentalTier, subCovers } from '@/core/services/fityab'
+import { gymTier, memberPriceOf, rentalTier, subCovers } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
 import { directionsUrl } from './nav'
 import { EmptyProvider } from '@/ui/EmptyProvider'
@@ -167,7 +167,7 @@ export default function FitYab() {
                   {[
                     ['فاصله', `${dec(sel.d)} کیلومتر`],
                     ['زمان رسیدن', `${num(Math.max(3, (sel.d / 22) * 60))} دقیقه`],
-                    sel.g.rental && !sel.g.sessionPrice ? ['هر ساعت اجاره', `${num(sel.g.rental.hourlyPrice / 1000)} هزار`] : ['هر سانس', `${num(sel.g.sessionPrice / 1000)} هزار`],
+                    sel.g.rental && !sel.g.sessionPrice ? ['هر ساعت اجاره', `${num(sel.g.rental.hourlyPrice / 1000)} هزار`] : ['هر سانس', `${num(sel.g.sessionPrice / 1000)} هزار${memberPriceOf(sel.g) ? ` · اعضا ${num(memberPriceOf(sel.g)! / 1000)}` : ''}`],
                   ].map(([k, v], i) => (
                     <div key={k} className={i === 1 ? 'border-x hairline' : ''}>
                       <div className="text-[12px] text-ink-400">{k}</div>

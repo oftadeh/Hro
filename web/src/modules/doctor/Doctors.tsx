@@ -73,7 +73,7 @@ export default function Doctors() {
                   <div className="font-semibold">{u.name}</div>
                   <div className="text-xs text-ink-500">{d.specialty}</div>
                   <div className="mt-1 flex items-center gap-2 text-[12px] text-ink-400">
-                    <Stars value={d.rating} /> {num(d.visits)} ویزیت
+                    <Stars value={d.rating} /> {d.visits > 0 && `${num(d.visits)} ویزیت`}
                   </div>
                   <div className="mt-1 text-xs">
                     هر جلسه: <b className="text-aqua-600">{toman(d.visitPrice)}</b> · {num(d.slots.length)} نوبت آزاد

@@ -498,7 +498,7 @@ export function Stars({ value, count }: { value: number; count?: number }) {
     <span className="inline-flex items-center gap-1 text-xs tabular-nums text-ink-600 dark:text-ink-300">
       <Star size={12} className="fill-gold-400 stroke-gold-400" />
       {value ? value.toLocaleString('fa-IR', { maximumFractionDigits: 1 }) : 'جدید'}
-      {count !== undefined && <span className="text-ink-400">({num(count)})</span>}
+      {!!count && <span className="text-ink-400">({num(count)})</span>}
     </span>
   )
 }
