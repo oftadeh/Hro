@@ -79,7 +79,7 @@ export function carryOver(existing: { credit: number; expiresAt: string; trial?:
 }
 
 /** فعال‌سازی یا تمدید اشتراک (داخل mutate) */
-export function activatePlan(d: DBState, userId: ID, plan: SubscriptionPlan, orgId?: ID) {
+export function activatePlan(d: DBState, userId: ID, plan: SubscriptionPlan, orgId?: ID, paid = 0) {
   const existing = d.subscriptions.find((s) => s.userId === userId)
   const start = new Date()
   const base = existing && new Date(existing.expiresAt) > start && !existing.trial ? new Date(existing.expiresAt) : start
@@ -94,8 +94,9 @@ export function activatePlan(d: DBState, userId: ID, plan: SubscriptionPlan, org
     existing.freeChallengeUsed = 0
     existing.freeDoctorUsed = 0
     existing.orgId = orgId
+    existing.paid = paid || undefined
   } else {
-    d.subscriptions.push({ userId, planId: plan.id, credit: plan.credit, startedAt: now(), expiresAt: expires, freeChallengeUsed: 0, freeDoctorUsed: 0, orgId })
+    d.subscriptions.push({ userId, planId: plan.id, credit: plan.credit, startedAt: now(), expiresAt: expires, freeChallengeUsed: 0, freeDoctorUsed: 0, orgId, paid: paid || undefined })
   }
   notify(d, userId, `اشتراک ${plan.name} فعال شد`, `${toman(plan.credit)} اعتبار ورود به باشگاه‌ها گرفتی.`, '', '/fityab')
 }
@@ -119,9 +120,9 @@ export const buySubscription = svc('wallet.buySub', (planId: string, couponCode?
   if (!plan) throw new AppError('پلن یافت نشد')
   const { discount } = couponDiscount(couponCode, 'subscription', plan.price, userId)
   mutate((d) => {
-    applyPayment(d, { type: 'subscription', from: userId, to: 'platform', amount: plan.price, discountAmount: discount, description: `خرید اشتراک ${plan.name}${discount ? ` (کد ${couponCode!.toUpperCase()})` : ''}` })
+    const tx = applyPayment(d, { type: 'subscription', from: userId, to: 'platform', amount: plan.price, discountAmount: discount, description: `خرید اشتراک ${plan.name}${discount ? ` (کد ${couponCode!.toUpperCase()})` : ''}` })
     if (discount) d.coupons.find((c) => c.code.toUpperCase() === couponCode!.trim().toUpperCase())!.usedBy.push(userId)
-    activatePlan(d, userId, plan)
+    activatePlan(d, userId, plan, undefined, tx.amount - (tx.discount ?? 0))
     rewardReferral(d, userId)
   })
 })
@@ -166,6 +167,39 @@ export function activeSubscription(userId: string, s: Pick<DBState, 'subscriptio
   if (!x || new Date(x.expiresAt) < new Date()) return null
   return { ...x, plan: planById(x.planId) ?? trialPlan() }
 }
+
+/* ───────── لغو اشتراک و بازگشت اعتبار ───────── */
+
+/**
+ * مبلغی که با لغو اشتراک به کیف پول برمی‌گردد: اعتبار استفاده‌نشده، حداکثر به اندازه‌ی مبلغی که برای همین دوره پرداخت شده.
+ * دوره‌ی آزمایشی، اشتراک سازمانی و هدیه بازگشت وجه ندارند (پولی از خود کاربر پرداخت نشده است).
+ */
+export function refundableCredit(sub: { credit: number; paid?: number; trial?: boolean; orgId?: ID; expiresAt: string } | undefined | null, at = Date.now()) {
+  if (!sub || sub.trial || sub.orgId || new Date(sub.expiresAt).getTime() < at) return 0
+  return Math.max(0, Math.min(Math.round(sub.credit), Math.round(sub.paid ?? 0)))
+}
+
+export const cancelSubscription = svc('wallet.cancelSub', () => {
+  const userId = currentUserId()
+  let refund = 0
+  mutate((d) => {
+    const sub = d.subscriptions.find((s) => s.userId === userId)
+    if (!sub || new Date(sub.expiresAt) < new Date()) throw new AppError('اشتراک فعالی نداری')
+    if (sub.orgId) throw new AppError('اشتراک سازمانی را فقط مدیر سازمان می‌تواند لغو کند')
+    refund = refundableCredit(sub)
+    const plan = planById(sub.planId)
+    sub.credit = 0
+    sub.paid = undefined
+    sub.expiresAt = now()
+    if (refund) {
+      d.wallets.platform = (d.wallets.platform ?? 0) - refund
+      d.wallets[userId] = (d.wallets[userId] ?? 0) + refund
+      d.transactions.unshift({ id: uid('tx-'), type: 'refund', from: 'platform', to: userId, payerId: userId, amount: refund, commission: 0, description: `بازگشت اعتبار استفاده‌نشده‌ی اشتراک ${plan?.name ?? ''}`.trim(), createdAt: now() })
+    }
+    notify(d, userId, 'اشتراک لغو شد', refund ? `${toman(refund)} اعتبار استفاده‌نشده به کیف پولت برگشت؛ می‌توانی برداشتش کنی.` : 'اشتراکت لغو شد.', '', '/wallet')
+  })
+  return refund
+})
 
 export const requestWithdraw = svc('wallet.withdraw', (rawAmount: number, iban: string) => {
   const userId = currentUserId()

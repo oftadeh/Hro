@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useDB } from '@/core/db'
 import { DEFAULT_TIER_CAPS, MODULE_LABEL } from '@/core/config'
-import { broadcast, saveCoupon, setCommission, setPlatformSetting, setTierCaps, setTrial, setVenueKinds } from '@/core/services/admin'
+import { broadcast, saveCoupon, setCommission, setCompany, setPlatformSetting, setTierCaps, setTrial, setVenueKinds } from '@/core/services/admin'
 import { VENUE_KINDS } from '@/core/config'
 import type { VenueKind } from '@/core/types'
-import type { Coupon } from '@/core/types'
+import type { CompanyInfo, Coupon } from '@/core/types'
 import { faDate, num } from '@/core/format'
 import type { RevenueModule } from '@/core/types'
 import { Badge, Button, Card, Field, Input, NumberInput, PageHeader, SectionTitle, Select, Tabs, Textarea } from '@/ui/kit'
@@ -111,6 +111,7 @@ export default function AdminSettings() {
               </div>
             </div>
         </Card>
+        <CompanyCard current={settings.company} />
       </div>
       )}
 
@@ -191,5 +192,29 @@ export default function AdminSettings() {
       </>
       )}
     </div>
+  )
+}
+
+/** مشخصات حقوقی و نماد اعتماد که در صفحه‌ی اول و پاورقی عمومی نشان داده می‌شود */
+function CompanyCard({ current }: { current?: CompanyInfo }) {
+  const [f, setF] = useState<CompanyInfo>(() => ({ name: '', ...current }))
+  const set = (k: keyof CompanyInfo) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value })
+  return (
+    <Card className="space-y-3 lg:col-span-2">
+      <SectionTitle title="مشخصات حقوقی و نماد اعتماد" />
+      <p className="text-[13px] leading-6 text-ink-500">این اطلاعات در صفحه‌ی اول (بخش «قول ما به تو») و پاورقی نمایش داده می‌شود. شناسه و کد نماد اعتماد را از پنل enamad.ir بردار (در کد HTML نماد، مقدار id و Code).</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="نام ثبتی شرکت یا کسب‌وکار"><Input value={f.name} onChange={set('name')} /></Field>
+        <Field label="شناسه‌ی ملی (اختیاری)"><Input dir="ltr" value={f.nationalId ?? ''} onChange={set('nationalId')} /></Field>
+        <Field label="نشانی"><Input value={f.address ?? ''} onChange={set('address')} /></Field>
+        <Field label="تلفن پشتیبانی"><Input dir="ltr" value={f.phone ?? ''} onChange={set('phone')} /></Field>
+        <Field label="ایمیل"><Input dir="ltr" value={f.email ?? ''} onChange={set('email')} /></Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="شناسه‌ی اینماد (id)"><Input dir="ltr" value={f.enamadId ?? ''} onChange={set('enamadId')} /></Field>
+          <Field label="کد اینماد (Code)"><Input dir="ltr" value={f.enamadCode ?? ''} onChange={set('enamadCode')} /></Field>
+        </div>
+      </div>
+      <Button size="sm" variant="secondary" onClick={() => run(() => setCompany(f), 'مشخصات ذخیره شد')}>ذخیره‌ی مشخصات</Button>
+    </Card>
   )
 }

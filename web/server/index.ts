@@ -49,6 +49,7 @@ import { assertCanLogin, createUser, isValidEmail, isValidPhone, normalizeEmail,
 import { creditTopUp } from '../src/core/services/wallet'
 import { env } from './env'
 import { ensureAdmin, getState, getVersion, mutateState, saveNow } from './storage'
+import { publicInfo } from '../src/core/services/public'
 import { project } from './project'
 import { HttpError, checkEmailOtp, checkOtp, createSession, deleteSession, readSignupToken, requestEmailOtp, requestOtp, sessionUser, signupToken } from './auth'
 import { mailEnabled } from './mail'
@@ -161,6 +162,11 @@ async function api(req: Req, res: Res, url: URL) {
   if (p === '/api/config') {
     const demoUsers = env.demo ? getState().users.slice(0, 14).map((u) => ({ id: u.id, name: u.name })) : undefined
     return json(res, 200, { demo: env.demo, demoUsers, ai: !!env.ai.key, push: pushEnabled, payments: env.zarinpal.merchant ? 'zarinpal' : 'simulated', sms: env.demo || !!env.sms.kavenegarKey, email: env.demo || mailEnabled() || env.otpEcho })
+  }
+
+  // اطلاعات عمومی صفحه‌ی اول (باشگاه‌ها، دوره‌ی آزمایشی، مشخصات حقوقی) بدون ورود
+  if (p === '/api/public') {
+    return json(res, 200, publicInfo(getState()))
   }
 
   if (p === '/api/auth/otp' && req.method === 'POST') {

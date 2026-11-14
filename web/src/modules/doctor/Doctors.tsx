@@ -1,3 +1,4 @@
+import { EmptyProvider } from '@/ui/EmptyProvider'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useDB } from '@/core/db'
 import { CARE_KINDS } from '@/core/config'
@@ -59,7 +60,7 @@ export default function Doctors() {
         </>
       )}
       <SectionTitle title={CARE_KINDS[kind].plural} />
-      {list.length === 0 && <div className="rounded-2xl bg-ink-900/[.04] p-4 text-sm text-ink-500 dark:bg-white/5">به‌زودی {CARE_KINDS[kind].plural} به کی‌فیت اضافه می‌شوند.</div>}
+      {list.length === 0 && <EmptyProvider who={CARE_KINDS[kind].label} title={`هنوز ${CARE_KINDS[kind].label} در این بخش نیست`} />}
       <div className="grid gap-3 sm:grid-cols-2">
         {list.map((d) => {
           const u = users[d.userId]

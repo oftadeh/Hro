@@ -1,3 +1,4 @@
+import { EmptyProvider } from '@/ui/EmptyProvider'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ShoppingCart } from 'lucide-react'
@@ -24,6 +25,7 @@ export function CartButton({ kind, onClick }: { kind: 'product' | 'food'; onClic
 
 export default function Shop() {
   const products = useDB((s) => s.products)
+  const freeOver = useDB((s) => s.settings.freeShippingOver) ?? 0
   const [cat, setCat] = useState<'all' | Product['category']>('all')
   const [q, setQ] = useState('')
   const [cart, setCart] = useState(false)
@@ -40,9 +42,9 @@ export default function Shop() {
         <Orbs seed="shop" intensity={0.8} />
         <Shaker size={120} className="pointer-events-none absolute -bottom-2 left-4" />
         <div className="relative max-w-[62%]">
-          <div className="text-[12px] text-white/70">مجموعه‌ی پاییز</div>
-          <div className="mt-2 font-display text-[2rem] leading-[1.1]">تا ۲۰٪ تخفیف مکمل‌های منتخب</div>
-          <div className="mt-1 text-[13px] text-white/75">ارسال رایگان برای خریدهای بالای ۲ میلیون تومان</div>
+          <div className="text-[12px] text-white/70">ویژه‌ی مشترک‌های کی‌فیت</div>
+          <div className="mt-2 font-display text-[2rem] leading-[1.1]">تا ۲۰٪ تخفیف با عضویت</div>
+          {freeOver > 0 && <div className="mt-1 text-[13px] text-white/75">ارسال رایگان برای خریدهای بالای {toman(freeOver)}</div>}
         </div>
       </div>
       <div className="relative mb-3">
@@ -50,9 +52,13 @@ export default function Shop() {
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="جستجوی محصول یا برند…" className="pr-10" />
       </div>
       <Chips value={cat} onChange={setCat} items={[{ value: 'all', label: 'همه' }, ...Object.entries(CATEGORIES).map(([value, label]) => ({ value: value as Product['category'], label }))]} />
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {list.map((p) => <ProductCard key={p.id} p={p} />)}
-      </div>
+      {list.length ? (
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {list.map((p) => <ProductCard key={p.id} p={p} />)}
+        </div>
+      ) : (
+        <div className="mt-4"><EmptyProvider who="فروشنده‌ی مکمل و لوازم ورزشی" filtered={products.some((p) => !p.review)} onClear={() => { setQ(''); setCat('all') }} /></div>
+      )}
       <CartSheet kind="product" open={cart} onClose={() => setCart(false)} />
     </div>
   )

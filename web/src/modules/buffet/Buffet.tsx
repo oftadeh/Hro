@@ -10,6 +10,7 @@ import { CartSheet } from '@/modules/shop/CartSheet'
 import { CartButton } from '@/modules/shop/Shop'
 import { FoodRow } from './FoodRow'
 import { SaladBowl } from '@/ui/art'
+import { EmptyProvider } from '@/ui/EmptyProvider'
 
 export default function Buffet() {
   const restaurants = useDB((s) => s.restaurants)
@@ -50,6 +51,7 @@ export default function Buffet() {
       </div>
       <SectionTitle title="منوی سالم امروز" />
       <Chips value={tag} onChange={setTag} items={[{ value: 'all', label: 'همه' }, ...tags.map((t) => ({ value: t, label: t }))]} />
+      {!filtered.length && <div className="mt-3"><EmptyProvider who="رستوران غذای سالم" filtered={foods.some((f) => f.available)} onClear={() => setTag('all')} /></div>}
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {filtered.map((f) => (
           <FoodRow

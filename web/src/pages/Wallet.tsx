@@ -10,11 +10,11 @@ import { useDB } from '@/core/db'
 import { ROLE_META, SUBSCRIPTION_PLANS } from '@/core/config'
 import { isBusiness, primaryBusinessRole } from '@/core/roles'
 import { daysLeft, num, toman } from '@/core/format'
-import { activeSubscription, buySubscription, startTrial, topUp, trialBlocker } from '@/core/services/wallet'
+import { activeSubscription, buySubscription, cancelSubscription, refundableCredit, startTrial, topUp, trialBlocker } from '@/core/services/wallet'
 import { Button, Card, Field, HeroHeader, MetricRow, Money, NumberInput, PageHeader, SectionTitle, Sheet } from '@/ui/kit'
 import { KeyCard } from '@/ui/KeyCard'
 import { useMe, useBalance } from '@/ui/hooks'
-import { run, runOk } from '@/ui/toast'
+import { ask, run, runOk } from '@/ui/toast'
 import { TxList } from './TxList'
 import { CardIcon, LiveTiles } from '@/ui/live'
 import { moment } from '@/ui/moments'
@@ -110,19 +110,33 @@ export default function WalletPage() {
         <div className="space-y-3">
           {sub ? (
             <KeyCard
-              tone={sub.plan.id === 'plan-diamond' ? 'mint' : sub.plan.id === 'plan-gold' ? 'lavender' : 'peach'}
+              tone={sub.plan.id === 'plan-diamond' ? 'mint' : sub.plan.id === 'plan-gold' ? 'lavender' : sub.plan.id === 'plan-start' ? 'mint' : 'peach'}
               title={`KEYFIT · ${sub.plan.name}`}
               subtitle="اعتبار ورود به باشگاه‌ها"
               amount={sub.credit}
               footer={<><span>{me.name}</span><span>{num(daysLeft(sub.expiresAt))} روز باقی‌مانده</span></>}
             />
           ) : (
-            <KeyCard tone="lavender" title="KEYFIT" subtitle="عضویت فعال ندارید" amount="۰ تومان" footer={<span>با عضویت، بیش از مبلغ پرداختی اعتبار بگیرید</span>} />
+            <KeyCard tone="lavender" title="KEYFIT" subtitle="عضویت فعال ندارید" amount="۰ تومان" footer={<span>یک عضویت، ورود به همه‌ی باشگاه‌های طرف قرارداد</span>} />
           )}
           {sub && sub.plan.credit > 0 && (
             <Card className="px-4 py-1">
               <MetricRow tone="amber" icon={<Ticket size={17} />} title="مصرف اعتبار ورود" value={`${num(Math.max(0, 1 - sub.credit / sub.plan.credit) * 100)}٪`} progress={Math.max(0, 1 - sub.credit / sub.plan.credit)} />
             </Card>
+          )}
+          {sub && !sub.trial && !sub.orgId && (
+            <button
+              type="button"
+              className="w-full rounded-full px-4 py-2 text-center text-[13px] text-ink-500 underline-offset-4 hover:underline active:scale-[.97]"
+              onClick={async () => {
+                const back = refundableCredit(sub)
+                if (!(await ask(back ? `اشتراک لغو شود؟ ${toman(back)} اعتبار استفاده‌نشده به کیف پولت برمی‌گردد و می‌توانی برداشتش کنی.` : 'اشتراک لغو شود؟ اعتبار قابل بازگشتی باقی نمانده است.'))) return
+                const got = await run(() => cancelSubscription())
+                if (got !== undefined) toast.success(got ? `اشتراک لغو شد و ${toman(got)} به کیف پولت برگشت` : 'اشتراک لغو شد')
+              }}
+            >
+              لغو اشتراک{refundableCredit(sub) ? ` و بازگشت ${toman(refundableCredit(sub))}` : ''}
+            </button>
           )}
           {!sub && trial.enabled && !trialWhy && (
             <Card className="card-lime flex items-center gap-3 text-ink-950">
@@ -146,14 +160,15 @@ export default function WalletPage() {
 
       {!biz && (<>
       <div id="plans" /><SectionTitle title="عضویت‌ها" />
-      <div className="grid gap-4 md:grid-cols-3">
+      <p className="-mt-2 mb-4 text-[13px] leading-6 text-ink-500">هر پلن به اندازه‌ی مبلغش اعتبار ورود دارد و هر جلسه به قیمت خود باشگاه کم می‌شود. با لغو، اعتبار استفاده‌نشده به کیف پول برمی‌گردد.</p>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {SUBSCRIPTION_PLANS.map((p, i) => (
-          <div key={p.id} className={clsx('relative flex flex-col rounded-[30px] p-6 text-ink-950', ['card-mint', 'card-violet', 'card-peach'][i % 3], p.popular && 'ring-2 ring-ink-950 ring-offset-4 ring-offset-ink-50 dark:ring-white dark:ring-offset-ink-950')}>
+          <div key={p.id} className={clsx('relative flex flex-col rounded-[30px] p-6 text-ink-950', ['card-mint', 'card-peach', 'card-violet', 'card-pink'][i % 4], p.popular && 'ring-2 ring-ink-950 ring-offset-4 ring-offset-ink-50 dark:ring-white dark:ring-offset-ink-950')}>
             {p.popular && <span className="absolute left-5 top-5 rounded-full bg-ink-950 px-3 py-1 text-[12px] font-bold text-white">پیشنهاد ما</span>}
             <div className="text-[14px] font-bold opacity-70">اشتراک کی‌فیت</div>
             <div className="mt-2 text-[28px] font-black leading-tight">{p.name}</div>
             <div className="mt-3 text-[30px] font-black leading-none"><Money value={p.price} /></div>
-            <div className="mt-1 text-[13px] font-semibold opacity-70">{num(p.durationDays)} روزه · {num(Math.round(((p.credit - p.price) / p.price) * 100))}٪ اعتبار هدیه</div>
+            <div className="mt-1 text-[13px] font-semibold opacity-70">{num(p.durationDays)} روزه · {toman(p.credit)} اعتبار ورود</div>
             <ul className="mt-5 flex-1 space-y-2.5 border-t border-ink-950/10 pt-5 text-[14px]">
               {p.perks.map((perk) => (
                 <li key={perk} className="flex gap-2"><Check size={16} strokeWidth={2.2} className="mt-0.5 shrink-0" /> {perk}</li>

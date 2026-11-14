@@ -208,7 +208,7 @@ export function createSeed(): DBState {
     version: 1,
     users,
     subscriptions: [
-      { userId: 'u-sara', planId: 'plan-gold', credit: 1_540_000, startedAt: ago(24 * 8), expiresAt: ahead(24 * 22), freeChallengeUsed: 0, freeDoctorUsed: 0 },
+      { userId: 'u-sara', planId: 'plan-gold', credit: 1_540_000, startedAt: ago(24 * 8), expiresAt: ahead(24 * 22), freeChallengeUsed: 0, freeDoctorUsed: 0, paid: 1_890_000 },
       ...['u-reza', 'u-hamed', 'u-org'].map((userId) => ({ userId, planId: 'plan-silver', credit: 900_000, startedAt: ago(24 * 20), expiresAt: ahead(24 * 10), freeChallengeUsed: 0, freeDoctorUsed: 0, orgId: 'org-1' })),
     ],
     wallets: { 'u-sara': 1_250_000, 'u-ali': 8_400_000, 'u-coach1': 3_200_000, 'u-coach2': 1_900_000, 'u-seller': 12_500_000, 'u-doctor': 4_100_000, 'u-rest': 2_300_000, 'u-mina': 600_000, 'u-reza': 900_000, 'u-hamed': 300_000, 'u-admin': 0, 'u-org': 5_000_000, platform: 6_850_000, escrow: 4_100_000 },

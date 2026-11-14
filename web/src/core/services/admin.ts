@@ -1,6 +1,6 @@
 /** عملیات مدیر سامانه — همه روی سرور فقط برای نقش admin مجازند */
 import { AppError, mutate, db, svc, currentUserId } from '../store'
-import type { Coupon, RevenueModule, VenueKind, Gym } from '../types'
+import type { CompanyInfo, Coupon, RevenueModule, VenueKind, Gym } from '../types'
 import { VENUE_KINDS } from '../config'
 import { notify } from './ledger'
 import { gymMissing } from './fityab'
@@ -58,6 +58,30 @@ export const setTrial = svc(
     if (!(days >= 1 && days <= 30)) throw new AppError('مدت دوره‌ی آزمایشی باید ۱ تا ۳۰ روز باشد')
     mutate((d) => {
       d.settings.trial = { enabled: !!input.enabled, credit, days }
+    })
+  },
+  A,
+)
+
+/** مشخصات حقوقی و نماد اعتماد که در صفحه‌ی اول عمومی نمایش داده می‌شود */
+export const setCompany = svc(
+  'admin.company',
+  (input: CompanyInfo) => {
+    const t = (v: unknown, max: number) => String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, max)
+    const code = (v: unknown) => String(v ?? '').trim().replace(/[^A-Za-z0-9]/g, '').slice(0, 40)
+    const c: CompanyInfo = {
+      name: t(input?.name, 80),
+      nationalId: t(input?.nationalId, 20) || undefined,
+      address: t(input?.address, 200) || undefined,
+      phone: t(input?.phone, 20) || undefined,
+      email: t(input?.email, 80) || undefined,
+      enamadId: code(input?.enamadId) || undefined,
+      enamadCode: code(input?.enamadCode) || undefined,
+    }
+    if (c.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email)) throw new AppError('ایمیل معتبر نیست')
+    if (!!c.enamadId !== !!c.enamadCode) throw new AppError('برای نماد اعتماد، هم شناسه و هم کد را وارد کن')
+    mutate((d) => {
+      d.settings.company = c.name || c.address || c.phone || c.enamadId ? c : undefined
     })
   },
   A,

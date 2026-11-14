@@ -101,6 +101,8 @@ export interface Subscription {
   orgId?: ID
   /** دوره‌ی آزمایشی رایگان */
   trial?: boolean
+  /** مبلغی که کاربر برای دوره‌ی فعلی پرداخت کرده (سقف بازگشت وجه با لغو اشتراک) */
+  paid?: number
 }
 
 /** مزایای قابل اجرای هر پلن؛ تخفیف‌ها از سهم کی‌فیت پرداخت می‌شود نه از سهم ارائه‌دهنده */
@@ -721,6 +723,21 @@ export interface PlatformSettings {
   tierCaps?: { standard: number; premium: number }
   /** دوره‌ی آزمایشی رایگان: یک بار برای هر شماره‌ی تأییدشده */
   trial?: { enabled: boolean; credit: number; days: number }
+  /** مشخصات حقوقی و نماد اعتماد که در صفحه‌ی اول و پاورقی عمومی نمایش داده می‌شود */
+  company?: CompanyInfo
+}
+
+/** هویت حقوقی کسب‌وکار (برای اعتماد کاربر)؛ فیلدهای خالی نمایش داده نمی‌شوند */
+export interface CompanyInfo {
+  /** نام ثبتی شرکت یا صاحب کسب‌وکار */
+  name: string
+  nationalId?: string
+  address?: string
+  phone?: string
+  email?: string
+  /** شناسه و کد نماد اعتماد الکترونیکی (از پنل enamad.ir) */
+  enamadId?: string
+  enamadCode?: string
 }
 
 /** لیست انتظار یک نوبت کلاس؛ با خالی شدن جا، نفر اول خودکار رزرو می‌شود */
