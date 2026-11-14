@@ -1,3 +1,4 @@
+import { EmptyProvider } from '@/ui/EmptyProvider'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Bot, Radio, Send, Trash2 } from 'lucide-react'
@@ -157,6 +158,7 @@ function Coaches() {
   return (
     <>
       <Tabs className="mb-4 max-w-sm" value={filter} onChange={setFilter} items={[{ value: 'all', label: 'همه' }, { value: 'workout', label: 'تمرینی' }, { value: 'diet', label: 'تغذیه' }]} />
+      {!list.length && <EmptyProvider who="مربی" filtered={coaches.length > 0} onClear={() => setFilter('all')} desc={coaches.length ? undefined : 'تا وقتی مربی‌ها اضافه شوند، از تب «دستیار هوشمند» برنامه‌ی تمرین و تغذیه بگیر. مربی آشنایی داری؟ دعوتش کن تا رایگان ثبت شود.'} />}
       <div className="grid gap-4 sm:grid-cols-2">
         {list.map((c) => {
           const u = users[c.userId]

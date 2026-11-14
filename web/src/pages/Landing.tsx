@@ -6,6 +6,7 @@ import { Emblem, Logo } from '@/layouts/Logo'
 import { Showcase } from './landing/Showcase'
 import { CardIcon, LiveTiles, boardTiles, crowdTiles, progressTiles, tileIcon } from '@/ui/live'
 import { moment } from '@/ui/moments'
+import { EnamadBadge, PartnerGyms, Plans, Trust, usePublicInfo } from './landing/PublicSections'
 
 /**
  * شمارنده‌ی نمایشی: هر چند ثانیه یک «داده‌ی تازه» تا بازدیدکننده زنده بودن کارت‌ها را ببیند.
@@ -336,6 +337,7 @@ function StartButton() {
 
 export default function Landing() {
   const start = <StartButton />
+  const info = usePublicInfo()
   return (
     <div className="sport-bg min-h-dvh overflow-x-clip bg-[#131118] text-white">
       <header className="sticky top-0 z-50 bg-[#131118]/80 backdrop-blur-xl">
@@ -355,7 +357,7 @@ export default function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {start}
-              <a href="#tour" className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[15px] font-semibold">ببین چطور کار می‌کند</a>
+              <a href="#partners" className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[15px] font-semibold">باشگاه‌ها و قیمت‌ها</a>
             </div>
             <ul className="mt-9 grid max-w-md grid-cols-3 gap-3 text-[13px]">
               {[
@@ -371,6 +373,8 @@ export default function Landing() {
           </div>
           <HeroVisual />
         </section>
+
+        <PartnerGyms info={info} />
 
         <Bento />
 
@@ -395,6 +399,10 @@ export default function Landing() {
           </ol>
         </section>
 
+        <Plans info={info} />
+
+        <Trust info={info} />
+
         <section className="card-night relative overflow-hidden rounded-[40px] p-8 sm:p-12">
           <span aria-hidden className="pointer-events-none absolute -left-20 -top-24 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(246,169,211,.35),transparent_65%)]" />
           <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
@@ -412,7 +420,7 @@ export default function Landing() {
           <Emblem size={72} className="mx-auto" />
           <div dir="ltr" className="mt-4 text-[13px] font-semibold tracking-[.35em] text-white/45">UNLOCK YOUR POTENTIAL</div>
           <h2 className="mt-3 text-[34px] font-black">آماده‌ای؟</h2>
-          <p className="mt-2 text-white/60">ثبت‌نام رایگان است.</p>
+          <p className="mt-2 text-white/60">{info?.trial ? `ثبت‌نام رایگان است و ${info.trial.days.toLocaleString('fa-IR')} روز اول را مجانی امتحان می‌کنی.` : 'ثبت‌نام رایگان است.'}</p>
           <div className="mt-6">{start}</div>
         </section>
       </main>
@@ -422,7 +430,8 @@ export default function Landing() {
           <Link to="/terms" className="hover:text-white">قوانین و مقررات</Link>
           <Link to="/privacy" className="hover:text-white">حریم خصوصی</Link>
         </nav>
-        © {new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric' }).format(new Date())} کی‌فیت · ایران · keyfitapp.ir
+        {info?.company?.enamadId && <div className="mb-4 flex justify-center"><EnamadBadge info={info} small /></div>}
+        © {new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric' }).format(new Date())} کی‌فیت{info?.company?.name ? ` · ${info.company.name}` : ''} · ایران · keyfitapp.ir
       </footer>
     </div>
   )

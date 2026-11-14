@@ -14,6 +14,7 @@ import { ClassFinder } from './ClassFinder'
 import { gymTier, rentalTier, subCovers } from '@/core/services/fityab'
 import { activeSubscription } from '@/core/services/wallet'
 import { directionsUrl } from './nav'
+import { EmptyProvider } from '@/ui/EmptyProvider'
 import { useMe } from '@/ui/hooks'
 
 const KIND_ICON: Record<VenueKind, LucideIcon> = { gym: Dumbbell, pool: Waves, equestrian: Award, hall: Building2, turf: Flag }
@@ -199,9 +200,15 @@ export default function FitYab() {
               ]}
             />
           </div>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map(({ g, d }) => <GymCard key={g.id} gym={g} distance={d} />)}
-          </div>
+          {list.length ? (
+            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {list.map(({ g, d }) => <GymCard key={g.id} gym={g} distance={d} />)}
+            </div>
+          ) : (
+            <div className="mt-3">
+              <EmptyProvider who="باشگاه" filtered={visibleGyms.some((g) => g.approved)} onClear={() => { setQ(''); setSport('all'); setKind('all'); setWomenOnly(false); setKidsOnly(false); setCoveredOnly(false) }} />
+            </div>
+          )}
         </>
       )}
     </div>
