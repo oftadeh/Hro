@@ -100,6 +100,7 @@ export function PaySheet({
   title,
   desc,
   price,
+  subPrice,
   credit,
   balance,
   onPay,
@@ -122,11 +123,15 @@ export function PaySheet({
   title: string
   desc: string
   price: number
+  /** مبلغی که در پرداخت از اشتراک از اعتبار کم می‌شود (قیمت اعضا یا سقف پلن جلسه‌ای) */
+  subPrice?: number
   credit?: number
   balance: number
   onPay: (prefer: 'subscription' | 'wallet') => void
 }) {
-  const canSub = credit !== undefined && credit >= price && !uncovered
+  const subAmount = subPrice ?? price
+  const canSub = credit !== undefined && credit >= subAmount && !uncovered
+  const subCheaper = credit !== undefined && !uncovered && subAmount < price
   return (
     <Sheet open={open} onClose={onClose} title={title}>
       <div className="space-y-3">
@@ -137,6 +142,12 @@ export function PaySheet({
           <span className="text-xs text-ink-500">مبلغ قابل پرداخت</span>
           <span className="font-display text-3xl">{toman(price)}</span>
         </div>
+        {subCheaper && (
+          <div className="flex items-baseline justify-between rounded-2xl bg-brand-400/10 p-3 text-xs">
+            <span>با اشتراک فقط</span>
+            <span className="font-display text-xl">{toman(subAmount)}</span>
+          </div>
+        )}
         <Button className="w-full" size="lg" disabled={!canSub || disabled} onClick={() => onPay('subscription')}>
           {cta ? `${cta} · ` : ''}پرداخت از اشتراک {credit !== undefined ? `(اعتبار: ${toman(credit)})` : '(اشتراک ندارید)'}
         </Button>

@@ -6,7 +6,7 @@
 import type { DBState } from '../state'
 import type { CompanyInfo, Gym, GymTier, VenueKind } from '../types'
 import { isProviderActive } from '../roles'
-import { tierOfPrice } from './fityab'
+import { memberPriceOf, tierOfPrice } from './fityab'
 
 export interface PublicGym {
   id: string
@@ -16,6 +16,8 @@ export interface PublicGym {
   kind: VenueKind
   gender: Gym['gender']
   sessionPrice: number
+  /** قیمت ویژه‌ی اعضای اشتراک (سانس آزاد) */
+  memberPrice?: number
   tier: GymTier
   lat: number
   lng: number
@@ -46,6 +48,7 @@ export function publicInfo(s: DBState): PublicInfo {
     .map((g) => ({
       id: g.id, name: g.name, branch: g.branch, city: g.city, kind: g.kind ?? 'gym', gender: g.gender,
       sessionPrice: g.kind === 'hall' || g.kind === 'turf' ? g.rental?.hourlyPrice ?? g.sessionPrice : g.sessionPrice,
+      memberPrice: g.kind === 'hall' || g.kind === 'turf' ? undefined : memberPriceOf(g),
       tier: tierOfPrice(g.kind === 'hall' || g.kind === 'turf' ? g.rental?.hourlyPrice ?? 0 : g.sessionPrice, s),
       // مختصات با دقت حدود ۱۰۰ متر کافی است
       lat: Math.round(g.lat * 1000) / 1000, lng: Math.round(g.lng * 1000) / 1000,

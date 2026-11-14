@@ -105,7 +105,7 @@ export default function TeamDetail() {
 
       <SectionTitle title="چالش‌های تیم" action={<Link to={`/challenges/new?team=${team.id}`}><Button size="sm" variant="secondary" icon={<Trophy size={14} />}>چالش تیمی</Button></Link>} />
       {teamChallenges.length === 0 ? <p className="text-xs text-ink-400">چالش تیمی بدون جایزه‌ی نقدی رایگان است.</p> : teamChallenges.map((c) => (
-        <Link key={c.id} to={`/challenges/${c.id}`}><Card className="mb-2 text-sm font-medium">{c.title} <span className="text-[12px] text-ink-400">· {num(c.participants.length)} شرکت‌کننده</span></Card></Link>
+        <Link key={c.id} to={`/challenges/${c.id}`}><Card className="mb-2 text-sm font-medium">{c.title} {c.participants.length > 0 && <span className="text-[12px] text-ink-400">· {num(c.participants.length)} شرکت‌کننده</span>}</Card></Link>
       ))}
 
       <SectionTitle title="رتبه‌بندی این هفته" />

@@ -90,7 +90,7 @@ export function PostCard({ post }: { post: Post }) {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-950 text-brand-300"><MetricIcon metric={challenge.metric} size={16} /></span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-medium">{challenge.title}</div>
-                <div className="text-[12px] tabular-nums text-ink-400">صندوق {toman(challenge.pool)} · {num(challenge.participants.length)} شرکت‌کننده</div>
+                <div className="text-[12px] tabular-nums text-ink-400">صندوق {toman(challenge.pool)}{challenge.participants.length ? ` · ${num(challenge.participants.length)} شرکت‌کننده` : ''}</div>
               </div>
               <span className="text-[12px] text-ink-500">مشاهده</span>
             </Link>

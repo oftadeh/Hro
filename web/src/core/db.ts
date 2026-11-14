@@ -25,7 +25,7 @@ export const useDB = create<DBState>()(
       // در حالت سرور فقط یک کپی موقت از نمای کاربر نگه داشته می‌شود
       name: REMOTE ? 'keyfit-cache' : 'keyfit-db',
       // نسخه‌ی داده‌های نمایشی؛ با تغییر ساختار، داده‌ها به حالت اولیه برمی‌گردند
-      version: 8,
+      version: 9,
       migrate: () => (REMOTE ? createEmpty() : createSeed()),
       storage: createJSONStorage(() => localStorage),
     },

@@ -67,6 +67,18 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     benefits: { discounts: { buffet: 5 }, freeChallengeEntries: 0, freeDoctorVisits: 0, badge: false },
   },
   {
+    id: 'plan-sessions',
+    name: 'جلسه‌ای',
+    price: 890_000,
+    credit: 890_000,
+    durationDays: 45,
+    color: 'from-ink-700 to-ink-800',
+    tiers: ['standard'],
+    sessionCap: 125_000,
+    perks: ['هر ورود حداکثر ۱۲۵٬۰۰۰ تومان از اعتبار کم می‌کند', 'اگر باشگاه قیمتش را بالا ببرد، مابه‌التفاوت با کی‌فیت', 'دست‌کم ۷ جلسه در ۴۵ روز، در باشگاه‌های ارزان‌تر بیشتر', 'باشگاه‌های سطح استاندارد', 'اعتبار استفاده‌نشده با لغو، به کیف پول برمی‌گردد'],
+    benefits: { discounts: { buffet: 5 }, freeChallengeEntries: 0, freeDoctorVisits: 0, badge: false },
+  },
+  {
     id: 'plan-silver',
     name: 'نقره‌ای',
     price: 990_000,

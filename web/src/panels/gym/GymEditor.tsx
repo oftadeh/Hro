@@ -36,7 +36,7 @@ export default function GymEditor() {
       const [lat, lng] = cityCenter(source.city)
       return {
         name: source.name, brand: source.brand || source.name, branch: '', tagline: source.tagline, description: source.description, address: '', city: source.city, phone: source.phone,
-        sessionPrice: source.sessionPrice, facilities: source.facilities, sports: source.sports, hours: source.hours, gender: source.gender, genderHours: source.genderHours,
+        sessionPrice: source.sessionPrice, memberPrice: source.memberPrice, facilities: source.facilities, sports: source.sports, hours: source.hours, gender: source.gender, genderHours: source.genderHours,
         offPeak: source.offPeak, kind: source.kind, rental: source.rental, capacity: source.capacity, lat, lng, media: [],
         classes: (source.classes ?? []).map((c) => ({ ...c, id: uid('k-') })),
       }
@@ -123,7 +123,12 @@ export default function GymEditor() {
                 <Field label="پایان ساعت کاری"><NumberInput value={f.rental?.openTo ?? 24} onChange={(v) => set('rental', { ...(f.rental ?? { hourlyPrice: 0, openFrom: 8, maxHours: 2 }), openTo: v })} /></Field>
               </>
             ) : (
-              <Field label="هزینه‌ی هر سانس (تومان)"><NumberInput value={f.sessionPrice ?? 0} onChange={(v) => set('sessionPrice', v)} /></Field>
+              <>
+                <Field label="هزینه‌ی هر سانس (تومان)"><NumberInput value={f.sessionPrice ?? 0} onChange={(v) => set('sessionPrice', v)} /></Field>
+                <Field label="قیمت ویژه‌ی اعضای کی‌فیت (اختیاری)" hint="کمتر از قیمت عادی؛ اعضای اشتراک با این قیمت وارد می‌شوند و باشگاه شما در لیست با برچسب «قیمت اعضا» دیده می‌شود">
+                  <NumberInput value={f.memberPrice ?? 0} onChange={(v) => set('memberPrice', v || undefined)} />
+                </Field>
+              </>
             )}
             <Field label="ساعات کاری"><Input value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
             <Field label="شهر"><CityInput value={f.city ?? ''} onChange={(e) => setCity(e.target.value)} /></Field>

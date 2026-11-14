@@ -7,7 +7,7 @@ import { SportArt } from '@/ui/art'
 import { VENUE_KINDS } from '@/core/config'
 import { vtName } from '@/ui/ViewTransitions'
 import { useDB } from '@/core/db'
-import { crowdLevels, gymTier, tierLabel } from '@/core/services/fityab'
+import { crowdLevels, gymTier, memberPriceOf, tierLabel } from '@/core/services/fityab'
 import { LiveTiles, crowdTiles } from '@/ui/live'
 
 export const GENDER_LABEL = { male: 'آقایان', female: 'بانوان', mixed: 'بانوان و آقایان' } as const
@@ -42,6 +42,9 @@ export function GymCard({ gym, distance, compact }: { gym: Gym; distance?: numbe
       <div className="flex items-center justify-between gap-2 px-5 py-4">
         <div className="text-[14px] font-semibold tabular-nums">
           {gym.rental ? <>{toman(gym.rental.hourlyPrice)} <span className="text-ink-400">/ ساعت</span></> : <>{toman(gym.sessionPrice)} <span className="text-ink-400">/ جلسه</span></>}
+          {!gym.rental && memberPriceOf(gym) && (
+            <div className="mt-0.5 text-[12px] font-bold text-brand-600 dark:text-brand-300">اعضا: {toman(memberPriceOf(gym)!)}</div>
+          )}
           {!gym.rental && tier !== 'standard' && <span className="ms-2 rounded-full bg-gold-300/25 px-2 py-0.5 text-[11px] font-bold text-gold-600 dark:text-gold-300">{tierLabel(tier)}</span>}
         </div>
         <div className="flex items-center gap-3">

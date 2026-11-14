@@ -195,7 +195,7 @@ function ChallengeCard({ c, meId, tone }: { c: Challenge; meId: string; tone: st
       <LiveTiles tiles={boardTiles({ score: mine?.score ?? 0, goal: c.goal, rank: rank + 1, joined: !!mine })} />
       <CardIcon name="trophy" playKey={`${mine?.score ?? 0}-${rank}`} />
       <div className="relative text-[12px] font-semibold opacity-70">
-        {left ? `${num(left)} روز مانده` : 'روز آخر'} · {num(c.participants.length)} نفر
+        {left ? `${num(left)} روز مانده` : 'روز آخر'}{c.participants.length ? ` · ${num(c.participants.length)} نفر` : ''}
       </div>
       <h3 className="relative mt-2 line-clamp-2 max-w-[74%] text-[18px] font-extrabold leading-7">{c.title}</h3>
       <div className="relative mt-auto max-w-[56%]">
